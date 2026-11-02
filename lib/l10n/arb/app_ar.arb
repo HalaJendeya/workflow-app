@@ -1,0 +1,19 @@
+{
+  "@@locale": "ar",
+  "appTitle": "WorkFlow",
+  "portalClient": "عميل",
+  "portalEmployee": "موظف",
+  "designPendingTitle": "التصميم قيد الانتظار",
+  "designPendingBody": "سيتم بناء هذه الشاشة وفق تصميم Figma الرسمي بعد منح صلاحية الوصول إلى الملف.",
+  "demoModeBanner": "بيانات تجريبية — لا يتم حفظ أي شيء على الخادم",
+  "retry": "إعادة المحاولة",
+  "emptyState": "لا يوجد شيء هنا بعد",
+  "errorNetwork": "تعذر الوصول إلى الخادم. تحقق من اتصالك.",
+  "errorSessionExpired": "انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.",
+  "errorForbidden": "ليست لديك صلاحية الوصول إلى هذا.",
+  "errorNotFound": "هذا العنصر لم يعد موجودًا.",
+  "errorValidation": "يرجى مراجعة الحقول المحددة.",
+  "errorRateLimited": "محاولات كثيرة جدًا. حاول مرة أخرى بعد {seconds} ثانية.",
+  "errorServer": "حدث خطأ من جهتنا. يرجى المحاولة مرة أخرى.",
+  "errorUnknown": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+}

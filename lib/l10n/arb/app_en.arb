@@ -1,0 +1,22 @@
+{
+  "@@locale": "en",
+  "appTitle": "WorkFlow",
+  "portalClient": "Client",
+  "portalEmployee": "Employee",
+  "designPendingTitle": "Design pending",
+  "designPendingBody": "This screen will be built from the official Figma design once access to the file is granted.",
+  "demoModeBanner": "Demo data — nothing is saved to the server",
+  "retry": "Retry",
+  "emptyState": "Nothing here yet",
+  "errorNetwork": "Can't reach the server. Check your connection.",
+  "errorSessionExpired": "Your session has ended. Please sign in again.",
+  "errorForbidden": "You don't have access to this.",
+  "errorNotFound": "This item no longer exists.",
+  "errorValidation": "Please check the highlighted fields.",
+  "errorRateLimited": "Too many attempts. Try again in {seconds} seconds.",
+  "@errorRateLimited": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+  "errorServer": "Something went wrong on our side. Please try again.",
+  "errorUnknown": "Something went wrong. Please try again."
+}
