@@ -52,8 +52,6 @@ class ClientDashboard {
   /// Completed / in progress / pending review / total sprints.
   final (int, int, int, int) milestones;
   final List<DashboardLine> finance;
-
-  int get allocationTotal => allocation.$1 + allocation.$2 + allocation.$3;
 }
 
 final clientDashboardProvider = Provider<ClientDashboard?>((ref) {

@@ -8,6 +8,7 @@ import 'package:workflow_app/app/routes.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/dashboard/domain/client_dashboard.dart';
+import 'package:workflow_app/features/dashboard/presentation/dashboard_widgets.dart';
 import 'package:workflow_app/features/finance/domain/finance_models.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/finance/presentation/invoices_screen.dart';
@@ -76,14 +77,14 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
           ],
         ),
         if (data != null) ...[
-          _SectionCard(
+          DashboardSection(
             title: l10n.overviewMetrics,
             badge: l10n.activeHub,
             caption: l10n.kpisTracked(8),
             children: [for (final line in data.overview) _Line(line)],
           ),
           _RevenueCard(data: data),
-          _SectionCard(
+          DashboardSection(
             title: l10n.workOverview,
             children: [for (final line in data.work) _Line(line)],
           ),
@@ -98,16 +99,16 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
               _showSettled = !_showSettled || !_showInvoiced;
             }),
           ),
-          _AllocationCard(data: data),
+          AllocationCard(allocation: data.allocation),
           _MilestonesCard(data: data),
-          _SectionCard(
+          DashboardSection(
             title: l10n.financialSummary,
             badge: l10n.verifiedClientAccount,
             tone: BadgeTone.success,
             children: [for (final line in data.finance) _Line(line)],
           ),
         ],
-        _GroupHeader(
+        DashboardGroupHeader(
           title: l10n.activeClientProjects,
           chips: [
             FilterChipBox(
@@ -123,8 +124,8 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
           ],
         ),
         if (projects.isEmpty) EmptyNotice(text: l10n.noRecords),
-        for (final p in projects) _DashboardProjectCard(project: p),
-        _GroupHeader(
+        for (final p in projects) DashboardProjectCard(project: p),
+        DashboardGroupHeader(
           title: l10n.latestInvoices,
           chips: [
             FilterChipBox(
@@ -156,76 +157,15 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
       .push(MaterialPageRoute<void>(builder: (_) => const ProjectsScreen()));
 }
 
-TextStyle get _title =>
-    AppTextStyles.mobileLgSemiBold.copyWith(color: AppColors.textPrimary);
-TextStyle get _caption =>
-    AppTextStyles.mobileXsRegular.copyWith(color: AppColors.textSecondary);
-TextStyle get _label =>
-    AppTextStyles.mobileXsRegular.copyWith(color: AppColors.textPrimary);
-TextStyle get _value =>
-    AppTextStyles.mobileLgSemiBold.copyWith(color: AppColors.textPrimary);
-
-class _SectionCard extends StatelessWidget {
-  const new({
-    required this.title,
-    required this.children,
-    this.badge,
-    this.tone = BadgeTone.info,
-    this.caption,
-  });
-
-  final String title;
-  final String? badge;
-  final BadgeTone tone;
-  final String? caption;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) => ModuleCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: _title),
-        if (badge != null) ...[
-          const SizedBox(height: 16),
-          StatusBadge(label: badge!, tone: tone),
-        ],
-        if (caption != null) ...[
-          const SizedBox(height: 12),
-          Text(caption!, style: _caption),
-        ],
-        for (final c in children) ...[const SizedBox(height: 16), c],
-      ],
-    ),
-  );
-}
-
 class _Line extends StatelessWidget {
   const new(this.line);
 
   final DashboardLine line;
 
   @override
-  Widget build(BuildContext context) => _LabelValue(
+  Widget build(BuildContext context) => LabelValue(
     label: line.tag.isEmpty ? line.label : '${line.label} · ${line.tag}',
     value: line.value,
-  );
-}
-
-class _LabelValue extends StatelessWidget {
-  const new({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: _label),
-      const SizedBox(height: 2),
-      Text(value, style: _value),
-    ],
   );
 }
 
@@ -266,7 +206,7 @@ class _RevenueCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             l10n.revenueTarget(money(data.revenueTarget), pct),
-            style: _caption,
+            style: dashCaption,
           ),
         ],
       ),
@@ -297,7 +237,7 @@ class _TrendCard extends StatelessWidget {
     final growth = first == 0
         ? 0
         : ((points.last.invoiced - first) / first * 100).round();
-    return _SectionCard(
+    return DashboardSection(
       title: l10n.expenditureTrends,
       badge: l10n.efficiencyDelta('+$growth%'),
       caption: l10n.expenditureTrendsBody,
@@ -335,9 +275,12 @@ class _TrendCard extends StatelessWidget {
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [for (final p in points) Text(p.label, style: _caption)],
+          children: [for (final p in points) Text(p.label, style: dashCaption)],
         ),
-        Text(l10n.peakValue(peak.label, money(peak.invoiced)), style: _label),
+        Text(
+          l10n.peakValue(peak.label, money(peak.invoiced)),
+          style: dashLabel,
+        ),
       ],
     );
   }
@@ -403,92 +346,6 @@ class _TrendPainter extends CustomPainter {
       old.showSettled != showSettled;
 }
 
-class _AllocationCard extends StatelessWidget {
-  const new({required this.data});
-
-  final ClientDashboard data;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final (done, active, review) = data.allocation;
-    final total = data.allocationTotal;
-    int pct(int v) => total == 0 ? 0 : (v / total * 100).round();
-    return _SectionCard(
-      title: l10n.workAllocation,
-      badge: l10n.onSchedule,
-      tone: BadgeTone.success,
-      caption: l10n.deliverableBreakdown,
-      children: [
-        Center(
-          child: SizedBox.square(
-            dimension: 160,
-            child: CustomPaint(
-              painter: _DonutPainter([
-                (done.toDouble(), ModuleColors.successFg),
-                (active.toDouble(), AppColors.primary),
-                (review.toDouble(), ModuleColors.chartYellow),
-              ]),
-              child: Center(
-                child: Text(
-                  '${pct(done) + pct(active)}%',
-                  style: AppTextStyles.choiceTitle.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        _LabelValue(
-          label: l10n.completedMilestones,
-          value: l10n.percentItems(pct(done), done),
-        ),
-        _LabelValue(
-          label: l10n.activeInSprint,
-          value: l10n.percentItems(pct(active), active),
-        ),
-        _LabelValue(
-          label: l10n.reviewQa,
-          value: l10n.percentItems(pct(review), review),
-        ),
-      ],
-    );
-  }
-}
-
-class _DonutPainter extends CustomPainter {
-  const new(this.segments);
-
-  final List<(double, Color)> segments;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const thickness = 26.0;
-    final rect = (Offset.zero & size).deflate(thickness / 2);
-    final total = segments.fold<double>(0, (s, e) => s + e.$1);
-    if (total == 0) return;
-    var start = -math.pi / 2;
-    for (final (v, c) in segments) {
-      final sweep = v / total * 2 * math.pi;
-      canvas.drawArc(
-        rect,
-        start,
-        sweep,
-        false,
-        Paint()
-          ..color = c
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = thickness,
-      );
-      start += sweep;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DonutPainter old) => old.segments != segments;
-}
-
 class _MilestonesCard extends StatelessWidget {
   const new({required this.data});
 
@@ -501,9 +358,9 @@ class _MilestonesCard extends StatelessWidget {
     final total = done + progress + review;
     int pct(int v) => total == 0 ? 0 : (v / total * 100).round();
     Widget cell(String label, String value) => Expanded(
-      child: _LabelValue(label: label, value: value),
+      child: LabelValue(label: label, value: value),
     );
-    return _SectionCard(
+    return DashboardSection(
       title: l10n.milestoneVelocity,
       badge: l10n.milestonesTotal(total),
       caption: l10n.realtimeOverview,
@@ -555,118 +412,6 @@ class _MilestonesCard extends StatelessWidget {
   }
 }
 
-class _GroupHeader extends StatelessWidget {
-  const new({required this.title, required this.chips});
-
-  final String title;
-  final List<Widget> chips;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(title, style: _title),
-      const SizedBox(height: 16),
-      ChipRow(children: chips),
-    ],
-  );
-}
-
-class _DashboardProjectCard extends ConsumerWidget {
-  const new({required this.project});
-
-  final Project project;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final p = project;
-    final target = DateTime.now().add(Duration(days: p.daysLeft));
-    return ModuleCard(
-      key: Key('dash-project-${p.id}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(p.name, style: _title),
-          const SizedBox(height: 8),
-          Text('${p.client} • ${p.company}', style: _caption),
-          const SizedBox(height: 16),
-          StatusBadge(
-            label: projectStatusLabel(l10n, p.status),
-            tone: projectTone(p.status),
-          ),
-          const SizedBox(height: 16),
-          _LabelValue(
-            label: l10n.contractBudget,
-            value: money(p.budget, currency: p.currency),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(child: Text(l10n.fieldProgress, style: _caption)),
-              Text(
-                '${p.progress}%',
-                style: AppTextStyles.mobileXsSemiBold.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(100),
-            child: LinearProgressIndicator(
-              value: p.progress / 100,
-              minHeight: 6,
-              color: AppColors.primary,
-              backgroundColor: ModuleColors.sectionDivider,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _LabelValue(
-            label: l10n.targetDelivery,
-            value: DateFormat.yMMMd(l10n.localeName).format(target),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              TextButton(
-                key: Key('dash-view-${p.id}'),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  foregroundColor: AppColors.primary,
-                  textStyle: AppTextStyles.mobileXsSemiBold,
-                ),
-                onPressed: () => showProjectDetails(context, p),
-                child: Text(l10n.viewDetails),
-              ),
-              const Spacer(),
-              IconButton(
-                tooltip: l10n.edit,
-                onPressed: () => openProjectForm(context, existing: p),
-                icon: const WfSvg('action_edit', size: 20),
-              ),
-              IconButton(
-                key: Key('dash-delete-${p.id}'),
-                tooltip: l10n.delete,
-                onPressed: () async {
-                  if (await confirmDelete(context, p.name)) {
-                    ref.read(projectsProvider.notifier).remove(p.id);
-                    if (context.mounted) {
-                      showSnack(context, l10n.deletedLocally);
-                    }
-                  }
-                },
-                icon: const WfSvg('action_delete', size: 20),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _DashboardInvoiceCard extends StatelessWidget {
   const new({required this.invoice});
 
@@ -681,7 +426,7 @@ class _DashboardInvoiceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(i.reference, style: _title),
+          Text(i.reference, style: dashTitle),
           const SizedBox(height: 8),
           Text(
             i.project,
@@ -694,13 +439,13 @@ class _DashboardInvoiceCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: _LabelValue(
+                child: LabelValue(
                   label: l10n.issueDate,
                   value: DateFormat.yMMMd(l10n.localeName).format(i.issueDate),
                 ),
               ),
               Expanded(
-                child: _LabelValue(
+                child: LabelValue(
                   label: l10n.fieldAmount,
                   value: money(i.amount, currency: i.currency),
                 ),

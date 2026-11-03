@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:workflow_app/app/routes.dart';
-import 'package:workflow_app/core/widgets/design_pending_screen.dart';
 import 'package:workflow_app/features/categories/presentation/categories_screen.dart';
+import 'package:workflow_app/features/dashboard/presentation/employee_dashboard_screen.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_forms.dart';
 import 'package:workflow_app/features/meetings/presentation/meetings_screen.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
@@ -28,10 +28,7 @@ class EmployeeCategoriesScreen extends StatelessWidget {
             CategoryItem(
               label: l10n.catDashboard,
               icon: 'cat_item_dashboard',
-              onOpen: (c) => push(
-                c,
-                const DesignPendingScreen(routeName: 'employee/dashboard'),
-              ),
+              onOpen: (c) => push(c, const EmployeeDashboardScreen()),
             ),
           ],
         ),

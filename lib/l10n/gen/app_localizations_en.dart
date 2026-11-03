@@ -1555,4 +1555,135 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yourAccount => 'your account';
+
+  @override
+  String get employeeDashboardBody =>
+      'Your work, hours and sprint progress at a glance.';
+
+  @override
+  String get revenue => 'Revenue';
+
+  @override
+  String targetShort(String amount) {
+    return 'Target $amount';
+  }
+
+  @override
+  String tasksCount(int count) {
+    return '+$count Tasks';
+  }
+
+  @override
+  String highPriorityCount(int count) {
+    return '$count high priority';
+  }
+
+  @override
+  String get completedUpper => 'Completed';
+
+  @override
+  String velocityPercent(int percent) {
+    return '$percent% velocity';
+  }
+
+  @override
+  String weeklyPercent(int percent) {
+    return '$percent% weekly';
+  }
+
+  @override
+  String get workingHoursTrend => 'Working Hours & Trend';
+
+  @override
+  String get hrsUnit => 'hrs';
+
+  @override
+  String get currentWeek => 'Current Week';
+
+  @override
+  String get hoursVsTarget => 'Daily logged hours vs. baseline target';
+
+  @override
+  String loggedLegend(String hours) {
+    return 'Logged ($hours)';
+  }
+
+  @override
+  String targetLegend(String hours) {
+    return 'Target ($hours/day)';
+  }
+
+  @override
+  String get dayMon => 'Mon';
+
+  @override
+  String get dayTue => 'Tue';
+
+  @override
+  String get dayWed => 'Wed';
+
+  @override
+  String get dayThu => 'Thu';
+
+  @override
+  String get dayFri => 'Fri';
+
+  @override
+  String get daySat => 'Sat';
+
+  @override
+  String get daySun => 'Sun';
+
+  @override
+  String get avgDaily => 'Avg daily';
+
+  @override
+  String get focusRate => 'Focus rate';
+
+  @override
+  String get timesheetLabel => 'Timesheet';
+
+  @override
+  String get taskDistribution => 'Task Distribution';
+
+  @override
+  String get taskDistributionBody => 'Current sprint backlog & status';
+
+  @override
+  String get allTasks => 'All Tasks';
+
+  @override
+  String get tasksUpper => 'TASKS';
+
+  @override
+  String percentDone(int percent) {
+    return '$percent% Done';
+  }
+
+  @override
+  String onTrackEta(int days) {
+    return 'On track (ETA ${days}d)';
+  }
+
+  @override
+  String get activeTasksMilestones => 'Active Tasks & Milestones';
+
+  @override
+  String get viewBacklog => 'View Backlog';
+
+  @override
+  String percentComplete(int percent) {
+    return '$percent% Complete';
+  }
+
+  @override
+  String get revenueTrajectory => 'Revenue Trajectory';
+
+  @override
+  String get revenueTrajectoryBody => 'Earnings vs monthly targets';
+
+  @override
+  String yoyDelta(int percent) {
+    return '+$percent% YoY';
+  }
 }

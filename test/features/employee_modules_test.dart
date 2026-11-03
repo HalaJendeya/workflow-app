@@ -131,4 +131,36 @@ void main() {
     );
     expect(find.byKey(const Key('timesheet-ts0')), findsNothing);
   });
+
+  testWidgets('Dashboard: task widgets link to Tasks and Sprints', (
+    tester,
+  ) async {
+    await pumpEmployee(tester);
+    await openFromMore(tester, 'Dashboard');
+    expect(find.text('Working Hours & Trend'), findsOneWidget);
+    // Six demo tasks: one completed, two high/urgent still open.
+    expect(find.text('5'), findsOneWidget);
+    expect(find.text('2 high priority'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('all-tasks')));
+    await tester.pumpAndSettle();
+    expect(find.text('Tasks Management'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('masthead-back')).last);
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('view-backlog')),
+      200,
+      scrollable: page(),
+    );
+    await Scrollable.ensureVisible(
+      tester.element(find.byKey(const Key('view-backlog'))),
+      alignment: 0.4,
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('focus-t1')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('view-backlog')));
+    await tester.pumpAndSettle();
+    expect(find.text('Sprint & Backlog'), findsOneWidget);
+  });
 }

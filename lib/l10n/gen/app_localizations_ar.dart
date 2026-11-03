@@ -1549,4 +1549,135 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get yourAccount => 'حسابك';
+
+  @override
+  String get employeeDashboardBody =>
+      'نظرة سريعة على عملك وساعاتك وتقدّم السبرنت.';
+
+  @override
+  String get revenue => 'الإيرادات';
+
+  @override
+  String targetShort(String amount) {
+    return 'الهدف $amount';
+  }
+
+  @override
+  String tasksCount(int count) {
+    return '+$count مهام';
+  }
+
+  @override
+  String highPriorityCount(int count) {
+    return '$count عالية الأولوية';
+  }
+
+  @override
+  String get completedUpper => 'المكتملة';
+
+  @override
+  String velocityPercent(int percent) {
+    return 'سرعة $percent%';
+  }
+
+  @override
+  String weeklyPercent(int percent) {
+    return '$percent% أسبوعيًا';
+  }
+
+  @override
+  String get workingHoursTrend => 'ساعات العمل والاتجاه';
+
+  @override
+  String get hrsUnit => 'ساعة';
+
+  @override
+  String get currentWeek => 'الأسبوع الحالي';
+
+  @override
+  String get hoursVsTarget => 'الساعات اليومية المسجلة مقابل الهدف';
+
+  @override
+  String loggedLegend(String hours) {
+    return 'المسجلة ($hours)';
+  }
+
+  @override
+  String targetLegend(String hours) {
+    return 'الهدف ($hours/يوم)';
+  }
+
+  @override
+  String get dayMon => 'إثن';
+
+  @override
+  String get dayTue => 'ثلا';
+
+  @override
+  String get dayWed => 'أرب';
+
+  @override
+  String get dayThu => 'خمي';
+
+  @override
+  String get dayFri => 'جمع';
+
+  @override
+  String get daySat => 'سبت';
+
+  @override
+  String get daySun => 'أحد';
+
+  @override
+  String get avgDaily => 'المتوسط اليومي';
+
+  @override
+  String get focusRate => 'معدل التركيز';
+
+  @override
+  String get timesheetLabel => 'سجل الدوام';
+
+  @override
+  String get taskDistribution => 'توزيع المهام';
+
+  @override
+  String get taskDistributionBody => 'قائمة السبرنت الحالية وحالتها';
+
+  @override
+  String get allTasks => 'كل المهام';
+
+  @override
+  String get tasksUpper => 'مهام';
+
+  @override
+  String percentDone(int percent) {
+    return '$percent% منجز';
+  }
+
+  @override
+  String onTrackEta(int days) {
+    return 'على المسار (متبقٍ $days يوم)';
+  }
+
+  @override
+  String get activeTasksMilestones => 'المهام النشطة والمراحل';
+
+  @override
+  String get viewBacklog => 'عرض قائمة المهام';
+
+  @override
+  String percentComplete(int percent) {
+    return '$percent% مكتمل';
+  }
+
+  @override
+  String get revenueTrajectory => 'مسار الإيرادات';
+
+  @override
+  String get revenueTrajectoryBody => 'الأرباح مقابل الأهداف الشهرية';
+
+  @override
+  String yoyDelta(int percent) {
+    return '+$percent% سنويًا';
+  }
 }

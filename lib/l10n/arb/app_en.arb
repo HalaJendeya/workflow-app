@@ -782,5 +782,118 @@
   },
   "workAllocation": "Work & Task Allocation",
   "workOverview": "Work overview",
-  "yourAccount": "your account"
+  "yourAccount": "your account",
+  "employeeDashboardBody": "Your work, hours and sprint progress at a glance.",
+  "revenue": "Revenue",
+  "targetShort": "Target {amount}",
+  "@targetShort": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "tasksCount": "+{count} Tasks",
+  "@tasksCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "highPriorityCount": "{count} high priority",
+  "@highPriorityCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "completedUpper": "Completed",
+  "velocityPercent": "{percent}% velocity",
+  "@velocityPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "weeklyPercent": "{percent}% weekly",
+  "@weeklyPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "workingHoursTrend": "Working Hours & Trend",
+  "hrsUnit": "hrs",
+  "currentWeek": "Current Week",
+  "hoursVsTarget": "Daily logged hours vs. baseline target",
+  "loggedLegend": "Logged ({hours})",
+  "@loggedLegend": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  },
+  "targetLegend": "Target ({hours}/day)",
+  "@targetLegend": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  },
+  "dayMon": "Mon",
+  "dayTue": "Tue",
+  "dayWed": "Wed",
+  "dayThu": "Thu",
+  "dayFri": "Fri",
+  "daySat": "Sat",
+  "daySun": "Sun",
+  "avgDaily": "Avg daily",
+  "focusRate": "Focus rate",
+  "timesheetLabel": "Timesheet",
+  "taskDistribution": "Task Distribution",
+  "taskDistributionBody": "Current sprint backlog & status",
+  "allTasks": "All Tasks",
+  "tasksUpper": "TASKS",
+  "percentDone": "{percent}% Done",
+  "@percentDone": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "onTrackEta": "On track (ETA {days}d)",
+  "@onTrackEta": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "activeTasksMilestones": "Active Tasks & Milestones",
+  "viewBacklog": "View Backlog",
+  "percentComplete": "{percent}% Complete",
+  "@percentComplete": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "revenueTrajectory": "Revenue Trajectory",
+  "revenueTrajectoryBody": "Earnings vs monthly targets",
+  "yoyDelta": "+{percent}% YoY",
+  "@yoyDelta": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  }
 }

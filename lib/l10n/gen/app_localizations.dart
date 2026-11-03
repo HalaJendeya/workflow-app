@@ -2917,6 +2917,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'your account'**
   String get yourAccount;
+
+  /// No description provided for @employeeDashboardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your work, hours and sprint progress at a glance.'**
+  String get employeeDashboardBody;
+
+  /// No description provided for @revenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue'**
+  String get revenue;
+
+  /// No description provided for @targetShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Target {amount}'**
+  String targetShort(String amount);
+
+  /// No description provided for @tasksCount.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} Tasks'**
+  String tasksCount(int count);
+
+  /// No description provided for @highPriorityCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} high priority'**
+  String highPriorityCount(int count);
+
+  /// No description provided for @completedUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get completedUpper;
+
+  /// No description provided for @velocityPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% velocity'**
+  String velocityPercent(int percent);
+
+  /// No description provided for @weeklyPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% weekly'**
+  String weeklyPercent(int percent);
+
+  /// No description provided for @workingHoursTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Working Hours & Trend'**
+  String get workingHoursTrend;
+
+  /// No description provided for @hrsUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'hrs'**
+  String get hrsUnit;
+
+  /// No description provided for @currentWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Week'**
+  String get currentWeek;
+
+  /// No description provided for @hoursVsTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily logged hours vs. baseline target'**
+  String get hoursVsTarget;
+
+  /// No description provided for @loggedLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged ({hours})'**
+  String loggedLegend(String hours);
+
+  /// No description provided for @targetLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'Target ({hours}/day)'**
+  String targetLegend(String hours);
+
+  /// No description provided for @dayMon.
+  ///
+  /// In en, this message translates to:
+  /// **'Mon'**
+  String get dayMon;
+
+  /// No description provided for @dayTue.
+  ///
+  /// In en, this message translates to:
+  /// **'Tue'**
+  String get dayTue;
+
+  /// No description provided for @dayWed.
+  ///
+  /// In en, this message translates to:
+  /// **'Wed'**
+  String get dayWed;
+
+  /// No description provided for @dayThu.
+  ///
+  /// In en, this message translates to:
+  /// **'Thu'**
+  String get dayThu;
+
+  /// No description provided for @dayFri.
+  ///
+  /// In en, this message translates to:
+  /// **'Fri'**
+  String get dayFri;
+
+  /// No description provided for @daySat.
+  ///
+  /// In en, this message translates to:
+  /// **'Sat'**
+  String get daySat;
+
+  /// No description provided for @daySun.
+  ///
+  /// In en, this message translates to:
+  /// **'Sun'**
+  String get daySun;
+
+  /// No description provided for @avgDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg daily'**
+  String get avgDaily;
+
+  /// No description provided for @focusRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus rate'**
+  String get focusRate;
+
+  /// No description provided for @timesheetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Timesheet'**
+  String get timesheetLabel;
+
+  /// No description provided for @taskDistribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Task Distribution'**
+  String get taskDistribution;
+
+  /// No description provided for @taskDistributionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Current sprint backlog & status'**
+  String get taskDistributionBody;
+
+  /// No description provided for @allTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'All Tasks'**
+  String get allTasks;
+
+  /// No description provided for @tasksUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'TASKS'**
+  String get tasksUpper;
+
+  /// No description provided for @percentDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% Done'**
+  String percentDone(int percent);
+
+  /// No description provided for @onTrackEta.
+  ///
+  /// In en, this message translates to:
+  /// **'On track (ETA {days}d)'**
+  String onTrackEta(int days);
+
+  /// No description provided for @activeTasksMilestones.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Tasks & Milestones'**
+  String get activeTasksMilestones;
+
+  /// No description provided for @viewBacklog.
+  ///
+  /// In en, this message translates to:
+  /// **'View Backlog'**
+  String get viewBacklog;
+
+  /// No description provided for @percentComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% Complete'**
+  String percentComplete(int percent);
+
+  /// No description provided for @revenueTrajectory.
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue Trajectory'**
+  String get revenueTrajectory;
+
+  /// No description provided for @revenueTrajectoryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Earnings vs monthly targets'**
+  String get revenueTrajectoryBody;
+
+  /// No description provided for @yoyDelta.
+  ///
+  /// In en, this message translates to:
+  /// **'+{percent}% YoY'**
+  String yoyDelta(int percent);
 }
 
 class _AppLocalizationsDelegate

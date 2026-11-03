@@ -40,6 +40,14 @@ abstract final class ModuleColors {
   static const activePill = Color(0xFF0166E6);
   static const activePillCount = Color(0xFF559FFE);
   static const chartYellow = Color(0xFFE8D636);
+
+  // Employee dashboard (731:47939) icon tiles and accents.
+  static const tintTeal = Color(0xFFF0FDFA);
+  static const tintPurple = Color(0xFFFAF5FF);
+  static const chartCyan = Color(0xFF38BDF8);
+  static const chartAmber = Color(0xFFFBBF24);
+  static const chartMuted = Color(0xFFCBD5E1);
+  static const chartTrack = Color(0xFFE2E8F0);
 }
 
 /// Scrollable page under a solid `action/primary` masthead (Figma
@@ -139,19 +147,27 @@ class ModuleMasthead extends StatelessWidget {
               Row(
                 children: [
                   if (canPop) ...[
-                    InkResponse(
-                      onTap: () => Navigator.of(context).maybePop(),
-                      radius: 22,
-                      child: Icon(
+                    IconButton(
+                      key: const Key('masthead-back'),
+                      tooltip: MaterialLocalizations.of(context)
+                          .backButtonTooltip,
+                      onPressed: () => Navigator.of(context).maybePop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 40,
+                        height: 40,
+                      ),
+                      style: IconButton.styleFrom(
+                        tapTargetSize: MaterialTapTargetSize.padded,
+                      ),
+                      icon: Icon(
                         Directionality.of(context) == TextDirection.rtl
                             ? Icons.arrow_forward
                             : Icons.arrow_back,
                         color: white,
-                        semanticLabel: MaterialLocalizations.of(context)
-                            .backButtonTooltip,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 2),
                   ],
                   Expanded(
                     child: Text(
