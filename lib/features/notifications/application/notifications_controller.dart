@@ -29,6 +29,7 @@ class NotificationFilterController extends Notifier<NotificationFilter> {
   NotificationFilter build() => NotificationFilter.all;
 
   // A setter would hide the intent at call sites.
+  // A named method reads better than a setter at call sites.
   // ignore: use_setters_to_change_properties
   void select(NotificationFilter filter) => state = filter;
 }

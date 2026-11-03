@@ -30,11 +30,14 @@ class SessionController extends AsyncNotifier<Session?> {
     required String email,
     required String password,
     required Portal portal,
+    bool remember = true,
   }) async {
     final session = await ref
         .read(authRepositoryProvider)
         .login(email: email, password: password, portal: portal);
-    await ref.read(sessionStorageProvider).writeAll(session.toStorage());
+    // "Remember me" off keeps the token in memory only for this app run.
+    final storage = ref.read(sessionStorageProvider);
+    await (remember ? storage.writeAll(session.toStorage()) : storage.clear());
     ref.read(sessionCredentialsProvider).session = session;
     state = AsyncData(session);
   }
