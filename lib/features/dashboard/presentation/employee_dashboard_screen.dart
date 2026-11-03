@@ -762,12 +762,15 @@ class _DistributionCard extends StatelessWidget {
                 const WfSvg('edash_sprint', size: 14),
                 const SizedBox(width: 6),
                 Expanded(child: Text(d.sprint, style: dashLabel)),
-                StatusBadge(
-                  label: '• ${l10n.onTrackEta(d.sprintEtaDays)}',
-                  tone: BadgeTone.success,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: StatusBadge(
+                    label: '• ${l10n.onTrackEta(d.sprintEtaDays)}',
+                    tone: BadgeTone.success,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                   ),
                 ),
               ],

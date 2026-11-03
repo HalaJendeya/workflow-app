@@ -231,14 +231,18 @@ class _CompanyCard extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    l10n.joinPending,
-                    style: const TextStyle(
-                      fontFamily: _jakarta,
-                      fontSize: 12,
-                      height: 16 / 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.statusInfo,
+                  Flexible(
+                    child: Text(
+                      l10n.joinPending,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: _jakarta,
+                        fontSize: 12,
+                        height: 16 / 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.statusInfo,
+                      ),
                     ),
                   ),
                 ],
