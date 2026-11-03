@@ -4,6 +4,8 @@ import 'package:workflow_app/core/widgets/design_pending_screen.dart';
 import 'package:workflow_app/features/categories/presentation/categories_screen.dart';
 import 'package:workflow_app/features/finance/presentation/invoices_screen.dart';
 import 'package:workflow_app/features/finance/presentation/payments_screen.dart';
+import 'package:workflow_app/features/meetings/presentation/meeting_forms.dart';
+import 'package:workflow_app/features/meetings/presentation/meetings_screen.dart';
 import 'package:workflow_app/features/projects/presentation/projects_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -97,15 +99,14 @@ class ClientCategoriesScreen extends StatelessWidget {
             CategoryItem(
               label: l10n.catMeetings,
               icon: 'cat_item_meetings',
-              onOpen: (c) => push(
-                c,
-                const DesignPendingScreen(routeName: 'client/meetings'),
-              ),
+              onOpen: (c) => push(c, const MeetingsScreen()),
             ),
           ],
         ),
       ],
       createActions: [
+        CreateAction(l10n.scheduleMeeting, openScheduleMeeting),
+        CreateAction(l10n.joinByCodeTitle, openJoinByCode),
         CreateAction(
           l10n.createInvoice,
           (c) => pushRoot(c, const InvoiceFormScreen()),

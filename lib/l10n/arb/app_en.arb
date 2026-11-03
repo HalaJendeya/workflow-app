@@ -351,5 +351,176 @@
         "type": "int"
       }
     }
+  },
+  "meetingsTitle": "Meetings Management",
+  "meetingsDescription": "Schedule, manage and join meetings across all companies",
+  "scheduleMeeting": "Schedule meeting",
+  "joinByCode": "join by code",
+  "meetingOverview": "Meeting overview",
+  "totalMeetings": "Total Meetings",
+  "liveNow": "Live Now",
+  "activeCount": "{count} Active",
+  "meetingScheduled": "Scheduled",
+  "meetingLive": "Live",
+  "meetingWaiting": "Waiting",
+  "meetingEnded": "Ended",
+  "meetingsCalendar": "Meetings Calendar",
+  "timezoneLabel": "Timezone: {zone}",
+  "todaysMeetings": "Today's Meetings",
+  "noMeetingsThisDay": "No meetings on this day",
+  "upcomingMeetings": "Upcoming Meetings",
+  "searchMeetingsHint": "Search meetings, companies, or code...",
+  "codeTypeParticipants": "Code · Type · Participants",
+  "details": "Details",
+  "detailsBody": "Comprehensive session logs and meeting parameters",
+  "meetingId": "Meeting ID",
+  "fieldType": "Type",
+  "scheduledAt": "Scheduled At",
+  "privacy": "Privacy",
+  "public": "Public",
+  "private": "Private",
+  "startedAt": "Started At",
+  "endedAt": "Ended At",
+  "duration": "Duration",
+  "minutes": "{count} minutes",
+  "createdBy": "Created By",
+  "peakParticipants": "Peak Participants",
+  "maxParticipants": "Max Participants",
+  "features": "Features",
+  "description": "Description",
+  "invitationRequired": "Invitation required",
+  "invitationRequiredBody": "This meeting is invitation-only. Ask the host to invite you.",
+  "peakOf": "Peak {peak} of {max} allowed.",
+  "refreshList": "Refresh list",
+  "listUpToDate": "The list is up to date.",
+  "user": "User",
+  "host": "Host",
+  "connected": "Connected",
+  "disconnected": "Disconnected",
+  "invitationsCount": "Invitations ({count})",
+  "invitationsBody": "Company members and approved clients can be invited.",
+  "inviteParticipant": "Invite Participant",
+  "noInvitations": "No invitations sent yet",
+  "noInvitationsBody": "Use the form above or click Invite to add participants to this meeting session.",
+  "featureChat": "Chat",
+  "featureScreen": "Screen",
+  "featureWhiteboard": "Whiteboard",
+  "featureFiles": "Files",
+  "scheduleMeetingTitle": "Schedule a New Meeting",
+  "editMeeting": "Edit Meeting",
+  "scheduleMeetingBody": "Set up seamless video collaboration with your team or external clients",
+  "stepDateTime": "1 - Select Date & Time",
+  "stepDateTimeBody": "Choose meeting date and available time slot",
+  "availableTimes": "AVAILABLE TIMES",
+  "inviteDispatchNote": "Meeting link and invitation calendar ICS files will be automatically dispatched to all confirmed participants.",
+  "stepDetails": "2 - Meeting Details",
+  "stepDetailsBody": "Provide agenda and meeting specifications",
+  "meetingTitle": "Meeting Title",
+  "agenda": "Description & Agenda",
+  "meetingType": "Meeting Type",
+  "onlineVideoMeeting": "Online Video Meeting",
+  "meetingStatus": "Meeting Status",
+  "companyClient": "Company / Client",
+  "stepParticipants": "3 - Participants & Guest Access",
+  "stepParticipantsBody": "Add internal team members or invite external emails",
+  "searchEmployeesHint": "Search employees by name or type email...",
+  "addExternal": "Add External",
+  "collaborationFeatures": "IN-MEETING COLLABORATION FEATURES",
+  "encryptedRoom": "End-to-end encrypted video room ready",
+  "joinByCodeTitle": "Join by Code",
+  "meetingCode": "Meeting Code",
+  "roomPassword": "Room Password (Optional)",
+  "joinMeeting": "Join Meeting",
+  "meetingNotFound": "No meeting matches this code.",
+  "minimize": "Minimize",
+  "peopleCount": "{count} people",
+  "polls": "Polls",
+  "notes": "Notes",
+  "mute": "Mute",
+  "unmute": "Unmute",
+  "camera": "Camera",
+  "raiseHand": "Raise hand",
+  "reactions": "Reactions",
+  "moreOptions": "More options",
+  "leave": "Leave",
+  "micMuted": "Speaker muted",
+  "mediaPending": "Audio and video connect once the meetings backend is available.",
+  "meetingStartedAt": "Meeting started at {time}",
+  "messageParticipantsHint": "Type a message to participants...",
+  "livePoll": "LIVE POLL",
+  "votesCount": "{count} votes",
+  "tapToVote": "Tap an option to vote",
+  "votedAs": "Voted as: {name}",
+  "noteTitleHint": "Note title...",
+  "noteBodyHint": "Write meeting notes or minutes here...",
+  "saveNote": "Save note",
+  "muteAll": "Mute all",
+  "participant": "Participant",
+  "encryptedMeeting": "End-to-end encrypted meeting",
+  "@activeCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@timezoneLabel": {
+    "placeholders": {
+      "zone": {
+        "type": "String"
+      }
+    }
+  },
+  "@minutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@peakOf": {
+    "placeholders": {
+      "peak": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "@invitationsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@peopleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@meetingStartedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "@votesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@votedAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

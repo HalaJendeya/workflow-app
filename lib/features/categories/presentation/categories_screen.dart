@@ -77,26 +77,29 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
       children: [
         SizedBox(
           height: 44,
-          child: ListView(
+          child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            children: [
-              _Pill(
-                label: l10n.filterAll,
-                icon: 'cat_pill_all',
-                count: total,
-                selected: _section == null,
-                onTap: () => setState(() => _section = null),
-              ),
-              for (var i = 0; i < widget.sections.length; i++) ...[
-                const SizedBox(width: 11),
+            child: Row(
+              children: [
                 _Pill(
-                  label: widget.sections[i].title,
-                  icon: widget.sections[i].pillIcon,
-                  selected: _section == i,
-                  onTap: () => setState(() => _section = i),
+                  label: l10n.filterAll,
+                  icon: 'cat_pill_all',
+                  count: total,
+                  selected: _section == null,
+                  onTap: () => setState(() => _section = null),
                 ),
+                for (var i = 0; i < widget.sections.length; i++) ...[
+                  const SizedBox(width: 11),
+                  _Pill(
+                    key: Key('cat-pill-${widget.sections[i].title}'),
+                    label: widget.sections[i].title,
+                    icon: widget.sections[i].pillIcon,
+                    selected: _section == i,
+                    onTap: () => setState(() => _section = i),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
         if (cards.isEmpty) EmptyNotice(text: l10n.noResults) else ...cards,
@@ -137,6 +140,7 @@ class _Pill extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.count,
+    super.key,
   });
 
   final String label;
@@ -276,47 +280,50 @@ class _SectionCard extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         for (var i = 0; i < items.length; i++)
-          InkWell(
-            key: Key('category-${items[i].label}'),
-            onTap: () => items[i].onOpen(context),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: i < items.length - 1
-                  ? const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Color(0xFFF8FAFC)),
+          Semantics(
+            button: true,
+            child: InkWell(
+              key: Key('category-${items[i].label}'),
+              onTap: () => items[i].onOpen(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: i < items.length - 1
+                    ? const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Color(0xFFF8FAFC)),
+                        ),
+                      )
+                    : null,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.appBackground,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    )
-                  : null,
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.appBackground,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: SizedBox.square(
-                      dimension: 24,
-                      child: Center(child: WfSvg(items[i].icon)),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      items[i].label,
-                      style: AppTextStyles.desktopXsSemiBold.copyWith(
-                        color: AppColors.black,
+                      child: SizedBox.square(
+                        dimension: 24,
+                        child: Center(child: WfSvg(items[i].icon)),
                       ),
                     ),
-                  ),
-                  if (Directionality.of(context) == TextDirection.rtl)
-                    Transform.flip(flipX: true, child: const WfSvg('chevron'))
-                  else
-                    const WfSvg('chevron'),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        items[i].label,
+                        style: AppTextStyles.desktopXsSemiBold.copyWith(
+                          color: AppColors.black,
+                        ),
+                      ),
+                    ),
+                    if (Directionality.of(context) == TextDirection.rtl)
+                      Transform.flip(flipX: true, child: const WfSvg('chevron'))
+                    else
+                      const WfSvg('chevron'),
+                  ],
+                ),
               ),
             ),
           ),

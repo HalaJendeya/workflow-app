@@ -14,7 +14,7 @@ void main() {
     AppMode mode = AppMode.mock,
   }) async {
     tester.view
-      ..physicalSize = const Size(390, 844) * 3
+      ..physicalSize = const Size(390, 1400) * 3
       ..devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     final storage = InMemorySessionStorage();
@@ -54,13 +54,27 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> openMeetings(WidgetTester tester) async {
+    await tab(tester, 'More');
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('category-Meetings')),
+      200,
+      scrollable: page(),
+    );
+    // Lift the row clear of the floating navigation surface.
+    await tester.drag(page(), const Offset(0, -150));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('category-Meetings')));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('More opens Categories and filters sections', (tester) async {
     await pumpClient(tester);
     await tab(tester, 'More');
     expect(find.text('Categories'), findsOneWidget);
-    await tester.ensureVisible(find.text('Finance').first);
+    await tester.ensureVisible(find.byKey(const Key('cat-pill-Finance')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Finance').first);
+    await tester.tap(find.byKey(const Key('cat-pill-Finance')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('category-Payments')),
@@ -74,9 +88,9 @@ void main() {
   testWidgets('Categories → Payments → search narrows records', (tester) async {
     await pumpClient(tester);
     await tab(tester, 'More');
-    await tester.ensureVisible(find.text('Finance').first);
+    await tester.ensureVisible(find.byKey(const Key('cat-pill-Finance')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Finance').first);
+    await tester.tap(find.byKey(const Key('cat-pill-Finance')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('category-Payments')),
@@ -200,5 +214,81 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Gaza'), findsNothing);
+  });
+
+  testWidgets('Meetings: details, join by code, room chat, vote and leave', (
+    tester,
+  ) async {
+    await pumpClient(tester);
+    await openMeetings(tester);
+    expect(find.text('Meetings Management'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('today-m1')),
+      200,
+      scrollable: page(),
+    );
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('today-m1')),
+        matching: find.text('View Details'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('ZUC-287-6LJ'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Invitation required'),
+      200,
+      scrollable: page(),
+    );
+    expect(find.text('Invitation required'), findsOneWidget);
+    await tester.fling(page(), const Offset(0, 3000), 4000);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('join by code'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('join-code')), 'bhu-232-cek');
+    await tester.tap(find.byKey(const Key('form-save')));
+    await tester.pumpAndSettle();
+    expect(find.text('BHU-232-CEK'), findsOneWidget);
+
+    await tester.tap(find.text('Chat').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('room-chat-input')), 'Hi all');
+    await tester.tap(find.byKey(const Key('room-chat-send')));
+    await tester.pump();
+    expect(find.text('Hi all'), findsOneWidget);
+
+    await tester.tap(find.text('Polls'));
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const Key('poll-Server response acceleration')),
+    );
+    await tester.pump();
+    expect(find.text('Voted as: You'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('room-leave')));
+    await tester.pumpAndSettle();
+    expect(find.text('BHU-232-CEK'), findsNothing);
+  });
+
+  testWidgets('Meetings: Overdue tab shows the empty state for today', (
+    tester,
+  ) async {
+    await pumpClient(tester);
+    await openMeetings(tester);
+    await tester.scrollUntilVisible(
+      find.text('Overdue').first,
+      200,
+      scrollable: page(),
+    );
+    await tester.tap(find.text('Overdue').first);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('No meetings on this day'),
+      200,
+      scrollable: page(),
+    );
+    expect(find.text('No meetings on this day'), findsOneWidget);
   });
 }

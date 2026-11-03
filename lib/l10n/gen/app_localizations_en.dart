@@ -807,4 +807,345 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get startChat => 'Start Chat';
+
+  @override
+  String get meetingsTitle => 'Meetings Management';
+
+  @override
+  String get meetingsDescription =>
+      'Schedule, manage and join meetings across all companies';
+
+  @override
+  String get scheduleMeeting => 'Schedule meeting';
+
+  @override
+  String get joinByCode => 'join by code';
+
+  @override
+  String get meetingOverview => 'Meeting overview';
+
+  @override
+  String get totalMeetings => 'Total Meetings';
+
+  @override
+  String get liveNow => 'Live Now';
+
+  @override
+  String activeCount(int count) {
+    return '$count Active';
+  }
+
+  @override
+  String get meetingScheduled => 'Scheduled';
+
+  @override
+  String get meetingLive => 'Live';
+
+  @override
+  String get meetingWaiting => 'Waiting';
+
+  @override
+  String get meetingEnded => 'Ended';
+
+  @override
+  String get meetingsCalendar => 'Meetings Calendar';
+
+  @override
+  String timezoneLabel(String zone) {
+    return 'Timezone: $zone';
+  }
+
+  @override
+  String get todaysMeetings => 'Today\'s Meetings';
+
+  @override
+  String get noMeetingsThisDay => 'No meetings on this day';
+
+  @override
+  String get upcomingMeetings => 'Upcoming Meetings';
+
+  @override
+  String get searchMeetingsHint => 'Search meetings, companies, or code...';
+
+  @override
+  String get codeTypeParticipants => 'Code · Type · Participants';
+
+  @override
+  String get details => 'Details';
+
+  @override
+  String get detailsBody => 'Comprehensive session logs and meeting parameters';
+
+  @override
+  String get meetingId => 'Meeting ID';
+
+  @override
+  String get fieldType => 'Type';
+
+  @override
+  String get scheduledAt => 'Scheduled At';
+
+  @override
+  String get privacy => 'Privacy';
+
+  @override
+  String get public => 'Public';
+
+  @override
+  String get private => 'Private';
+
+  @override
+  String get startedAt => 'Started At';
+
+  @override
+  String get endedAt => 'Ended At';
+
+  @override
+  String get duration => 'Duration';
+
+  @override
+  String minutes(int count) {
+    return '$count minutes';
+  }
+
+  @override
+  String get createdBy => 'Created By';
+
+  @override
+  String get peakParticipants => 'Peak Participants';
+
+  @override
+  String get maxParticipants => 'Max Participants';
+
+  @override
+  String get features => 'Features';
+
+  @override
+  String get description => 'Description';
+
+  @override
+  String get invitationRequired => 'Invitation required';
+
+  @override
+  String get invitationRequiredBody =>
+      'This meeting is invitation-only. Ask the host to invite you.';
+
+  @override
+  String peakOf(int peak, int max) {
+    return 'Peak $peak of $max allowed.';
+  }
+
+  @override
+  String get refreshList => 'Refresh list';
+
+  @override
+  String get listUpToDate => 'The list is up to date.';
+
+  @override
+  String get user => 'User';
+
+  @override
+  String get host => 'Host';
+
+  @override
+  String get connected => 'Connected';
+
+  @override
+  String get disconnected => 'Disconnected';
+
+  @override
+  String invitationsCount(int count) {
+    return 'Invitations ($count)';
+  }
+
+  @override
+  String get invitationsBody =>
+      'Company members and approved clients can be invited.';
+
+  @override
+  String get inviteParticipant => 'Invite Participant';
+
+  @override
+  String get noInvitations => 'No invitations sent yet';
+
+  @override
+  String get noInvitationsBody =>
+      'Use the form above or click Invite to add participants to this meeting session.';
+
+  @override
+  String get featureChat => 'Chat';
+
+  @override
+  String get featureScreen => 'Screen';
+
+  @override
+  String get featureWhiteboard => 'Whiteboard';
+
+  @override
+  String get featureFiles => 'Files';
+
+  @override
+  String get scheduleMeetingTitle => 'Schedule a New Meeting';
+
+  @override
+  String get editMeeting => 'Edit Meeting';
+
+  @override
+  String get scheduleMeetingBody =>
+      'Set up seamless video collaboration with your team or external clients';
+
+  @override
+  String get stepDateTime => '1 - Select Date & Time';
+
+  @override
+  String get stepDateTimeBody => 'Choose meeting date and available time slot';
+
+  @override
+  String get availableTimes => 'AVAILABLE TIMES';
+
+  @override
+  String get inviteDispatchNote =>
+      'Meeting link and invitation calendar ICS files will be automatically dispatched to all confirmed participants.';
+
+  @override
+  String get stepDetails => '2 - Meeting Details';
+
+  @override
+  String get stepDetailsBody => 'Provide agenda and meeting specifications';
+
+  @override
+  String get meetingTitle => 'Meeting Title';
+
+  @override
+  String get agenda => 'Description & Agenda';
+
+  @override
+  String get meetingType => 'Meeting Type';
+
+  @override
+  String get onlineVideoMeeting => 'Online Video Meeting';
+
+  @override
+  String get meetingStatus => 'Meeting Status';
+
+  @override
+  String get companyClient => 'Company / Client';
+
+  @override
+  String get stepParticipants => '3 - Participants & Guest Access';
+
+  @override
+  String get stepParticipantsBody =>
+      'Add internal team members or invite external emails';
+
+  @override
+  String get searchEmployeesHint => 'Search employees by name or type email...';
+
+  @override
+  String get addExternal => 'Add External';
+
+  @override
+  String get collaborationFeatures => 'IN-MEETING COLLABORATION FEATURES';
+
+  @override
+  String get encryptedRoom => 'End-to-end encrypted video room ready';
+
+  @override
+  String get joinByCodeTitle => 'Join by Code';
+
+  @override
+  String get meetingCode => 'Meeting Code';
+
+  @override
+  String get roomPassword => 'Room Password (Optional)';
+
+  @override
+  String get joinMeeting => 'Join Meeting';
+
+  @override
+  String get meetingNotFound => 'No meeting matches this code.';
+
+  @override
+  String get minimize => 'Minimize';
+
+  @override
+  String peopleCount(int count) {
+    return '$count people';
+  }
+
+  @override
+  String get polls => 'Polls';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get mute => 'Mute';
+
+  @override
+  String get unmute => 'Unmute';
+
+  @override
+  String get camera => 'Camera';
+
+  @override
+  String get raiseHand => 'Raise hand';
+
+  @override
+  String get reactions => 'Reactions';
+
+  @override
+  String get moreOptions => 'More options';
+
+  @override
+  String get leave => 'Leave';
+
+  @override
+  String get micMuted => 'Speaker muted';
+
+  @override
+  String get mediaPending =>
+      'Audio and video connect once the meetings backend is available.';
+
+  @override
+  String meetingStartedAt(String time) {
+    return 'Meeting started at $time';
+  }
+
+  @override
+  String get messageParticipantsHint => 'Type a message to participants...';
+
+  @override
+  String get livePoll => 'LIVE POLL';
+
+  @override
+  String votesCount(int count) {
+    return '$count votes';
+  }
+
+  @override
+  String get tapToVote => 'Tap an option to vote';
+
+  @override
+  String votedAs(String name) {
+    return 'Voted as: $name';
+  }
+
+  @override
+  String get noteTitleHint => 'Note title...';
+
+  @override
+  String get noteBodyHint => 'Write meeting notes or minutes here...';
+
+  @override
+  String get saveNote => 'Save note';
+
+  @override
+  String get muteAll => 'Mute all';
+
+  @override
+  String get participant => 'Participant';
+
+  @override
+  String get encryptedMeeting => 'End-to-end encrypted meeting';
 }

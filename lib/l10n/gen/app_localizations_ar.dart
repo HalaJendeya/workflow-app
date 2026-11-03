@@ -807,4 +807,342 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get startChat => 'بدء المحادثة';
+
+  @override
+  String get meetingsTitle => 'إدارة الاجتماعات';
+
+  @override
+  String get meetingsDescription =>
+      'جدولة الاجتماعات وإدارتها والانضمام إليها عبر جميع الشركات';
+
+  @override
+  String get scheduleMeeting => 'جدولة اجتماع';
+
+  @override
+  String get joinByCode => 'انضمام بالرمز';
+
+  @override
+  String get meetingOverview => 'نظرة عامة على الاجتماعات';
+
+  @override
+  String get totalMeetings => 'إجمالي الاجتماعات';
+
+  @override
+  String get liveNow => 'مباشر الآن';
+
+  @override
+  String activeCount(int count) {
+    return '$count نشط';
+  }
+
+  @override
+  String get meetingScheduled => 'مجدول';
+
+  @override
+  String get meetingLive => 'مباشر';
+
+  @override
+  String get meetingWaiting => 'بالانتظار';
+
+  @override
+  String get meetingEnded => 'منتهٍ';
+
+  @override
+  String get meetingsCalendar => 'تقويم الاجتماعات';
+
+  @override
+  String timezoneLabel(String zone) {
+    return 'المنطقة الزمنية: $zone';
+  }
+
+  @override
+  String get todaysMeetings => 'اجتماعات اليوم';
+
+  @override
+  String get noMeetingsThisDay => 'لا توجد اجتماعات في هذا اليوم';
+
+  @override
+  String get upcomingMeetings => 'الاجتماعات القادمة';
+
+  @override
+  String get searchMeetingsHint => 'ابحث في الاجتماعات أو الشركات أو الرمز...';
+
+  @override
+  String get codeTypeParticipants => 'الرمز · النوع · المشاركون';
+
+  @override
+  String get details => 'التفاصيل';
+
+  @override
+  String get detailsBody => 'سجلات الجلسة ومعايير الاجتماع';
+
+  @override
+  String get meetingId => 'معرّف الاجتماع';
+
+  @override
+  String get fieldType => 'النوع';
+
+  @override
+  String get scheduledAt => 'موعد الجدولة';
+
+  @override
+  String get privacy => 'الخصوصية';
+
+  @override
+  String get public => 'عام';
+
+  @override
+  String get private => 'خاص';
+
+  @override
+  String get startedAt => 'بدأ في';
+
+  @override
+  String get endedAt => 'انتهى في';
+
+  @override
+  String get duration => 'المدة';
+
+  @override
+  String minutes(int count) {
+    return '$count دقيقة';
+  }
+
+  @override
+  String get createdBy => 'أنشأه';
+
+  @override
+  String get peakParticipants => 'ذروة المشاركين';
+
+  @override
+  String get maxParticipants => 'الحد الأقصى للمشاركين';
+
+  @override
+  String get features => 'الميزات';
+
+  @override
+  String get description => 'الوصف';
+
+  @override
+  String get invitationRequired => 'دعوة مطلوبة';
+
+  @override
+  String get invitationRequiredBody =>
+      'هذا الاجتماع بالدعوة فقط. اطلب من المضيف دعوتك.';
+
+  @override
+  String peakOf(int peak, int max) {
+    return 'الذروة $peak من $max مسموح.';
+  }
+
+  @override
+  String get refreshList => 'تحديث القائمة';
+
+  @override
+  String get listUpToDate => 'القائمة محدّثة.';
+
+  @override
+  String get user => 'مستخدم';
+
+  @override
+  String get host => 'المضيف';
+
+  @override
+  String get connected => 'متصل';
+
+  @override
+  String get disconnected => 'غير متصل';
+
+  @override
+  String invitationsCount(int count) {
+    return 'الدعوات ($count)';
+  }
+
+  @override
+  String get invitationsBody => 'يمكن دعوة أعضاء الشركة والعملاء المعتمدين.';
+
+  @override
+  String get inviteParticipant => 'دعوة مشارك';
+
+  @override
+  String get noInvitations => 'لم تُرسل أي دعوات بعد';
+
+  @override
+  String get noInvitationsBody =>
+      'استخدم النموذج أعلاه أو اضغط دعوة لإضافة مشاركين إلى هذه الجلسة.';
+
+  @override
+  String get featureChat => 'الدردشة';
+
+  @override
+  String get featureScreen => 'الشاشة';
+
+  @override
+  String get featureWhiteboard => 'السبورة';
+
+  @override
+  String get featureFiles => 'الملفات';
+
+  @override
+  String get scheduleMeetingTitle => 'جدولة اجتماع جديد';
+
+  @override
+  String get editMeeting => 'تعديل الاجتماع';
+
+  @override
+  String get scheduleMeetingBody =>
+      'جهّز تعاونًا مرئيًا سلسًا مع فريقك أو عملائك';
+
+  @override
+  String get stepDateTime => '1 - اختر التاريخ والوقت';
+
+  @override
+  String get stepDateTimeBody => 'اختر تاريخ الاجتماع والوقت المتاح';
+
+  @override
+  String get availableTimes => 'الأوقات المتاحة';
+
+  @override
+  String get inviteDispatchNote =>
+      'سيتم إرسال رابط الاجتماع وملفات التقويم تلقائيًا لجميع المشاركين المؤكدين.';
+
+  @override
+  String get stepDetails => '2 - تفاصيل الاجتماع';
+
+  @override
+  String get stepDetailsBody => 'أدخل جدول الأعمال ومواصفات الاجتماع';
+
+  @override
+  String get meetingTitle => 'عنوان الاجتماع';
+
+  @override
+  String get agenda => 'الوصف وجدول الأعمال';
+
+  @override
+  String get meetingType => 'نوع الاجتماع';
+
+  @override
+  String get onlineVideoMeeting => 'اجتماع فيديو عبر الإنترنت';
+
+  @override
+  String get meetingStatus => 'حالة الاجتماع';
+
+  @override
+  String get companyClient => 'الشركة / العميل';
+
+  @override
+  String get stepParticipants => '3 - المشاركون ووصول الضيوف';
+
+  @override
+  String get stepParticipantsBody => 'أضف أعضاء الفريق أو ادعُ بريدًا خارجيًا';
+
+  @override
+  String get searchEmployeesHint => 'ابحث عن الموظفين بالاسم أو اكتب بريدًا...';
+
+  @override
+  String get addExternal => 'إضافة خارجي';
+
+  @override
+  String get collaborationFeatures => 'ميزات التعاون أثناء الاجتماع';
+
+  @override
+  String get encryptedRoom => 'غرفة فيديو مشفّرة بالكامل جاهزة';
+
+  @override
+  String get joinByCodeTitle => 'انضمام بالرمز';
+
+  @override
+  String get meetingCode => 'رمز الاجتماع';
+
+  @override
+  String get roomPassword => 'كلمة مرور الغرفة (اختياري)';
+
+  @override
+  String get joinMeeting => 'انضمام للاجتماع';
+
+  @override
+  String get meetingNotFound => 'لا يوجد اجتماع بهذا الرمز.';
+
+  @override
+  String get minimize => 'تصغير';
+
+  @override
+  String peopleCount(int count) {
+    return '$count أشخاص';
+  }
+
+  @override
+  String get polls => 'الاستطلاعات';
+
+  @override
+  String get notes => 'الملاحظات';
+
+  @override
+  String get mute => 'كتم';
+
+  @override
+  String get unmute => 'إلغاء الكتم';
+
+  @override
+  String get camera => 'الكاميرا';
+
+  @override
+  String get raiseHand => 'رفع اليد';
+
+  @override
+  String get reactions => 'التفاعلات';
+
+  @override
+  String get moreOptions => 'خيارات أخرى';
+
+  @override
+  String get leave => 'مغادرة';
+
+  @override
+  String get micMuted => 'الميكروفون مكتوم';
+
+  @override
+  String get mediaPending => 'يتصل الصوت والفيديو عند توفر خدمة الاجتماعات.';
+
+  @override
+  String meetingStartedAt(String time) {
+    return 'بدأ الاجتماع في $time';
+  }
+
+  @override
+  String get messageParticipantsHint => 'اكتب رسالة للمشاركين...';
+
+  @override
+  String get livePoll => 'استطلاع مباشر';
+
+  @override
+  String votesCount(int count) {
+    return '$count أصوات';
+  }
+
+  @override
+  String get tapToVote => 'اضغط على خيار للتصويت';
+
+  @override
+  String votedAs(String name) {
+    return 'صوّت باسم: $name';
+  }
+
+  @override
+  String get noteTitleHint => 'عنوان الملاحظة...';
+
+  @override
+  String get noteBodyHint => 'اكتب ملاحظات الاجتماع هنا...';
+
+  @override
+  String get saveNote => 'حفظ الملاحظة';
+
+  @override
+  String get muteAll => 'كتم الجميع';
+
+  @override
+  String get participant => 'مشارك';
+
+  @override
+  String get encryptedMeeting => 'اجتماع مشفّر بالكامل';
 }

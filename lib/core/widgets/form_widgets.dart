@@ -15,6 +15,7 @@ class FormPage extends StatelessWidget {
     required this.fields,
     required this.onSave,
     this.saving = false,
+    this.saveLabel,
     super.key,
   });
 
@@ -23,6 +24,7 @@ class FormPage extends StatelessWidget {
   final List<Widget> fields;
   final VoidCallback onSave;
   final bool saving;
+  final String? saveLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +86,7 @@ class FormPage extends StatelessWidget {
                     ),
                     textStyle: AppTextStyles.mobileBaseSemiBold,
                   ),
-                  child: Text(l10n.save),
+                  child: Text(saveLabel ?? l10n.save),
                 ),
               ),
               const SizedBox(height: 8),
