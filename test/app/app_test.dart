@@ -363,6 +363,9 @@ void main() {
       expect(find.text('Companies'), findsOneWidget);
       await tester.tap(find.text('More'));
       await tester.pumpAndSettle();
+      expect(find.text('Categories'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('account-menu')).last);
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('logout')));
       await tester.pumpAndSettle();
       expect(find.text('Account Type'), findsOneWidget);

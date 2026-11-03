@@ -172,5 +172,112 @@
         "type": "int"
       }
     }
+  },
+  "viewDetails": "View Details",
+  "edit": "Edit",
+  "delete": "Delete",
+  "create": "Create",
+  "cancel": "Cancel",
+  "deleteTitle": "Delete record?",
+  "deleteBody": "{what} will be removed from this device.",
+  "backendPending": "This section is ready for the new WorkFlow API. Its data will appear here once the backend team publishes the endpoints.",
+  "selectHint": "select",
+  "validationNumber": "Enter a valid number",
+  "savedLocally": "Saved on this device (demo) — not sent to the server yet.",
+  "deletedLocally": "Removed on this device (demo).",
+  "exportReport": "Export Report",
+  "exportPending": "Export will be available when the backend supports it.",
+  "noRecords": "No records match these filters",
+  "vsLastMonth": "vs last month",
+  "invoicesTitle": "Invoices Management",
+  "invoicesDescription": "Track, manage, and process client billing across all registered companies.",
+  "searchInvoicesHint": "Search invoices, company, or client...",
+  "metricTotalInvoices": "Total Invoices",
+  "metricPaid": "Paid",
+  "metricOverdue": "Overdue",
+  "filterAllStatus": "All Status",
+  "filterAllCompanies": "All Companies",
+  "filterAllMethods": "All Methods",
+  "rangeLast30": "Last 30 days",
+  "rangeLast90": "Last 90 days",
+  "rangeThisYear": "This year",
+  "rangeAll": "All time",
+  "statusPaid": "Paid",
+  "statusOverdue": "Overdue",
+  "statusDraft": "Draft",
+  "statusPending": "Pending",
+  "statusCompleted": "Completed",
+  "statusInProgress": "In Progress",
+  "fieldClient": "Client",
+  "fieldProject": "Project",
+  "fieldIssueDate": "Issue date",
+  "fieldCompany": "Company",
+  "fieldCurrency": "Currency",
+  "fieldAmount": "Amount",
+  "fieldInvoiceDate": "Invoice Date",
+  "fieldDueDate": "Due Date",
+  "fieldStatus": "Status",
+  "fieldMethod": "Method",
+  "fieldWallet": "Wallet",
+  "fieldInvoice": "Invoice",
+  "fieldEmployee": "Employee",
+  "fieldPaymentMethod": "Payment Method",
+  "fieldPaymentDate": "Payment Date",
+  "fieldNotes": "Notes",
+  "createInvoice": "Create Invoice",
+  "editInvoice": "Edit Invoice",
+  "addPayment": "Add Payment",
+  "editPayment": "Edit Payment",
+  "paymentsTitle": "Payment Records",
+  "paymentsDescription": "Track, manage, and audit all incoming and outgoing transactions.",
+  "searchPaymentsHint": "Search by invoice, company, or method...",
+  "metricTotalRevenue": "TOTAL REVENUE",
+  "metricPendingPayments": "PENDING PAYMENTS",
+  "metricTransactionVolume": "TRANSACTION VOLUME",
+  "invoicesAwaiting": "{count} invoices awaiting clearance",
+  "directionIncoming": "Incoming",
+  "directionOutgoing": "Outgoing",
+  "companiesTitle": "Available Companies",
+  "companiesDescription": "Explore workspaces and request access",
+  "joinRequest": "Join Request",
+  "joinPending": "Pending",
+  "joinRequestSent": "Join request sent to {name} (demo).",
+  "categoriesTitle": "Categories",
+  "categoriesDescription": "Explore all workspace modules and central departments",
+  "catOverview": "Overview",
+  "catOverviewBody": "Key metrics, executive dashboards & reports",
+  "catDashboard": "Dashboard",
+  "catClients": "Clients & Subscriptions",
+  "catClientsBody": "Enterprise accounts, agreements and requests",
+  "catFinance": "Finance",
+  "catFinanceBody": "Account management, expenses & payments",
+  "catPayments": "Payments",
+  "catWork": "Work & Projects",
+  "catWorkBody": "Tasks, agile sprints and engineering tools",
+  "catCommunication": "Communication",
+  "catCommunicationBody": "Direct chat threads & virtual team meetings",
+  "catConversations": "Conversations",
+  "catMeetings": "Meetings",
+  "accountMenu": "Account",
+  "@deleteBody": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "@invoicesAwaiting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@joinRequestSent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

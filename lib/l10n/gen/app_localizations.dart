@@ -739,6 +739,522 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No results match your search'**
   String get noResults;
+
+  /// No description provided for @viewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View Details'**
+  String get viewDetails;
+
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @create.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get create;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @deleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete record?'**
+  String get deleteTitle;
+
+  /// No description provided for @deleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{what} will be removed from this device.'**
+  String deleteBody(String what);
+
+  /// No description provided for @backendPending.
+  ///
+  /// In en, this message translates to:
+  /// **'This section is ready for the new WorkFlow API. Its data will appear here once the backend team publishes the endpoints.'**
+  String get backendPending;
+
+  /// No description provided for @selectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'select'**
+  String get selectHint;
+
+  /// No description provided for @validationNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid number'**
+  String get validationNumber;
+
+  /// No description provided for @savedLocally.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device (demo) — not sent to the server yet.'**
+  String get savedLocally;
+
+  /// No description provided for @deletedLocally.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed on this device (demo).'**
+  String get deletedLocally;
+
+  /// No description provided for @exportReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Report'**
+  String get exportReport;
+
+  /// No description provided for @exportPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Export will be available when the backend supports it.'**
+  String get exportPending;
+
+  /// No description provided for @noRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'No records match these filters'**
+  String get noRecords;
+
+  /// No description provided for @vsLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'vs last month'**
+  String get vsLastMonth;
+
+  /// No description provided for @invoicesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices Management'**
+  String get invoicesTitle;
+
+  /// No description provided for @invoicesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Track, manage, and process client billing across all registered companies.'**
+  String get invoicesDescription;
+
+  /// No description provided for @searchInvoicesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search invoices, company, or client...'**
+  String get searchInvoicesHint;
+
+  /// No description provided for @metricTotalInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Invoices'**
+  String get metricTotalInvoices;
+
+  /// No description provided for @metricPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get metricPaid;
+
+  /// No description provided for @metricOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get metricOverdue;
+
+  /// No description provided for @filterAllStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'All Status'**
+  String get filterAllStatus;
+
+  /// No description provided for @filterAllCompanies.
+  ///
+  /// In en, this message translates to:
+  /// **'All Companies'**
+  String get filterAllCompanies;
+
+  /// No description provided for @filterAllMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'All Methods'**
+  String get filterAllMethods;
+
+  /// No description provided for @rangeLast30.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 30 days'**
+  String get rangeLast30;
+
+  /// No description provided for @rangeLast90.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 90 days'**
+  String get rangeLast90;
+
+  /// No description provided for @rangeThisYear.
+  ///
+  /// In en, this message translates to:
+  /// **'This year'**
+  String get rangeThisYear;
+
+  /// No description provided for @rangeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get rangeAll;
+
+  /// No description provided for @statusPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get statusPaid;
+
+  /// No description provided for @statusOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get statusOverdue;
+
+  /// No description provided for @statusDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get statusDraft;
+
+  /// No description provided for @statusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get statusPending;
+
+  /// No description provided for @statusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get statusCompleted;
+
+  /// No description provided for @statusInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In Progress'**
+  String get statusInProgress;
+
+  /// No description provided for @fieldClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Client'**
+  String get fieldClient;
+
+  /// No description provided for @fieldProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get fieldProject;
+
+  /// No description provided for @fieldIssueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Issue date'**
+  String get fieldIssueDate;
+
+  /// No description provided for @fieldCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Company'**
+  String get fieldCompany;
+
+  /// No description provided for @fieldCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get fieldCurrency;
+
+  /// No description provided for @fieldAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get fieldAmount;
+
+  /// No description provided for @fieldInvoiceDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice Date'**
+  String get fieldInvoiceDate;
+
+  /// No description provided for @fieldDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Due Date'**
+  String get fieldDueDate;
+
+  /// No description provided for @fieldStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get fieldStatus;
+
+  /// No description provided for @fieldMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Method'**
+  String get fieldMethod;
+
+  /// No description provided for @fieldWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get fieldWallet;
+
+  /// No description provided for @fieldInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice'**
+  String get fieldInvoice;
+
+  /// No description provided for @fieldEmployee.
+  ///
+  /// In en, this message translates to:
+  /// **'Employee'**
+  String get fieldEmployee;
+
+  /// No description provided for @fieldPaymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Method'**
+  String get fieldPaymentMethod;
+
+  /// No description provided for @fieldPaymentDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Date'**
+  String get fieldPaymentDate;
+
+  /// No description provided for @fieldNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get fieldNotes;
+
+  /// No description provided for @createInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Invoice'**
+  String get createInvoice;
+
+  /// No description provided for @editInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Invoice'**
+  String get editInvoice;
+
+  /// No description provided for @addPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Payment'**
+  String get addPayment;
+
+  /// No description provided for @editPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Payment'**
+  String get editPayment;
+
+  /// No description provided for @paymentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Records'**
+  String get paymentsTitle;
+
+  /// No description provided for @paymentsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Track, manage, and audit all incoming and outgoing transactions.'**
+  String get paymentsDescription;
+
+  /// No description provided for @searchPaymentsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by invoice, company, or method...'**
+  String get searchPaymentsHint;
+
+  /// No description provided for @metricTotalRevenue.
+  ///
+  /// In en, this message translates to:
+  /// **'TOTAL REVENUE'**
+  String get metricTotalRevenue;
+
+  /// No description provided for @metricPendingPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'PENDING PAYMENTS'**
+  String get metricPendingPayments;
+
+  /// No description provided for @metricTransactionVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'TRANSACTION VOLUME'**
+  String get metricTransactionVolume;
+
+  /// No description provided for @invoicesAwaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} invoices awaiting clearance'**
+  String invoicesAwaiting(int count);
+
+  /// No description provided for @directionIncoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming'**
+  String get directionIncoming;
+
+  /// No description provided for @directionOutgoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Outgoing'**
+  String get directionOutgoing;
+
+  /// No description provided for @companiesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Companies'**
+  String get companiesTitle;
+
+  /// No description provided for @companiesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore workspaces and request access'**
+  String get companiesDescription;
+
+  /// No description provided for @joinRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Join Request'**
+  String get joinRequest;
+
+  /// No description provided for @joinPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get joinPending;
+
+  /// No description provided for @joinRequestSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Join request sent to {name} (demo).'**
+  String joinRequestSent(String name);
+
+  /// No description provided for @categoriesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categoriesTitle;
+
+  /// No description provided for @categoriesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore all workspace modules and central departments'**
+  String get categoriesDescription;
+
+  /// No description provided for @catOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get catOverview;
+
+  /// No description provided for @catOverviewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Key metrics, executive dashboards & reports'**
+  String get catOverviewBody;
+
+  /// No description provided for @catDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get catDashboard;
+
+  /// No description provided for @catClients.
+  ///
+  /// In en, this message translates to:
+  /// **'Clients & Subscriptions'**
+  String get catClients;
+
+  /// No description provided for @catClientsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enterprise accounts, agreements and requests'**
+  String get catClientsBody;
+
+  /// No description provided for @catFinance.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance'**
+  String get catFinance;
+
+  /// No description provided for @catFinanceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Account management, expenses & payments'**
+  String get catFinanceBody;
+
+  /// No description provided for @catPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get catPayments;
+
+  /// No description provided for @catWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Work & Projects'**
+  String get catWork;
+
+  /// No description provided for @catWorkBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks, agile sprints and engineering tools'**
+  String get catWorkBody;
+
+  /// No description provided for @catCommunication.
+  ///
+  /// In en, this message translates to:
+  /// **'Communication'**
+  String get catCommunication;
+
+  /// No description provided for @catCommunicationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct chat threads & virtual team meetings'**
+  String get catCommunicationBody;
+
+  /// No description provided for @catConversations.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversations'**
+  String get catConversations;
+
+  /// No description provided for @catMeetings.
+  ///
+  /// In en, this message translates to:
+  /// **'Meetings'**
+  String get catMeetings;
+
+  /// No description provided for @accountMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get accountMenu;
 }
 
 class _AppLocalizationsDelegate

@@ -13,6 +13,7 @@ import 'package:workflow_app/features/notifications/application/notifications_co
 import 'package:workflow_app/features/notifications/data/notifications_repository.dart';
 import 'package:workflow_app/features/notifications/domain/app_notification.dart';
 import 'package:workflow_app/features/profile/data/profile_repository.dart';
+import 'package:workflow_app/features/shell/workspace_header.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 /// Notification pills in the Overview card. The API exposes a `category`
@@ -108,7 +109,6 @@ class _Masthead extends ConsumerWidget {
     const white = AppColors.white;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final date = DateFormat('EEEE, MMMM d', locale).format(DateTime.now());
-    final role = portal == Portal.client ? l10n.roleClient : l10n.roleEmployee;
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(
@@ -128,34 +128,8 @@ class _Masthead extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    WfAvatar(initials: profile?.initials ?? ''),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.appTitle,
-                            style: AppTextStyles.mobileXlSemiBold.copyWith(
-                              color: white,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            [?profile?.email, role].join(' · '),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.mobileXsRegular.copyWith(
-                              color: white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _BellButton(portal: portal),
-                  ],
+                WorkspaceHeader(
+                  onBellTap: () => _showNotificationOptions(context, ref),
                 ),
                 const SizedBox(height: 20),
                 Text(
@@ -177,43 +151,6 @@ class _Masthead extends ConsumerWidget {
                 const SizedBox(height: 20),
                 const _SearchField(),
               ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BellButton extends ConsumerWidget {
-  const new({required this.portal});
-
-  final Portal portal;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final unread = ref
-        .watch(notificationsControllerProvider)
-        .value
-        ?.unreadCount;
-    return Semantics(
-      button: true,
-      label: AppLocalizations.of(context).notificationsTitle,
-      child: Material(
-        color: AppColors.white,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: () => _showNotificationOptions(context, ref),
-          child: SizedBox.square(
-            dimension: 40,
-            child: Badge(
-              isLabelVisible: (unread ?? 0) > 0,
-              smallSize: 8,
-              backgroundColor: AppColors.primary,
-              child: const Center(
-                child: SvgIcon(AppIcon.notification, size: 22),
-              ),
             ),
           ),
         ),

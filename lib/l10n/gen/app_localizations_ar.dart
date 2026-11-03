@@ -376,4 +376,274 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noResults => 'لا توجد نتائج مطابقة لبحثك';
+
+  @override
+  String get viewDetails => 'عرض التفاصيل';
+
+  @override
+  String get edit => 'تعديل';
+
+  @override
+  String get delete => 'حذف';
+
+  @override
+  String get create => 'إنشاء';
+
+  @override
+  String get cancel => 'إلغاء';
+
+  @override
+  String get deleteTitle => 'حذف السجل؟';
+
+  @override
+  String deleteBody(String what) {
+    return 'سيتم حذف $what من هذا الجهاز.';
+  }
+
+  @override
+  String get backendPending =>
+      'هذا القسم جاهز لواجهة WorkFlow البرمجية الجديدة. ستظهر البيانات هنا بعد أن ينشر فريق الخادم نقاط الاتصال.';
+
+  @override
+  String get selectHint => 'اختر';
+
+  @override
+  String get validationNumber => 'أدخل رقمًا صحيحًا';
+
+  @override
+  String get savedLocally =>
+      'تم الحفظ على هذا الجهاز (تجريبي) — لم يُرسل إلى الخادم بعد.';
+
+  @override
+  String get deletedLocally => 'تم الحذف من هذا الجهاز (تجريبي).';
+
+  @override
+  String get exportReport => 'تصدير التقرير';
+
+  @override
+  String get exportPending => 'سيتوفر التصدير عندما يدعمه الخادم.';
+
+  @override
+  String get noRecords => 'لا توجد سجلات مطابقة لهذه الفلاتر';
+
+  @override
+  String get vsLastMonth => 'مقارنة بالشهر الماضي';
+
+  @override
+  String get invoicesTitle => 'إدارة الفواتير';
+
+  @override
+  String get invoicesDescription =>
+      'تتبّع فواتير العملاء وأدرها وعالجها لجميع الشركات المسجلة.';
+
+  @override
+  String get searchInvoicesHint => 'ابحث في الفواتير أو الشركة أو العميل...';
+
+  @override
+  String get metricTotalInvoices => 'إجمالي الفواتير';
+
+  @override
+  String get metricPaid => 'مدفوعة';
+
+  @override
+  String get metricOverdue => 'متأخرة';
+
+  @override
+  String get filterAllStatus => 'كل الحالات';
+
+  @override
+  String get filterAllCompanies => 'كل الشركات';
+
+  @override
+  String get filterAllMethods => 'كل الطرق';
+
+  @override
+  String get rangeLast30 => 'آخر 30 يومًا';
+
+  @override
+  String get rangeLast90 => 'آخر 90 يومًا';
+
+  @override
+  String get rangeThisYear => 'هذا العام';
+
+  @override
+  String get rangeAll => 'كل الأوقات';
+
+  @override
+  String get statusPaid => 'مدفوعة';
+
+  @override
+  String get statusOverdue => 'متأخرة';
+
+  @override
+  String get statusDraft => 'مسودة';
+
+  @override
+  String get statusPending => 'قيد الانتظار';
+
+  @override
+  String get statusCompleted => 'مكتمل';
+
+  @override
+  String get statusInProgress => 'قيد التنفيذ';
+
+  @override
+  String get fieldClient => 'العميل';
+
+  @override
+  String get fieldProject => 'المشروع';
+
+  @override
+  String get fieldIssueDate => 'تاريخ الإصدار';
+
+  @override
+  String get fieldCompany => 'الشركة';
+
+  @override
+  String get fieldCurrency => 'العملة';
+
+  @override
+  String get fieldAmount => 'المبلغ';
+
+  @override
+  String get fieldInvoiceDate => 'تاريخ الفاتورة';
+
+  @override
+  String get fieldDueDate => 'تاريخ الاستحقاق';
+
+  @override
+  String get fieldStatus => 'الحالة';
+
+  @override
+  String get fieldMethod => 'الطريقة';
+
+  @override
+  String get fieldWallet => 'المحفظة';
+
+  @override
+  String get fieldInvoice => 'الفاتورة';
+
+  @override
+  String get fieldEmployee => 'الموظف';
+
+  @override
+  String get fieldPaymentMethod => 'طريقة الدفع';
+
+  @override
+  String get fieldPaymentDate => 'تاريخ الدفع';
+
+  @override
+  String get fieldNotes => 'ملاحظات';
+
+  @override
+  String get createInvoice => 'إنشاء فاتورة';
+
+  @override
+  String get editInvoice => 'تعديل الفاتورة';
+
+  @override
+  String get addPayment => 'إضافة دفعة';
+
+  @override
+  String get editPayment => 'تعديل الدفعة';
+
+  @override
+  String get paymentsTitle => 'سجلات الدفع';
+
+  @override
+  String get paymentsDescription =>
+      'تتبّع جميع المعاملات الواردة والصادرة وأدرها ودقّقها.';
+
+  @override
+  String get searchPaymentsHint => 'ابحث بالفاتورة أو الشركة أو الطريقة...';
+
+  @override
+  String get metricTotalRevenue => 'إجمالي الإيرادات';
+
+  @override
+  String get metricPendingPayments => 'مدفوعات معلقة';
+
+  @override
+  String get metricTransactionVolume => 'حجم المعاملات';
+
+  @override
+  String invoicesAwaiting(int count) {
+    return '$count فواتير بانتظار التسوية';
+  }
+
+  @override
+  String get directionIncoming => 'واردة';
+
+  @override
+  String get directionOutgoing => 'صادرة';
+
+  @override
+  String get companiesTitle => 'الشركات المتاحة';
+
+  @override
+  String get companiesDescription => 'استكشف مساحات العمل واطلب الانضمام';
+
+  @override
+  String get joinRequest => 'طلب انضمام';
+
+  @override
+  String get joinPending => 'قيد الانتظار';
+
+  @override
+  String joinRequestSent(String name) {
+    return 'تم إرسال طلب الانضمام إلى $name (تجريبي).';
+  }
+
+  @override
+  String get categoriesTitle => 'الأقسام';
+
+  @override
+  String get categoriesDescription =>
+      'استكشف جميع وحدات مساحة العمل والأقسام الرئيسية';
+
+  @override
+  String get catOverview => 'نظرة عامة';
+
+  @override
+  String get catOverviewBody => 'المؤشرات الرئيسية ولوحات المتابعة والتقارير';
+
+  @override
+  String get catDashboard => 'لوحة المتابعة';
+
+  @override
+  String get catClients => 'العملاء والاشتراكات';
+
+  @override
+  String get catClientsBody => 'حسابات المؤسسات والاتفاقيات والطلبات';
+
+  @override
+  String get catFinance => 'المالية';
+
+  @override
+  String get catFinanceBody => 'إدارة الحسابات والمصروفات والمدفوعات';
+
+  @override
+  String get catPayments => 'المدفوعات';
+
+  @override
+  String get catWork => 'العمل والمشاريع';
+
+  @override
+  String get catWorkBody => 'المهام والدورات الرشيقة وأدوات الهندسة';
+
+  @override
+  String get catCommunication => 'التواصل';
+
+  @override
+  String get catCommunicationBody =>
+      'المحادثات المباشرة واجتماعات الفريق الافتراضية';
+
+  @override
+  String get catConversations => 'المحادثات';
+
+  @override
+  String get catMeetings => 'الاجتماعات';
+
+  @override
+  String get accountMenu => 'الحساب';
 }

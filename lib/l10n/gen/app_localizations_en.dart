@@ -373,4 +373,275 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noResults => 'No results match your search';
+
+  @override
+  String get viewDetails => 'View Details';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get deleteTitle => 'Delete record?';
+
+  @override
+  String deleteBody(String what) {
+    return '$what will be removed from this device.';
+  }
+
+  @override
+  String get backendPending =>
+      'This section is ready for the new WorkFlow API. Its data will appear here once the backend team publishes the endpoints.';
+
+  @override
+  String get selectHint => 'select';
+
+  @override
+  String get validationNumber => 'Enter a valid number';
+
+  @override
+  String get savedLocally =>
+      'Saved on this device (demo) — not sent to the server yet.';
+
+  @override
+  String get deletedLocally => 'Removed on this device (demo).';
+
+  @override
+  String get exportReport => 'Export Report';
+
+  @override
+  String get exportPending =>
+      'Export will be available when the backend supports it.';
+
+  @override
+  String get noRecords => 'No records match these filters';
+
+  @override
+  String get vsLastMonth => 'vs last month';
+
+  @override
+  String get invoicesTitle => 'Invoices Management';
+
+  @override
+  String get invoicesDescription =>
+      'Track, manage, and process client billing across all registered companies.';
+
+  @override
+  String get searchInvoicesHint => 'Search invoices, company, or client...';
+
+  @override
+  String get metricTotalInvoices => 'Total Invoices';
+
+  @override
+  String get metricPaid => 'Paid';
+
+  @override
+  String get metricOverdue => 'Overdue';
+
+  @override
+  String get filterAllStatus => 'All Status';
+
+  @override
+  String get filterAllCompanies => 'All Companies';
+
+  @override
+  String get filterAllMethods => 'All Methods';
+
+  @override
+  String get rangeLast30 => 'Last 30 days';
+
+  @override
+  String get rangeLast90 => 'Last 90 days';
+
+  @override
+  String get rangeThisYear => 'This year';
+
+  @override
+  String get rangeAll => 'All time';
+
+  @override
+  String get statusPaid => 'Paid';
+
+  @override
+  String get statusOverdue => 'Overdue';
+
+  @override
+  String get statusDraft => 'Draft';
+
+  @override
+  String get statusPending => 'Pending';
+
+  @override
+  String get statusCompleted => 'Completed';
+
+  @override
+  String get statusInProgress => 'In Progress';
+
+  @override
+  String get fieldClient => 'Client';
+
+  @override
+  String get fieldProject => 'Project';
+
+  @override
+  String get fieldIssueDate => 'Issue date';
+
+  @override
+  String get fieldCompany => 'Company';
+
+  @override
+  String get fieldCurrency => 'Currency';
+
+  @override
+  String get fieldAmount => 'Amount';
+
+  @override
+  String get fieldInvoiceDate => 'Invoice Date';
+
+  @override
+  String get fieldDueDate => 'Due Date';
+
+  @override
+  String get fieldStatus => 'Status';
+
+  @override
+  String get fieldMethod => 'Method';
+
+  @override
+  String get fieldWallet => 'Wallet';
+
+  @override
+  String get fieldInvoice => 'Invoice';
+
+  @override
+  String get fieldEmployee => 'Employee';
+
+  @override
+  String get fieldPaymentMethod => 'Payment Method';
+
+  @override
+  String get fieldPaymentDate => 'Payment Date';
+
+  @override
+  String get fieldNotes => 'Notes';
+
+  @override
+  String get createInvoice => 'Create Invoice';
+
+  @override
+  String get editInvoice => 'Edit Invoice';
+
+  @override
+  String get addPayment => 'Add Payment';
+
+  @override
+  String get editPayment => 'Edit Payment';
+
+  @override
+  String get paymentsTitle => 'Payment Records';
+
+  @override
+  String get paymentsDescription =>
+      'Track, manage, and audit all incoming and outgoing transactions.';
+
+  @override
+  String get searchPaymentsHint => 'Search by invoice, company, or method...';
+
+  @override
+  String get metricTotalRevenue => 'TOTAL REVENUE';
+
+  @override
+  String get metricPendingPayments => 'PENDING PAYMENTS';
+
+  @override
+  String get metricTransactionVolume => 'TRANSACTION VOLUME';
+
+  @override
+  String invoicesAwaiting(int count) {
+    return '$count invoices awaiting clearance';
+  }
+
+  @override
+  String get directionIncoming => 'Incoming';
+
+  @override
+  String get directionOutgoing => 'Outgoing';
+
+  @override
+  String get companiesTitle => 'Available Companies';
+
+  @override
+  String get companiesDescription => 'Explore workspaces and request access';
+
+  @override
+  String get joinRequest => 'Join Request';
+
+  @override
+  String get joinPending => 'Pending';
+
+  @override
+  String joinRequestSent(String name) {
+    return 'Join request sent to $name (demo).';
+  }
+
+  @override
+  String get categoriesTitle => 'Categories';
+
+  @override
+  String get categoriesDescription =>
+      'Explore all workspace modules and central departments';
+
+  @override
+  String get catOverview => 'Overview';
+
+  @override
+  String get catOverviewBody => 'Key metrics, executive dashboards & reports';
+
+  @override
+  String get catDashboard => 'Dashboard';
+
+  @override
+  String get catClients => 'Clients & Subscriptions';
+
+  @override
+  String get catClientsBody => 'Enterprise accounts, agreements and requests';
+
+  @override
+  String get catFinance => 'Finance';
+
+  @override
+  String get catFinanceBody => 'Account management, expenses & payments';
+
+  @override
+  String get catPayments => 'Payments';
+
+  @override
+  String get catWork => 'Work & Projects';
+
+  @override
+  String get catWorkBody => 'Tasks, agile sprints and engineering tools';
+
+  @override
+  String get catCommunication => 'Communication';
+
+  @override
+  String get catCommunicationBody =>
+      'Direct chat threads & virtual team meetings';
+
+  @override
+  String get catConversations => 'Conversations';
+
+  @override
+  String get catMeetings => 'Meetings';
+
+  @override
+  String get accountMenu => 'Account';
 }
