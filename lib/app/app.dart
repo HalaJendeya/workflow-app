@@ -19,7 +19,6 @@ class WorkFlowApp extends ConsumerWidget {
       debugShowCheckedModeBanner: !isMock,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [

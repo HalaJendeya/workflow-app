@@ -1,28 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:workflow_app/core/design_system/tokens.dart';
+import 'package:workflow_app/core/design_system/typography.dart';
 
-/// Single entry point for theming. Screens read colors, type and spacing from
-/// `Theme.of(context)` and [AppSpacing] only — never hardcoded values — so the
-/// WorkFlow brand tokens can be dropped in here once they are extracted from
-/// the Figma file (currently inaccessible; see the backend/design gap report).
-///
-/// Until then this is deliberately the neutral Material 3 baseline, not an
-/// invented brand.
+export 'tokens.dart';
+export 'typography.dart';
+
+/// Light theme built from the Figma tokens. The Figma file defines a dark
+/// mode only for desktop auth frames, so the app ships light-only for now.
 abstract final class AppTheme {
-  static ThemeData light() => _build(Brightness.light);
-  static ThemeData dark() => _build(Brightness.dark);
-
-  static ThemeData _build(Brightness brightness) => ThemeData(
-    useMaterial3: true,
-    brightness: brightness,
-    visualDensity: VisualDensity.standard,
-  );
-}
-
-/// Spacing scale placeholder (4-pt grid) pending Figma tokens.
-abstract final class AppSpacing {
-  static const double xs = 4;
-  static const double sm = 8;
-  static const double md = 16;
-  static const double lg = 24;
-  static const double xl = 32;
+  static ThemeData light() {
+    final scheme = ColorScheme.fromSeed(
+      seedColor: AppColors.primary,
+      primary: AppColors.primary,
+      onPrimary: AppColors.white,
+      surface: AppColors.white,
+      onSurface: AppColors.textPrimary,
+      outline: AppColors.borderDefault,
+      outlineVariant: AppColors.borderSubtle,
+    );
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: scheme,
+      fontFamily: AppTextStyles.family,
+      scaffoldBackgroundColor: AppColors.appBackground,
+      splashFactory: InkRipple.splashFactory,
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: AppColors.primary,
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.white,
+        showDragHandle: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadii.navSurface),
+          ),
+        ),
+      ),
+    );
+  }
 }

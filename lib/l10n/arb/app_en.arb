@@ -15,8 +15,162 @@
   "errorValidation": "Please check the highlighted fields.",
   "errorRateLimited": "Too many attempts. Try again in {seconds} seconds.",
   "@errorRateLimited": {
-    "placeholders": { "seconds": { "type": "int" } }
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
   },
   "errorServer": "Something went wrong on our side. Please try again.",
-  "errorUnknown": "Something went wrong. Please try again."
+  "errorUnknown": "Something went wrong. Please try again.",
+  "accountTypeTitle": "Account Type",
+  "accountTypeClientTitle": "client",
+  "accountTypeClientBody": "I am looking for companies to execute my projects",
+  "accountTypeEmployeeTitle": "Employee",
+  "accountTypeEmployeeBody": "I manage project and deal with clients",
+  "next": "Next",
+  "noAccountPrompt": "Don’t Have an Account?",
+  "createClientAccount": "Create Client Account",
+  "loginWelcome": "Welcome ",
+  "loginWelcomeAccent": "back!",
+  "loginTitle": "Login",
+  "emailLabel": "Email",
+  "emailHint": "example123@gmail.com",
+  "passwordLabel": "Password",
+  "passwordHint": "Enter your password",
+  "rememberMe": "Remember me",
+  "forgotPasswordLink": "Forget password ?",
+  "loginButton": "Login",
+  "signUpPrompt": "Already not have an account?",
+  "signUp": "Sign Up",
+  "registerTitleLead": "Create an ",
+  "registerTitleAccent": "account",
+  "registerSubtitle": "Sign in",
+  "userNameLabel": "User name",
+  "userNameHint": "mahmoud ali",
+  "agreeTermsLead": "I agree to the ",
+  "agreeTermsTerms": "Terms",
+  "agreeTermsAnd": " and ",
+  "agreeTermsConditions": "Conditions",
+  "signInButton": "Sign in",
+  "haveAccountPrompt": "Already have an account?",
+  "loginLink": "login",
+  "forgotTitle": "Forgot Password?",
+  "forgotBody": "Enter your registered email and we’ll send you a code to reset your password.",
+  "sendCode": "Send Code",
+  "backToLogin": "Back to Log In",
+  "verifyTitle": "Verification Code",
+  "verifyBody": "We’ve sent a {length}-digit code to ({email})",
+  "@verifyBody": {
+    "placeholders": {
+      "length": {
+        "type": "int"
+      },
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "verifyButton": "Verify",
+  "noCodePrompt": "Didn’t receive the code?",
+  "resend": "Resend",
+  "codeResent": "A new code has been sent.",
+  "newPasswordTitle": "Create New Password",
+  "newPasswordBody": "Your new password must be different from previous used passwords.",
+  "newPasswordLabel": "New Password",
+  "confirmPasswordLabel": "Confirm Password",
+  "save": "Save",
+  "successAccountTitle": "Account created successfully!",
+  "successAccountBody": "You can now log in with your new password.",
+  "successPasswordTitle": "Password updated successfully!",
+  "validationRequired": "This field is required",
+  "validationEmail": "Enter a valid email address",
+  "validationPasswordMin": "Use at least {min} characters",
+  "@validationPasswordMin": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "validationPasswordMatch": "Passwords don’t match",
+  "validationOtp": "Enter the full code",
+  "validationTerms": "Please accept the Terms and Conditions",
+  "navHome": "Home",
+  "navCompanies": "Companies",
+  "navInvoices": "Invoices",
+  "navChat": "Chat",
+  "navMore": "More",
+  "overviewBreadcrumb": "Overview",
+  "welcomeBackName": "Welcome back, {name}",
+  "@welcomeBackName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "welcomeBack": "Welcome back",
+  "searchHint": "Searching....",
+  "tasksTitle": "Tasks",
+  "tasksFilterProjects": "Projects {count}",
+  "@tasksFilterProjects": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tasksFilterMeetings": "Meetings",
+  "tasksFilterGeneral": "General",
+  "addMicroTask": "Add a personal micro-task",
+  "notificationsTitle": "Notifications",
+  "notificationsFilterAll": "All {count}",
+  "@notificationsFilterAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationsFilterMentions": "Mentions",
+  "notificationsFilterProjects": "Projects",
+  "markAllRead": "Mark all as read",
+  "notificationStatusTitle": "Show",
+  "filterAll": "All",
+  "filterUnread": "Unread",
+  "filterRead": "Read",
+  "featureUnavailable": "This section isn’t available yet — the WorkFlow API doesn’t provide it.",
+  "roleClient": "Client",
+  "roleEmployee": "Employee",
+  "logout": "Log out",
+  "navTasks": "Tasks",
+  "navProjects": "Projects",
+  "timeJustNow": "just now",
+  "timeMinutesAgo": "{count, plural, =1{a minute ago} other{{count} minutes ago}}",
+  "timeHoursAgo": "{count, plural, =1{an hour ago} other{{count} hours ago}}",
+  "timeDaysAgo": "{count, plural, =1{a day ago} other{{count} days ago}}",
+  "notificationsEmpty": "You’re all caught up",
+  "noResults": "No results match your search",
+  "@timeMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@timeHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@timeDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
