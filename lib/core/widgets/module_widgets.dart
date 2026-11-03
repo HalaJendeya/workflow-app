@@ -39,6 +39,7 @@ abstract final class ModuleColors {
   static const pillBorder = Color(0xCCE2E8F0);
   static const activePill = Color(0xFF0166E6);
   static const activePillCount = Color(0xFF559FFE);
+  static const chartYellow = Color(0xFFE8D636);
 }
 
 /// Scrollable page under a solid `action/primary` masthead (Figma

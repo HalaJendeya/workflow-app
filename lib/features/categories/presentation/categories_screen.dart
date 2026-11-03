@@ -282,6 +282,8 @@ class _SectionCard extends StatelessWidget {
         for (var i = 0; i < items.length; i++)
           Semantics(
             button: true,
+            label: items[i].label,
+            excludeSemantics: true,
             child: InkWell(
               key: Key('category-${items[i].label}'),
               onTap: () => items[i].onOpen(context),

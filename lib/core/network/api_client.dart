@@ -47,6 +47,9 @@ class ApiClient {
   Future<Response<Object?>> patch(String path, {Object? body}) =>
       _send(() => _dio.patch<Object?>(path, data: body));
 
+  Future<Response<Object?>> delete(String path, {Object? body}) =>
+      _send(() => _dio.delete<Object?>(path, data: body));
+
   Future<Response<Object?>> _send(
     Future<Response<Object?>> Function() request,
   ) async {

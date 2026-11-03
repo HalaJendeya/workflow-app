@@ -600,5 +600,187 @@
         "type": "int"
       }
     }
-  }
+  },
+  "accountId": "Account ID",
+  "achievedValue": "{count} · {percent}% achieved",
+  "@achievedValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "activeClientProjects": "Active Client Projects & Deliverables",
+  "activeHub": "Active Hub",
+  "activeInSprint": "Active in sprint",
+  "changePassword": "Change Password",
+  "changePasswordBody": "Update your account password to maintain security.",
+  "completedMilestones": "Completed milestones",
+  "confirmDeletion": "I confirm deletion",
+  "confirmNewPassword": "Confirm New Password",
+  "contractBudget": "Contract Budget",
+  "currentPassword": "Current Password",
+  "dangerZone": "Danger Zone",
+  "dashboardBody": "Overview of your projects, invoices, and linked companies.",
+  "deleteAccount": "Delete Account",
+  "deleteAccountBody": "Permanently remove your account and all associated data.",
+  "deleteAccountWarning": "Are you sure you want to delete your account? This action cannot be undone. All your projects, files, and settings will be permanently erased from our servers immediately.",
+  "deletionIrreversible": "I understand that my data cannot be recovered after this point.",
+  "deliverableBreakdown": "Deliverable progress breakdown",
+  "downloadReceipt": "Download receipt",
+  "efficiencyDelta": "{delta} efficiency",
+  "@efficiencyDelta": {
+    "placeholders": {
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "emailAddress": "Email Address",
+  "expenditureTrends": "Expenditure & Invoiced Trends",
+  "expenditureTrendsBody": "Spending cadence & approved invoice delivery",
+  "filterStatus": "Filter Status",
+  "financialSummary": "Financial Summary & Escrow Balance",
+  "firstName": "First Name",
+  "inDevValue": "{count} · {percent}% in dev",
+  "@inDevValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "invoicedSeries": "Invoiced ($)",
+  "issueDate": "Issue Date",
+  "keepProfileUpToDate": "Keep your profile up to date",
+  "keepProfileUpToDateBody": "A complete profile helps us serve you better.",
+  "kpisTracked": "{count} KPIs tracked • Key deliverables & KPIs",
+  "@kpisTracked": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lastName": "Last Name",
+  "latestInvoices": "Latest Invoices & Receipts",
+  "milestoneVelocity": "Deliverables & Milestone Velocity",
+  "milestonesTotal": "{count} Milestones Total",
+  "@milestonesTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "monthlyRevenue": "Monthly Revenue",
+  "newMilestoneRequest": "New Milestone Request",
+  "newPassword": "New Password",
+  "onSchedule": "On Schedule",
+  "overviewMetrics": "Overview & Metrics",
+  "passwordChanged": "Password updated",
+  "passwordRule": "Password must be at least 8 characters long and include a mix of letters, numbers, and symbols.",
+  "passwordsDontMatch": "Passwords don't match",
+  "peakValue": "{label} Peak: {amount}",
+  "@peakValue": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "pendingReview": "Pending Review",
+  "percentItems": "{percent}% ({count} items)",
+  "@percentItems": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "periodDay": "Day",
+  "periodMonth": "Month",
+  "periodWeek": "Week",
+  "periodYear": "Year",
+  "personalInformation": "Personal Information",
+  "profileDetails": "Profile Details",
+  "profileDetailsBody": "Manage your personal information and preferences.",
+  "profileSaved": "Profile updated",
+  "queuedValue": "{count} · {percent}% queued",
+  "@queuedValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "realtimeOverview": "Real-time status overview",
+  "recentCount": "{count} Recent",
+  "@recentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "revenueTarget": "Target: {amount} ({percent}%)",
+  "@revenueTarget": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewQa": "Review & QA",
+  "roadmapValue": "{count} · Roadmap",
+  "@roadmapValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "roleLabel": "Role",
+  "runningCount": "{count} Running",
+  "@runningCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settledSeries": "Settled ($)",
+  "targetDelivery": "Target Delivery",
+  "totalSprints": "Total Sprints",
+  "uploadNewImage": "Upload New Image",
+  "verifiedClientAccount": "Verified Client Account",
+  "viewAllCount": "View All ({count})",
+  "@viewAllCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workAllocation": "Work & Task Allocation",
+  "workOverview": "Work overview",
+  "yourAccount": "your account"
 }

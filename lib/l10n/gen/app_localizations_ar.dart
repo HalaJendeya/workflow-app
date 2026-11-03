@@ -1298,4 +1298,255 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get searchTimesheetsHint => 'ابحث في المهمة أو المشروع أو الموظف...';
+
+  @override
+  String get accountId => 'معرّف الحساب';
+
+  @override
+  String achievedValue(int count, int percent) {
+    return '$count · تم إنجاز $percent%';
+  }
+
+  @override
+  String get activeClientProjects => 'مشاريع العميل النشطة والمخرجات';
+
+  @override
+  String get activeHub => 'مركز نشط';
+
+  @override
+  String get activeInSprint => 'نشطة في السبرنت';
+
+  @override
+  String get changePassword => 'تغيير كلمة المرور';
+
+  @override
+  String get changePasswordBody => 'حدّث كلمة مرور حسابك للحفاظ على الأمان.';
+
+  @override
+  String get completedMilestones => 'المراحل المكتملة';
+
+  @override
+  String get confirmDeletion => 'أؤكد الحذف';
+
+  @override
+  String get confirmNewPassword => 'تأكيد كلمة المرور الجديدة';
+
+  @override
+  String get contractBudget => 'ميزانية العقد';
+
+  @override
+  String get currentPassword => 'كلمة المرور الحالية';
+
+  @override
+  String get dangerZone => 'منطقة الخطر';
+
+  @override
+  String get dashboardBody =>
+      'نظرة عامة على مشاريعك وفواتيرك والشركات المرتبطة.';
+
+  @override
+  String get deleteAccount => 'حذف الحساب';
+
+  @override
+  String get deleteAccountBody =>
+      'إزالة حسابك وجميع البيانات المرتبطة به نهائيًا.';
+
+  @override
+  String get deleteAccountWarning =>
+      'هل أنت متأكد من حذف حسابك؟ لا يمكن التراجع عن هذا الإجراء. ستُمحى جميع مشاريعك وملفاتك وإعداداتك من خوادمنا نهائيًا وفورًا.';
+
+  @override
+  String get deletionIrreversible =>
+      'أدرك أنه لا يمكن استعادة بياناتي بعد هذه الخطوة.';
+
+  @override
+  String get deliverableBreakdown => 'تفصيل تقدّم المخرجات';
+
+  @override
+  String get downloadReceipt => 'تنزيل الإيصال';
+
+  @override
+  String efficiencyDelta(String delta) {
+    return 'كفاءة $delta';
+  }
+
+  @override
+  String get emailAddress => 'البريد الإلكتروني';
+
+  @override
+  String get expenditureTrends => 'اتجاهات الإنفاق والفوترة';
+
+  @override
+  String get expenditureTrendsBody => 'وتيرة الإنفاق وتسليم الفواتير المعتمدة';
+
+  @override
+  String get filterStatus => 'تصفية الحالة';
+
+  @override
+  String get financialSummary => 'الملخص المالي ورصيد الضمان';
+
+  @override
+  String get firstName => 'الاسم الأول';
+
+  @override
+  String inDevValue(int count, int percent) {
+    return '$count · $percent% قيد التطوير';
+  }
+
+  @override
+  String get invoicedSeries => 'المفوتر (\$)';
+
+  @override
+  String get issueDate => 'تاريخ الإصدار';
+
+  @override
+  String get keepProfileUpToDate => 'حافظ على ملفك الشخصي محدّثًا';
+
+  @override
+  String get keepProfileUpToDateBody =>
+      'يساعدنا الملف المكتمل على خدمتك بشكل أفضل.';
+
+  @override
+  String kpisTracked(int count) {
+    return '$count مؤشرات متابَعة • المخرجات والمؤشرات الرئيسية';
+  }
+
+  @override
+  String get lastName => 'اسم العائلة';
+
+  @override
+  String get latestInvoices => 'أحدث الفواتير والإيصالات';
+
+  @override
+  String get milestoneVelocity => 'المخرجات وسرعة إنجاز المراحل';
+
+  @override
+  String milestonesTotal(int count) {
+    return 'إجمالي المراحل $count';
+  }
+
+  @override
+  String get monthlyRevenue => 'الإيراد الشهري';
+
+  @override
+  String get newMilestoneRequest => 'طلب مرحلة جديدة';
+
+  @override
+  String get newPassword => 'كلمة المرور الجديدة';
+
+  @override
+  String get onSchedule => 'ضمن الجدول';
+
+  @override
+  String get overviewMetrics => 'نظرة عامة ومؤشرات';
+
+  @override
+  String get passwordChanged => 'تم تحديث كلمة المرور';
+
+  @override
+  String get passwordRule =>
+      'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل وتتضمن أحرفًا وأرقامًا ورموزًا.';
+
+  @override
+  String get passwordsDontMatch => 'كلمتا المرور غير متطابقتين';
+
+  @override
+  String peakValue(String label, String amount) {
+    return 'الذروة $label: $amount';
+  }
+
+  @override
+  String get pendingReview => 'بانتظار المراجعة';
+
+  @override
+  String percentItems(int percent, int count) {
+    return '$percent% ($count عناصر)';
+  }
+
+  @override
+  String get periodDay => 'يوم';
+
+  @override
+  String get periodMonth => 'شهر';
+
+  @override
+  String get periodWeek => 'أسبوع';
+
+  @override
+  String get periodYear => 'سنة';
+
+  @override
+  String get personalInformation => 'المعلومات الشخصية';
+
+  @override
+  String get profileDetails => 'تفاصيل الملف الشخصي';
+
+  @override
+  String get profileDetailsBody => 'أدِر معلوماتك الشخصية وتفضيلاتك.';
+
+  @override
+  String get profileSaved => 'تم تحديث الملف الشخصي';
+
+  @override
+  String queuedValue(int count, int percent) {
+    return '$count · $percent% في الانتظار';
+  }
+
+  @override
+  String get realtimeOverview => 'نظرة فورية على الحالة';
+
+  @override
+  String recentCount(int count) {
+    return '$count حديثة';
+  }
+
+  @override
+  String revenueTarget(String amount, String percent) {
+    return 'الهدف: $amount ($percent%)';
+  }
+
+  @override
+  String get reviewQa => 'المراجعة وضمان الجودة';
+
+  @override
+  String roadmapValue(int count) {
+    return '$count · خارطة الطريق';
+  }
+
+  @override
+  String get roleLabel => 'الدور';
+
+  @override
+  String runningCount(int count) {
+    return '$count قيد التنفيذ';
+  }
+
+  @override
+  String get settledSeries => 'المسدد (\$)';
+
+  @override
+  String get targetDelivery => 'موعد التسليم المستهدف';
+
+  @override
+  String get totalSprints => 'إجمالي السبرنتات';
+
+  @override
+  String get uploadNewImage => 'رفع صورة جديدة';
+
+  @override
+  String get verifiedClientAccount => 'حساب عميل موثّق';
+
+  @override
+  String viewAllCount(int count) {
+    return 'عرض الكل ($count)';
+  }
+
+  @override
+  String get workAllocation => 'توزيع العمل والمهام';
+
+  @override
+  String get workOverview => 'نظرة على العمل';
+
+  @override
+  String get yourAccount => 'حسابك';
 }

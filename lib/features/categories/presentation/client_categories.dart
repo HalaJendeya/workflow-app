@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:workflow_app/app/routes.dart';
-import 'package:workflow_app/core/widgets/design_pending_screen.dart';
 import 'package:workflow_app/features/categories/presentation/categories_screen.dart';
+import 'package:workflow_app/features/dashboard/presentation/client_dashboard_screen.dart';
 import 'package:workflow_app/features/finance/presentation/invoices_screen.dart';
 import 'package:workflow_app/features/finance/presentation/payments_screen.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_forms.dart';
@@ -34,10 +34,7 @@ class ClientCategoriesScreen extends StatelessWidget {
             CategoryItem(
               label: l10n.catDashboard,
               icon: 'cat_item_dashboard',
-              onOpen: (c) => push(
-                c,
-                const DesignPendingScreen(routeName: 'client/dashboard'),
-              ),
+              onOpen: (c) => push(c, const ClientDashboardScreen()),
             ),
           ],
         ),

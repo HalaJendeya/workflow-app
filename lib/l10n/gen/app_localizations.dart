@@ -2479,6 +2479,444 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search task, project, employee...'**
   String get searchTimesheetsHint;
+
+  /// No description provided for @accountId.
+  ///
+  /// In en, this message translates to:
+  /// **'Account ID'**
+  String get accountId;
+
+  /// No description provided for @achievedValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} · {percent}% achieved'**
+  String achievedValue(int count, int percent);
+
+  /// No description provided for @activeClientProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Client Projects & Deliverables'**
+  String get activeClientProjects;
+
+  /// No description provided for @activeHub.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Hub'**
+  String get activeHub;
+
+  /// No description provided for @activeInSprint.
+  ///
+  /// In en, this message translates to:
+  /// **'Active in sprint'**
+  String get activeInSprint;
+
+  /// No description provided for @changePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Password'**
+  String get changePassword;
+
+  /// No description provided for @changePasswordBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Update your account password to maintain security.'**
+  String get changePasswordBody;
+
+  /// No description provided for @completedMilestones.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed milestones'**
+  String get completedMilestones;
+
+  /// No description provided for @confirmDeletion.
+  ///
+  /// In en, this message translates to:
+  /// **'I confirm deletion'**
+  String get confirmDeletion;
+
+  /// No description provided for @confirmNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm New Password'**
+  String get confirmNewPassword;
+
+  /// No description provided for @contractBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract Budget'**
+  String get contractBudget;
+
+  /// No description provided for @currentPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Password'**
+  String get currentPassword;
+
+  /// No description provided for @dangerZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Danger Zone'**
+  String get dangerZone;
+
+  /// No description provided for @dashboardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview of your projects, invoices, and linked companies.'**
+  String get dashboardBody;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently remove your account and all associated data.'**
+  String get deleteAccountBody;
+
+  /// No description provided for @deleteAccountWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete your account? This action cannot be undone. All your projects, files, and settings will be permanently erased from our servers immediately.'**
+  String get deleteAccountWarning;
+
+  /// No description provided for @deletionIrreversible.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand that my data cannot be recovered after this point.'**
+  String get deletionIrreversible;
+
+  /// No description provided for @deliverableBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliverable progress breakdown'**
+  String get deliverableBreakdown;
+
+  /// No description provided for @downloadReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Download receipt'**
+  String get downloadReceipt;
+
+  /// No description provided for @efficiencyDelta.
+  ///
+  /// In en, this message translates to:
+  /// **'{delta} efficiency'**
+  String efficiencyDelta(String delta);
+
+  /// No description provided for @emailAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Email Address'**
+  String get emailAddress;
+
+  /// No description provided for @expenditureTrends.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenditure & Invoiced Trends'**
+  String get expenditureTrends;
+
+  /// No description provided for @expenditureTrendsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending cadence & approved invoice delivery'**
+  String get expenditureTrendsBody;
+
+  /// No description provided for @filterStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter Status'**
+  String get filterStatus;
+
+  /// No description provided for @financialSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial Summary & Escrow Balance'**
+  String get financialSummary;
+
+  /// No description provided for @firstName.
+  ///
+  /// In en, this message translates to:
+  /// **'First Name'**
+  String get firstName;
+
+  /// No description provided for @inDevValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} · {percent}% in dev'**
+  String inDevValue(int count, int percent);
+
+  /// No description provided for @invoicedSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoiced (\$)'**
+  String get invoicedSeries;
+
+  /// No description provided for @issueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Issue Date'**
+  String get issueDate;
+
+  /// No description provided for @keepProfileUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your profile up to date'**
+  String get keepProfileUpToDate;
+
+  /// No description provided for @keepProfileUpToDateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A complete profile helps us serve you better.'**
+  String get keepProfileUpToDateBody;
+
+  /// No description provided for @kpisTracked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} KPIs tracked • Key deliverables & KPIs'**
+  String kpisTracked(int count);
+
+  /// No description provided for @lastName.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Name'**
+  String get lastName;
+
+  /// No description provided for @latestInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest Invoices & Receipts'**
+  String get latestInvoices;
+
+  /// No description provided for @milestoneVelocity.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliverables & Milestone Velocity'**
+  String get milestoneVelocity;
+
+  /// No description provided for @milestonesTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Milestones Total'**
+  String milestonesTotal(int count);
+
+  /// No description provided for @monthlyRevenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Revenue'**
+  String get monthlyRevenue;
+
+  /// No description provided for @newMilestoneRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'New Milestone Request'**
+  String get newMilestoneRequest;
+
+  /// No description provided for @newPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New Password'**
+  String get newPassword;
+
+  /// No description provided for @onSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'On Schedule'**
+  String get onSchedule;
+
+  /// No description provided for @overviewMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview & Metrics'**
+  String get overviewMetrics;
+
+  /// No description provided for @passwordChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated'**
+  String get passwordChanged;
+
+  /// No description provided for @passwordRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 8 characters long and include a mix of letters, numbers, and symbols.'**
+  String get passwordRule;
+
+  /// No description provided for @passwordsDontMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords don\'t match'**
+  String get passwordsDontMatch;
+
+  /// No description provided for @peakValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} Peak: {amount}'**
+  String peakValue(String label, String amount);
+
+  /// No description provided for @pendingReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Review'**
+  String get pendingReview;
+
+  /// No description provided for @percentItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% ({count} items)'**
+  String percentItems(int percent, int count);
+
+  /// No description provided for @periodDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get periodDay;
+
+  /// No description provided for @periodMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get periodMonth;
+
+  /// No description provided for @periodWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get periodWeek;
+
+  /// No description provided for @periodYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get periodYear;
+
+  /// No description provided for @personalInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Information'**
+  String get personalInformation;
+
+  /// No description provided for @profileDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile Details'**
+  String get profileDetails;
+
+  /// No description provided for @profileDetailsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your personal information and preferences.'**
+  String get profileDetailsBody;
+
+  /// No description provided for @profileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated'**
+  String get profileSaved;
+
+  /// No description provided for @queuedValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} · {percent}% queued'**
+  String queuedValue(int count, int percent);
+
+  /// No description provided for @realtimeOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time status overview'**
+  String get realtimeOverview;
+
+  /// No description provided for @recentCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Recent'**
+  String recentCount(int count);
+
+  /// No description provided for @revenueTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target: {amount} ({percent}%)'**
+  String revenueTarget(String amount, String percent);
+
+  /// No description provided for @reviewQa.
+  ///
+  /// In en, this message translates to:
+  /// **'Review & QA'**
+  String get reviewQa;
+
+  /// No description provided for @roadmapValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} · Roadmap'**
+  String roadmapValue(int count);
+
+  /// No description provided for @roleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get roleLabel;
+
+  /// No description provided for @runningCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Running'**
+  String runningCount(int count);
+
+  /// No description provided for @settledSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled (\$)'**
+  String get settledSeries;
+
+  /// No description provided for @targetDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Target Delivery'**
+  String get targetDelivery;
+
+  /// No description provided for @totalSprints.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Sprints'**
+  String get totalSprints;
+
+  /// No description provided for @uploadNewImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload New Image'**
+  String get uploadNewImage;
+
+  /// No description provided for @verifiedClientAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified Client Account'**
+  String get verifiedClientAccount;
+
+  /// No description provided for @viewAllCount.
+  ///
+  /// In en, this message translates to:
+  /// **'View All ({count})'**
+  String viewAllCount(int count);
+
+  /// No description provided for @workAllocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Work & Task Allocation'**
+  String get workAllocation;
+
+  /// No description provided for @workOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Work overview'**
+  String get workOverview;
+
+  /// No description provided for @yourAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'your account'**
+  String get yourAccount;
 }
 
 class _AppLocalizationsDelegate

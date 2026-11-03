@@ -19,7 +19,7 @@ class _MockAuth extends Mock implements AuthRepository;
 
 class _MockNotifications extends Mock implements NotificationsRepository;
 
-class _FakeProfile implements ProfileRepository {
+class _FakeProfile extends MockProfileRepository {
   @override
   Future<UserProfile> fetch() async =>
       const UserProfile(id: 7, email: 'taher@workflow.com', name: 'Taher Ali');

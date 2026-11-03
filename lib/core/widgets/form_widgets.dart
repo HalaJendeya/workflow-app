@@ -216,6 +216,8 @@ class TextInputField extends StatelessWidget {
     this.maxLines = 1,
     this.required = true,
     this.fieldKey,
+    this.validator,
+    this.keyboardType,
     super.key,
   });
 
@@ -227,6 +229,10 @@ class TextInputField extends StatelessWidget {
   final bool required;
   final Key? fieldKey;
 
+  /// Extra check run after the required/number rules pass.
+  final FormFieldValidator<String>? validator;
+  final TextInputType? keyboardType;
+
   @override
   Widget build(BuildContext context) => _Labeled(
     label: label,
@@ -237,7 +243,7 @@ class TextInputField extends StatelessWidget {
       minLines: maxLines > 1 ? maxLines : null,
       keyboardType: number
           ? const TextInputType.numberWithOptions(decimal: true)
-          : null,
+          : keyboardType,
       inputFormatters: number
           ? [FilteringTextInputFormatter.allow(RegExp('[0-9.]'))]
           : null,
@@ -256,7 +262,7 @@ class TextInputField extends StatelessWidget {
         if (number && v != null && v.isNotEmpty && double.tryParse(v) == null) {
           return AppLocalizations.of(context).validationNumber;
         }
-        return null;
+        return validator?.call(v);
       },
     ),
   );

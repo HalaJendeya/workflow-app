@@ -51,6 +51,20 @@ class UserProfile {
 
 abstract interface class ProfileRepository {
   Future<UserProfile> fetch();
+
+  /// `PATCH …/account`: partial update; documented response `data` is the
+  /// user plus `image_url`. Validation failures arrive as 422 field errors.
+  Future<UserProfile> update({String? name, String? email});
+
+  /// `PATCH …/account/password` with `old_password`, `new_password` and
+  /// `new_password_confirmation`. A wrong current password answers 422.
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  });
+
+  /// `DELETE …/account/delete` (marked destructive in the collection).
+  Future<void> deleteAccount();
 }
 
 class ApiProfileRepository implements ProfileRepository {
@@ -62,12 +76,66 @@ class ApiProfileRepository implements ProfileRepository {
   @override
   Future<UserProfile> fetch() async =>
       UserProfile.fromJson(ApiEnvelope.unwrapObject(await _client.get(_path)));
+
+  @override
+  Future<UserProfile> update({String? name, String? email}) async =>
+      UserProfile.fromJson(
+        ApiEnvelope.unwrapObject(
+          await _client.patch(_path, body: {'name': ?name, 'email': ?email}),
+        ),
+      );
+
+  @override
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    ApiEnvelope.unwrapData(
+      await _client.patch(
+        '$_path/password',
+        body: {
+          'old_password': oldPassword,
+          'new_password': newPassword,
+          'new_password_confirmation': newPassword,
+        },
+      ),
+    );
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    ApiEnvelope.unwrapData(await _client.delete('$_path/delete'));
+  }
 }
 
+/// Demo profile kept in memory for the lifetime of the repository.
 class MockProfileRepository implements ProfileRepository {
+  UserProfile _profile = const UserProfile(
+    id: 1,
+    email: 'demo@workflow.app',
+    name: 'Demo User',
+  );
+
   @override
-  Future<UserProfile> fetch() async =>
-      const UserProfile(id: 1, email: 'demo@workflow.app', name: 'Demo User');
+  Future<UserProfile> fetch() async => _profile;
+
+  @override
+  Future<UserProfile> update({String? name, String? email}) async =>
+      _profile = UserProfile(
+        id: _profile.id,
+        email: email ?? _profile.email,
+        name: name ?? _profile.name,
+        imageUrl: _profile.imageUrl,
+      );
+
+  @override
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {}
+
+  @override
+  Future<void> deleteAccount() async {}
 }
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {

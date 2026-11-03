@@ -11,6 +11,7 @@ import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/notifications/application/notifications_controller.dart';
 import 'package:workflow_app/features/profile/data/profile_repository.dart';
+import 'package:workflow_app/features/profile/presentation/profile_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 /// Figma "Workspace header" used at the top of every app masthead:
@@ -106,23 +107,43 @@ class _BellButton extends ConsumerWidget {
 }
 
 /// Account menu opened from the masthead avatar.
-Future<void> _showAccountMenu(BuildContext context, WidgetRef ref) =>
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (sheet) => SafeArea(
-        child: ListTile(
-          key: const Key('logout'),
-          leading: const Icon(Icons.logout, color: AppColors.textPrimary),
-          title: Text(
-            AppLocalizations.of(sheet).logout,
-            style: AppTextStyles.mobileBaseSemiBold.copyWith(
-              color: AppColors.textPrimary,
-            ),
+Future<void> _showAccountMenu(
+  BuildContext context,
+  WidgetRef ref,
+) => showModalBottomSheet<void>(
+  context: context,
+  useRootNavigator: true,
+  builder: (sheet) {
+    final l10n = AppLocalizations.of(sheet);
+    final style = AppTextStyles.mobileBaseSemiBold.copyWith(
+      color: AppColors.textPrimary,
+    );
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            key: const Key('account-profile'),
+            leading: const SvgIcon(AppIcon.profile),
+            title: Text(l10n.profileDetails, style: style),
+            onTap: () {
+              Navigator.of(sheet).pop();
+              Navigator.of(context, rootNavigator: true).push(
+                MaterialPageRoute<void>(builder: (_) => const ProfileScreen()),
+              );
+            },
           ),
-          onTap: () {
-            Navigator.of(sheet).pop();
-            unawaited(ref.read(sessionControllerProvider.notifier).logout());
-          },
-        ),
+          ListTile(
+            key: const Key('logout'),
+            leading: const Icon(Icons.logout, color: AppColors.textPrimary),
+            title: Text(l10n.logout, style: style),
+            onTap: () {
+              Navigator.of(sheet).pop();
+              unawaited(ref.read(sessionControllerProvider.notifier).logout());
+            },
+          ),
+        ],
       ),
     );
+  },
+);

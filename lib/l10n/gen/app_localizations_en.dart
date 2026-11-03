@@ -1301,4 +1301,258 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchTimesheetsHint => 'Search task, project, employee...';
+
+  @override
+  String get accountId => 'Account ID';
+
+  @override
+  String achievedValue(int count, int percent) {
+    return '$count · $percent% achieved';
+  }
+
+  @override
+  String get activeClientProjects => 'Active Client Projects & Deliverables';
+
+  @override
+  String get activeHub => 'Active Hub';
+
+  @override
+  String get activeInSprint => 'Active in sprint';
+
+  @override
+  String get changePassword => 'Change Password';
+
+  @override
+  String get changePasswordBody =>
+      'Update your account password to maintain security.';
+
+  @override
+  String get completedMilestones => 'Completed milestones';
+
+  @override
+  String get confirmDeletion => 'I confirm deletion';
+
+  @override
+  String get confirmNewPassword => 'Confirm New Password';
+
+  @override
+  String get contractBudget => 'Contract Budget';
+
+  @override
+  String get currentPassword => 'Current Password';
+
+  @override
+  String get dangerZone => 'Danger Zone';
+
+  @override
+  String get dashboardBody =>
+      'Overview of your projects, invoices, and linked companies.';
+
+  @override
+  String get deleteAccount => 'Delete Account';
+
+  @override
+  String get deleteAccountBody =>
+      'Permanently remove your account and all associated data.';
+
+  @override
+  String get deleteAccountWarning =>
+      'Are you sure you want to delete your account? This action cannot be undone. All your projects, files, and settings will be permanently erased from our servers immediately.';
+
+  @override
+  String get deletionIrreversible =>
+      'I understand that my data cannot be recovered after this point.';
+
+  @override
+  String get deliverableBreakdown => 'Deliverable progress breakdown';
+
+  @override
+  String get downloadReceipt => 'Download receipt';
+
+  @override
+  String efficiencyDelta(String delta) {
+    return '$delta efficiency';
+  }
+
+  @override
+  String get emailAddress => 'Email Address';
+
+  @override
+  String get expenditureTrends => 'Expenditure & Invoiced Trends';
+
+  @override
+  String get expenditureTrendsBody =>
+      'Spending cadence & approved invoice delivery';
+
+  @override
+  String get filterStatus => 'Filter Status';
+
+  @override
+  String get financialSummary => 'Financial Summary & Escrow Balance';
+
+  @override
+  String get firstName => 'First Name';
+
+  @override
+  String inDevValue(int count, int percent) {
+    return '$count · $percent% in dev';
+  }
+
+  @override
+  String get invoicedSeries => 'Invoiced (\$)';
+
+  @override
+  String get issueDate => 'Issue Date';
+
+  @override
+  String get keepProfileUpToDate => 'Keep your profile up to date';
+
+  @override
+  String get keepProfileUpToDateBody =>
+      'A complete profile helps us serve you better.';
+
+  @override
+  String kpisTracked(int count) {
+    return '$count KPIs tracked • Key deliverables & KPIs';
+  }
+
+  @override
+  String get lastName => 'Last Name';
+
+  @override
+  String get latestInvoices => 'Latest Invoices & Receipts';
+
+  @override
+  String get milestoneVelocity => 'Deliverables & Milestone Velocity';
+
+  @override
+  String milestonesTotal(int count) {
+    return '$count Milestones Total';
+  }
+
+  @override
+  String get monthlyRevenue => 'Monthly Revenue';
+
+  @override
+  String get newMilestoneRequest => 'New Milestone Request';
+
+  @override
+  String get newPassword => 'New Password';
+
+  @override
+  String get onSchedule => 'On Schedule';
+
+  @override
+  String get overviewMetrics => 'Overview & Metrics';
+
+  @override
+  String get passwordChanged => 'Password updated';
+
+  @override
+  String get passwordRule =>
+      'Password must be at least 8 characters long and include a mix of letters, numbers, and symbols.';
+
+  @override
+  String get passwordsDontMatch => 'Passwords don\'t match';
+
+  @override
+  String peakValue(String label, String amount) {
+    return '$label Peak: $amount';
+  }
+
+  @override
+  String get pendingReview => 'Pending Review';
+
+  @override
+  String percentItems(int percent, int count) {
+    return '$percent% ($count items)';
+  }
+
+  @override
+  String get periodDay => 'Day';
+
+  @override
+  String get periodMonth => 'Month';
+
+  @override
+  String get periodWeek => 'Week';
+
+  @override
+  String get periodYear => 'Year';
+
+  @override
+  String get personalInformation => 'Personal Information';
+
+  @override
+  String get profileDetails => 'Profile Details';
+
+  @override
+  String get profileDetailsBody =>
+      'Manage your personal information and preferences.';
+
+  @override
+  String get profileSaved => 'Profile updated';
+
+  @override
+  String queuedValue(int count, int percent) {
+    return '$count · $percent% queued';
+  }
+
+  @override
+  String get realtimeOverview => 'Real-time status overview';
+
+  @override
+  String recentCount(int count) {
+    return '$count Recent';
+  }
+
+  @override
+  String revenueTarget(String amount, String percent) {
+    return 'Target: $amount ($percent%)';
+  }
+
+  @override
+  String get reviewQa => 'Review & QA';
+
+  @override
+  String roadmapValue(int count) {
+    return '$count · Roadmap';
+  }
+
+  @override
+  String get roleLabel => 'Role';
+
+  @override
+  String runningCount(int count) {
+    return '$count Running';
+  }
+
+  @override
+  String get settledSeries => 'Settled (\$)';
+
+  @override
+  String get targetDelivery => 'Target Delivery';
+
+  @override
+  String get totalSprints => 'Total Sprints';
+
+  @override
+  String get uploadNewImage => 'Upload New Image';
+
+  @override
+  String get verifiedClientAccount => 'Verified Client Account';
+
+  @override
+  String viewAllCount(int count) {
+    return 'View All ($count)';
+  }
+
+  @override
+  String get workAllocation => 'Work & Task Allocation';
+
+  @override
+  String get workOverview => 'Work overview';
+
+  @override
+  String get yourAccount => 'your account';
 }
