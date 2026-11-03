@@ -1145,4 +1145,157 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get encryptedMeeting => 'اجتماع مشفّر بالكامل';
+
+  @override
+  String get navSprints => 'الدورات';
+
+  @override
+  String get timesheetsShort => 'سجلات الدوام';
+
+  @override
+  String get priorityLow => 'منخفضة';
+
+  @override
+  String get priorityMedium => 'متوسطة';
+
+  @override
+  String get priorityHigh => 'عالية';
+
+  @override
+  String get priorityUrgent => 'عاجلة';
+
+  @override
+  String get backlog => 'قائمة الانتظار';
+
+  @override
+  String get toDo => 'للتنفيذ';
+
+  @override
+  String get taskCode => 'المهمة';
+
+  @override
+  String get priority => 'الأولوية';
+
+  @override
+  String get startDate => 'تاريخ البدء';
+
+  @override
+  String get endDate => 'تاريخ الانتهاء';
+
+  @override
+  String get tasksManagement => 'إدارة المهام';
+
+  @override
+  String get tasksManagementBody =>
+      'نظرة عامة وإدارة لجميع المهام النشطة عبر المشاريع';
+
+  @override
+  String get addTask => 'إضافة مهمة';
+
+  @override
+  String get editTask => 'تعديل المهمة';
+
+  @override
+  String get activeTasks => 'المهام النشطة';
+
+  @override
+  String get completionVelocity => 'سرعة الإنجاز الإجمالية';
+
+  @override
+  String get totalBudgetUtilization => 'إجمالي استخدام الميزانية';
+
+  @override
+  String get budgetAllocations => 'مجموع المعدل × التخصيصات';
+
+  @override
+  String get loggedHours => 'الساعات المسجلة';
+
+  @override
+  String get hoursThisPeriod => 'الساعات المسجلة في هذه الفترة';
+
+  @override
+  String get searchTasksHint => 'ابحث بعنوان المهمة أو المشروع أو الموظف...';
+
+  @override
+  String get allProjects => 'كل المشاريع';
+
+  @override
+  String get allAssignees => 'كل المكلّفين';
+
+  @override
+  String get priorityLevel => 'مستوى الأولوية';
+
+  @override
+  String get view => 'عرض';
+
+  @override
+  String showingRange(int from, int to, int total) {
+    return 'عرض $from–$to من $total';
+  }
+
+  @override
+  String get taskTitle => 'عنوان المهمة';
+
+  @override
+  String get assignee => 'المكلّف';
+
+  @override
+  String get storyPoints => 'نقاط القصة';
+
+  @override
+  String get taskDate => 'تاريخ المهمة';
+
+  @override
+  String get sprintBacklog => 'الدورة وقائمة الانتظار';
+
+  @override
+  String get sprintBacklogBody =>
+      'أدر قائمة المنتج ووزّع الموارد وتابع أداء الدورة.';
+
+  @override
+  String get kanban => 'كانبان';
+
+  @override
+  String get createSprint => 'إنشاء دورة';
+
+  @override
+  String get sprintName => 'اسم الدورة';
+
+  @override
+  String get noTasksInColumn => 'لا توجد مهام في هذا العمود';
+
+  @override
+  String points(int count) {
+    return '$count نقاط';
+  }
+
+  @override
+  String subtasksDone(int done, int total) {
+    return 'المهام الفرعية: $done/$total منجزة';
+  }
+
+  @override
+  String get moveTo => 'نقل إلى';
+
+  @override
+  String get approved => 'معتمد';
+
+  @override
+  String get rejected => 'مرفوض';
+
+  @override
+  String get timesheetsTitle => 'لوحة سجلات الدوام';
+
+  @override
+  String get timesheetsBody =>
+      'راجع الساعات المسجلة والموافقات والمستحقات عبر المشاريع';
+
+  @override
+  String get totalHours => 'إجمالي الساعات';
+
+  @override
+  String get totalSalaries => 'إجمالي الرواتب';
+
+  @override
+  String get searchTimesheetsHint => 'ابحث في المهمة أو المشروع أو الموظف...';
 }

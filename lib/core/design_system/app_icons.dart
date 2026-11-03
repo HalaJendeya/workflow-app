@@ -8,6 +8,7 @@ enum AppIcon {
   navInvoices('nav_invoices'),
   navTasks('nav_tasks'),
   navProjects('nav_projects'),
+  navSprints('nav_sprints'),
   navChat('nav_chat'),
   navMore('nav_more'),
   notification('notification'),

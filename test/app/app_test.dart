@@ -148,7 +148,7 @@ void main() {
       expect(
         redirectFor(
           session: const AsyncData(employee),
-          location: Routes.employeeTasks,
+          location: Routes.employeeSprints,
         ),
         isNull,
       );

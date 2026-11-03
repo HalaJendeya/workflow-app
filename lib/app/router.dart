@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:workflow_app/app/routes.dart';
 import 'package:workflow_app/core/design_system/app_icons.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
-import 'package:workflow_app/core/widgets/design_pending_screen.dart';
 import 'package:workflow_app/features/auth/application/auth_flow.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
@@ -13,12 +12,14 @@ import 'package:workflow_app/features/auth/presentation/login_screen.dart';
 import 'package:workflow_app/features/auth/presentation/password_screens.dart';
 import 'package:workflow_app/features/auth/presentation/register_screen.dart';
 import 'package:workflow_app/features/categories/presentation/client_categories.dart';
+import 'package:workflow_app/features/categories/presentation/employee_categories.dart';
 import 'package:workflow_app/features/companies/presentation/companies_screen.dart';
 import 'package:workflow_app/features/conversations/presentation/conversations_screens.dart';
 import 'package:workflow_app/features/finance/presentation/invoices_screen.dart';
 import 'package:workflow_app/features/overview/presentation/overview_screen.dart';
 import 'package:workflow_app/features/projects/presentation/projects_screen.dart';
 import 'package:workflow_app/features/shell/app_shell.dart';
+import 'package:workflow_app/features/work/presentation/sprint_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 export 'routes.dart';
@@ -141,7 +142,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             navigationShell: shell,
             destinations: [
               NavDestination(icon: AppIcon.navHome, label: l10n.navHome),
-              NavDestination(icon: AppIcon.navTasks, label: l10n.navTasks),
+              NavDestination(icon: AppIcon.navSprints, label: l10n.navSprints),
               NavDestination(
                 icon: AppIcon.navProjects,
                 label: l10n.navProjects,
@@ -153,41 +154,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
         branches: [
           _branch(Routes.employee, const OverviewScreen()),
-          _branch(
-            Routes.employeeTasks,
-            const DesignPendingScreen(routeName: 'employee/tasks'),
-          ),
+          _branch(Routes.employeeSprints, const SprintScreen()),
           _branch(Routes.employeeProjects, const ProjectsScreen()),
           _branch(Routes.employeeChat, const ConversationsScreen()),
-          _branch(Routes.employeeMore, const MoreScreen()),
+          _branch(Routes.employeeMore, const EmployeeCategoriesScreen()),
         ],
       ),
     ],
   );
 });
-
-/// Temporary "More" tab: hosts logout until the Figma "More" menu is built.
-class MoreScreen extends ConsumerWidget {
-  const new({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.page),
-          children: [
-            ListTile(
-              key: const Key('logout'),
-              leading: const Icon(Icons.logout),
-              title: Text(l10n.logout),
-              onTap: () =>
-                  ref.read(sessionControllerProvider.notifier).logout(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

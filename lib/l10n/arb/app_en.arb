@@ -522,5 +522,83 @@
         "type": "String"
       }
     }
+  },
+  "navSprints": "Sprints",
+  "timesheetsShort": "Timesheets",
+  "priorityLow": "Low",
+  "priorityMedium": "Medium",
+  "priorityHigh": "High",
+  "priorityUrgent": "Urgent",
+  "backlog": "Backlog",
+  "toDo": "To do",
+  "taskCode": "Task",
+  "priority": "Priority",
+  "startDate": "Start date",
+  "endDate": "End date",
+  "tasksManagement": "Tasks Management",
+  "tasksManagementBody": "Overview and administration of all active tasks across projects",
+  "addTask": "Add Task",
+  "editTask": "Edit Task",
+  "activeTasks": "ACTIVE TASKS",
+  "completionVelocity": "Overall completion velocity",
+  "totalBudgetUtilization": "TOTAL BUDGET UTILIZATION",
+  "budgetAllocations": "Sum rate × allocations",
+  "loggedHours": "LOGGED HOURS",
+  "hoursThisPeriod": "Hours logged this period",
+  "searchTasksHint": "Search task title, project, employee...",
+  "allProjects": "All Projects",
+  "allAssignees": "All Assignees",
+  "priorityLevel": "Priority Level",
+  "view": "View",
+  "showingRange": "Showing {from}–{to} of {total}",
+  "taskTitle": "Task Title",
+  "assignee": "Assignee",
+  "storyPoints": "Story Points",
+  "taskDate": "Task Date",
+  "sprintBacklog": "Sprint & Backlog",
+  "sprintBacklogBody": "Manage your product backlog, allocate resources, and track sprint performance.",
+  "kanban": "Kanban",
+  "createSprint": "Create Sprint",
+  "sprintName": "Sprint name",
+  "noTasksInColumn": "No tasks in this column",
+  "points": "{count} pts",
+  "subtasksDone": "Subtasks: {done}/{total} done",
+  "moveTo": "Move to",
+  "approved": "Approved",
+  "rejected": "Rejected",
+  "timesheetsTitle": "Timesheets Dashboard",
+  "timesheetsBody": "Review logged hours, approvals and payouts across projects",
+  "totalHours": "Total Hours",
+  "totalSalaries": "Total Salaries",
+  "searchTimesheetsHint": "Search task, project, employee...",
+  "@showingRange": {
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@points": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@subtasksDone": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
   }
 }

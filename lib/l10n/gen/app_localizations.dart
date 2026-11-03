@@ -2191,6 +2191,294 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'End-to-end encrypted meeting'**
   String get encryptedMeeting;
+
+  /// No description provided for @navSprints.
+  ///
+  /// In en, this message translates to:
+  /// **'Sprints'**
+  String get navSprints;
+
+  /// No description provided for @timesheetsShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Timesheets'**
+  String get timesheetsShort;
+
+  /// No description provided for @priorityLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get priorityLow;
+
+  /// No description provided for @priorityMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get priorityMedium;
+
+  /// No description provided for @priorityHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get priorityHigh;
+
+  /// No description provided for @priorityUrgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Urgent'**
+  String get priorityUrgent;
+
+  /// No description provided for @backlog.
+  ///
+  /// In en, this message translates to:
+  /// **'Backlog'**
+  String get backlog;
+
+  /// No description provided for @toDo.
+  ///
+  /// In en, this message translates to:
+  /// **'To do'**
+  String get toDo;
+
+  /// No description provided for @taskCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Task'**
+  String get taskCode;
+
+  /// No description provided for @priority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get priority;
+
+  /// No description provided for @startDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get startDate;
+
+  /// No description provided for @endDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End date'**
+  String get endDate;
+
+  /// No description provided for @tasksManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks Management'**
+  String get tasksManagement;
+
+  /// No description provided for @tasksManagementBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview and administration of all active tasks across projects'**
+  String get tasksManagementBody;
+
+  /// No description provided for @addTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Task'**
+  String get addTask;
+
+  /// No description provided for @editTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Task'**
+  String get editTask;
+
+  /// No description provided for @activeTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIVE TASKS'**
+  String get activeTasks;
+
+  /// No description provided for @completionVelocity.
+  ///
+  /// In en, this message translates to:
+  /// **'Overall completion velocity'**
+  String get completionVelocity;
+
+  /// No description provided for @totalBudgetUtilization.
+  ///
+  /// In en, this message translates to:
+  /// **'TOTAL BUDGET UTILIZATION'**
+  String get totalBudgetUtilization;
+
+  /// No description provided for @budgetAllocations.
+  ///
+  /// In en, this message translates to:
+  /// **'Sum rate × allocations'**
+  String get budgetAllocations;
+
+  /// No description provided for @loggedHours.
+  ///
+  /// In en, this message translates to:
+  /// **'LOGGED HOURS'**
+  String get loggedHours;
+
+  /// No description provided for @hoursThisPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours logged this period'**
+  String get hoursThisPeriod;
+
+  /// No description provided for @searchTasksHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search task title, project, employee...'**
+  String get searchTasksHint;
+
+  /// No description provided for @allProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'All Projects'**
+  String get allProjects;
+
+  /// No description provided for @allAssignees.
+  ///
+  /// In en, this message translates to:
+  /// **'All Assignees'**
+  String get allAssignees;
+
+  /// No description provided for @priorityLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority Level'**
+  String get priorityLevel;
+
+  /// No description provided for @view.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get view;
+
+  /// No description provided for @showingRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {from}–{to} of {total}'**
+  String showingRange(int from, int to, int total);
+
+  /// No description provided for @taskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Task Title'**
+  String get taskTitle;
+
+  /// No description provided for @assignee.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignee'**
+  String get assignee;
+
+  /// No description provided for @storyPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Story Points'**
+  String get storyPoints;
+
+  /// No description provided for @taskDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Task Date'**
+  String get taskDate;
+
+  /// No description provided for @sprintBacklog.
+  ///
+  /// In en, this message translates to:
+  /// **'Sprint & Backlog'**
+  String get sprintBacklog;
+
+  /// No description provided for @sprintBacklogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your product backlog, allocate resources, and track sprint performance.'**
+  String get sprintBacklogBody;
+
+  /// No description provided for @kanban.
+  ///
+  /// In en, this message translates to:
+  /// **'Kanban'**
+  String get kanban;
+
+  /// No description provided for @createSprint.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Sprint'**
+  String get createSprint;
+
+  /// No description provided for @sprintName.
+  ///
+  /// In en, this message translates to:
+  /// **'Sprint name'**
+  String get sprintName;
+
+  /// No description provided for @noTasksInColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks in this column'**
+  String get noTasksInColumn;
+
+  /// No description provided for @points.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pts'**
+  String points(int count);
+
+  /// No description provided for @subtasksDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtasks: {done}/{total} done'**
+  String subtasksDone(int done, int total);
+
+  /// No description provided for @moveTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to'**
+  String get moveTo;
+
+  /// No description provided for @approved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get approved;
+
+  /// No description provided for @rejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get rejected;
+
+  /// No description provided for @timesheetsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Timesheets Dashboard'**
+  String get timesheetsTitle;
+
+  /// No description provided for @timesheetsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Review logged hours, approvals and payouts across projects'**
+  String get timesheetsBody;
+
+  /// No description provided for @totalHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Hours'**
+  String get totalHours;
+
+  /// No description provided for @totalSalaries.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Salaries'**
+  String get totalSalaries;
+
+  /// No description provided for @searchTimesheetsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search task, project, employee...'**
+  String get searchTimesheetsHint;
 }
 
 class _AppLocalizationsDelegate

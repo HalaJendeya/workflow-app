@@ -1,0 +1,342 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:workflow_app/core/data/local_collection.dart';
+import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/widgets/form_widgets.dart';
+import 'package:workflow_app/core/widgets/module_widgets.dart';
+import 'package:workflow_app/features/finance/presentation/finance_common.dart';
+import 'package:workflow_app/features/work/domain/work_models.dart';
+import 'package:workflow_app/features/work/presentation/work_widgets.dart';
+import 'package:workflow_app/l10n/gen/app_localizations.dart';
+
+String priorityLabel(AppLocalizations l10n, TaskPriority p) => switch (p) {
+  TaskPriority.low => l10n.priorityLow,
+  TaskPriority.medium => l10n.priorityMedium,
+  TaskPriority.high => l10n.priorityHigh,
+  TaskPriority.urgent => l10n.priorityUrgent,
+};
+
+String taskStatusLabel(AppLocalizations l10n, TaskStatus s) => switch (s) {
+  TaskStatus.backlog => l10n.backlog,
+  TaskStatus.todo => l10n.toDo,
+  TaskStatus.inProgress => l10n.statusInProgress,
+  TaskStatus.completed => l10n.statusCompleted,
+};
+
+String durationLabel(Duration d) => '${d.inHours}h ${d.inMinutes % 60}m';
+
+final _dt = DateFormat('yyyy/MM/dd - HH:mm', 'en');
+
+Future<void> openTaskForm(BuildContext context, {WorkTask? existing}) =>
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TaskFormScreen(existing: existing),
+      ),
+    );
+
+void showTaskDetails(BuildContext context, WorkTask t) {
+  final l10n = AppLocalizations.of(context);
+  unawaited(
+    showRecordDetails(
+      context,
+      title: t.title,
+      status: taskStatusLabel(l10n, t.status),
+      tone: BadgeTone.info,
+      fields: [
+        DetailField(l10n.taskCode, '${t.code} • ${t.sprint}'),
+        DetailField(l10n.fieldAmount, money(t.amount)),
+        DetailField(l10n.fieldProject, t.project),
+        DetailField(l10n.fieldEmployee, t.assignee),
+        DetailField(l10n.priority, priorityLabel(l10n, t.priority)),
+        DetailField(l10n.startDate, _dt.format(t.start)),
+        DetailField(l10n.endDate, _dt.format(t.end)),
+        DetailField(l10n.duration, durationLabel(t.duration)),
+      ],
+    ),
+  );
+}
+
+/// Figma "Tasks Management" (729:24059).
+class TasksScreen extends ConsumerStatefulWidget {
+  const new({super.key});
+
+  @override
+  ConsumerState<TasksScreen> createState() => _TasksScreenState();
+}
+
+class _TasksScreenState extends ConsumerState<TasksScreen> {
+  static const _pageSize = 4;
+  String _query = '';
+  String? _project;
+  String? _assignee;
+  TaskPriority? _priority;
+  int _page = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final demo = ref.watch(demoModeProvider);
+    final all = ref.watch(workTasksProvider);
+    final q = _query.trim().toLowerCase();
+    final filtered = all.where((t) {
+      if (_project != null && t.project != _project) return false;
+      if (_assignee != null && t.assignee != _assignee) return false;
+      if (_priority != null && t.priority != _priority) return false;
+      return q.isEmpty ||
+          '${t.title} ${t.code} ${t.project} ${t.assignee}'
+              .toLowerCase()
+              .contains(q);
+    }).toList();
+    final page = _page.clamp(
+      0,
+      ((filtered.length - 1) ~/ _pageSize).clamp(0, 999),
+    );
+    final visible = filtered.skip(page * _pageSize).take(_pageSize).toList();
+    final active = all.where((t) => t.status != TaskStatus.completed).length;
+    final hours = all.fold<int>(0, (s, t) => s + t.duration.inMinutes) ~/ 60;
+    final budget = all.fold<double>(0, (s, t) => s + t.amount);
+
+    return ModulePage(
+      title: l10n.tasksManagement,
+      description: l10n.tasksManagementBody,
+      onSearch: (v) => setState(() => _query = v),
+      onCreate: () => openTaskForm(context),
+      createLabel: l10n.addTask,
+      children: [
+        if (!demo) const BackendPendingNotice(),
+        IconMetricCard(
+          icon: 'metric_task_0',
+          tint: AppColors.primary50,
+          title: l10n.activeTasks,
+          value: '$active',
+          caption: l10n.completionVelocity,
+        ),
+        IconMetricCard(
+          icon: 'metric_task_1',
+          tint: AppColors.surfaceSubtle,
+          title: l10n.totalBudgetUtilization,
+          value: money(budget),
+          caption: l10n.budgetAllocations,
+        ),
+        IconMetricCard(
+          icon: 'metric_task_2',
+          tint: ModuleColors.warningBg,
+          title: l10n.loggedHours,
+          value: '$hours',
+          caption: l10n.hoursThisPeriod,
+        ),
+        WfSearchBox(
+          fieldKey: const Key('tasks-search'),
+          hint: l10n.searchTasksHint,
+          onChanged: (v) => setState(() {
+            _query = v;
+            _page = 0;
+          }),
+        ),
+        ChipRow(
+          children: [
+            DropdownChip<String?>(
+              value: _project,
+              options: [
+                null,
+                ...{for (final t in all) t.project},
+              ],
+              labelOf: (p) => p ?? l10n.allProjects,
+              onChanged: (p) => setState(() {
+                _project = p;
+                _page = 0;
+              }),
+            ),
+            DropdownChip<String?>(
+              value: _assignee,
+              options: [
+                null,
+                ...{for (final t in all) t.assignee},
+              ],
+              labelOf: (p) => p ?? l10n.allAssignees,
+              onChanged: (p) => setState(() {
+                _assignee = p;
+                _page = 0;
+              }),
+            ),
+            DropdownChip<TaskPriority?>(
+              value: _priority,
+              options: const [null, ...TaskPriority.values],
+              labelOf: (p) =>
+                  p == null ? l10n.priorityLevel : priorityLabel(l10n, p),
+              onChanged: (p) => setState(() {
+                _priority = p;
+                _page = 0;
+              }),
+            ),
+          ],
+        ),
+        if (visible.isEmpty) EmptyNotice(text: l10n.noRecords),
+        for (final t in visible)
+          StackedRecordCard(
+            key: Key('task-${t.id}'),
+            title: t.title,
+            subtitle: '${t.code} • ${t.sprint}',
+            amount: money(t.amount),
+            rows: [
+              (l10n.fieldProject, t.project),
+              (l10n.fieldEmployee, t.assignee),
+              (l10n.startDate, _dt.format(t.start)),
+              (l10n.endDate, _dt.format(t.end)),
+              (l10n.duration, durationLabel(t.duration)),
+            ],
+            actions: TintedActions(
+              onView: () => showTaskDetails(context, t),
+              onEdit: () => openTaskForm(context, existing: t),
+              onDelete: () async {
+                if (await confirmDelete(context, t.code)) {
+                  ref.read(workTasksProvider.notifier).remove(t.id);
+                  if (context.mounted) showSnack(context, l10n.deletedLocally);
+                }
+              },
+            ),
+          ),
+        Pager(
+          page: page,
+          pageSize: _pageSize,
+          total: filtered.length,
+          onPage: (p) => setState(() => _page = p),
+        ),
+      ],
+    );
+  }
+}
+
+/// Create/edit task form. Figma shows the Create action but no form frame,
+/// so the fields follow the documented task attributes with the shared
+/// form styling.
+class TaskFormScreen extends ConsumerStatefulWidget {
+  const new({this.existing, this.initialStatus, super.key});
+
+  final WorkTask? existing;
+  final TaskStatus? initialStatus;
+
+  @override
+  ConsumerState<TaskFormScreen> createState() => _TaskFormScreenState();
+}
+
+class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
+  final _form = GlobalKey<FormState>();
+  late final _title = TextEditingController(text: widget.existing?.title);
+  late final _points = TextEditingController(
+    text: '${widget.existing?.points ?? 1}',
+  );
+  late String? _project = widget.existing?.project;
+  late String? _assignee = widget.existing?.assignee;
+  late TaskPriority? _priority =
+      widget.existing?.priority ?? TaskPriority.medium;
+  late TaskStatus? _status =
+      widget.existing?.status ?? widget.initialStatus ?? TaskStatus.todo;
+  late DateTime _date = widget.existing?.start ?? DateTime.now();
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _points.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    if (!_form.currentState!.validate()) return;
+    final e = widget.existing;
+    final start = DateTime(_date.year, _date.month, _date.day, 9);
+    final notifier = ref.read(workTasksProvider.notifier);
+    if (e == null) {
+      notifier.add(
+        WorkTask(
+          id: localId('task'),
+          code: 'TASK-${8900 + ref.read(workTasksProvider).length + 40}',
+          title: _title.text.trim(),
+          project: _project!,
+          sprint: 'Sprint 4',
+          assignee: _assignee!,
+          status: _status!,
+          priority: _priority!,
+          points: int.tryParse(_points.text) ?? 1,
+          start: start,
+          end: start.add(const Duration(hours: 2)),
+          amount: 0,
+        ),
+      );
+    } else {
+      notifier.replace(
+        e.copyWith(
+          title: _title.text.trim(),
+          project: _project,
+          assignee: _assignee,
+          status: _status,
+          priority: _priority,
+          points: int.tryParse(_points.text),
+          start: start,
+          end: start.add(e.duration),
+        ),
+      );
+    }
+    showSnack(context, AppLocalizations.of(context).savedLocally);
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    String id(String s) => s;
+    return FormPage(
+      title: widget.existing == null ? l10n.addTask : l10n.editTask,
+      formKey: _form,
+      onSave: _save,
+      fields: [
+        TextInputField(
+          fieldKey: const Key('task-title'),
+          label: l10n.taskTitle,
+          controller: _title,
+        ),
+        SelectField<String>(
+          label: l10n.fieldProject,
+          value: _project,
+          options: {...workProjects, ?_project}.toList(),
+          labelOf: id,
+          onChanged: (v) => setState(() => _project = v),
+        ),
+        SelectField<String>(
+          label: l10n.assignee,
+          value: _assignee,
+          options: {...workPeople, ?_assignee}.toList(),
+          labelOf: id,
+          onChanged: (v) => setState(() => _assignee = v),
+        ),
+        SelectField<TaskPriority>(
+          label: l10n.priority,
+          value: _priority,
+          options: TaskPriority.values,
+          labelOf: (p) => priorityLabel(l10n, p),
+          onChanged: (v) => setState(() => _priority = v),
+        ),
+        SelectField<TaskStatus>(
+          label: l10n.fieldStatus,
+          value: _status,
+          options: TaskStatus.values,
+          labelOf: (s) => taskStatusLabel(l10n, s),
+          onChanged: (v) => setState(() => _status = v),
+        ),
+        TextInputField(
+          label: l10n.storyPoints,
+          controller: _points,
+          number: true,
+        ),
+        DateField(
+          label: l10n.taskDate,
+          value: _date,
+          onChanged: (d) => setState(() => _date = d),
+        ),
+      ],
+    );
+  }
+}

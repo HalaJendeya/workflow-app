@@ -28,7 +28,7 @@ abstract final class Routes {
   static const clientMore = '/client/more';
 
   static const employee = '/employee';
-  static const employeeTasks = '/employee/tasks';
+  static const employeeSprints = '/employee/sprints';
   static const employeeProjects = '/employee/projects';
   static const employeeChat = '/employee/chat';
   static const employeeMore = '/employee/more';

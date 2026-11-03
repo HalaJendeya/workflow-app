@@ -1148,4 +1148,157 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get encryptedMeeting => 'End-to-end encrypted meeting';
+
+  @override
+  String get navSprints => 'Sprints';
+
+  @override
+  String get timesheetsShort => 'Timesheets';
+
+  @override
+  String get priorityLow => 'Low';
+
+  @override
+  String get priorityMedium => 'Medium';
+
+  @override
+  String get priorityHigh => 'High';
+
+  @override
+  String get priorityUrgent => 'Urgent';
+
+  @override
+  String get backlog => 'Backlog';
+
+  @override
+  String get toDo => 'To do';
+
+  @override
+  String get taskCode => 'Task';
+
+  @override
+  String get priority => 'Priority';
+
+  @override
+  String get startDate => 'Start date';
+
+  @override
+  String get endDate => 'End date';
+
+  @override
+  String get tasksManagement => 'Tasks Management';
+
+  @override
+  String get tasksManagementBody =>
+      'Overview and administration of all active tasks across projects';
+
+  @override
+  String get addTask => 'Add Task';
+
+  @override
+  String get editTask => 'Edit Task';
+
+  @override
+  String get activeTasks => 'ACTIVE TASKS';
+
+  @override
+  String get completionVelocity => 'Overall completion velocity';
+
+  @override
+  String get totalBudgetUtilization => 'TOTAL BUDGET UTILIZATION';
+
+  @override
+  String get budgetAllocations => 'Sum rate × allocations';
+
+  @override
+  String get loggedHours => 'LOGGED HOURS';
+
+  @override
+  String get hoursThisPeriod => 'Hours logged this period';
+
+  @override
+  String get searchTasksHint => 'Search task title, project, employee...';
+
+  @override
+  String get allProjects => 'All Projects';
+
+  @override
+  String get allAssignees => 'All Assignees';
+
+  @override
+  String get priorityLevel => 'Priority Level';
+
+  @override
+  String get view => 'View';
+
+  @override
+  String showingRange(int from, int to, int total) {
+    return 'Showing $from–$to of $total';
+  }
+
+  @override
+  String get taskTitle => 'Task Title';
+
+  @override
+  String get assignee => 'Assignee';
+
+  @override
+  String get storyPoints => 'Story Points';
+
+  @override
+  String get taskDate => 'Task Date';
+
+  @override
+  String get sprintBacklog => 'Sprint & Backlog';
+
+  @override
+  String get sprintBacklogBody =>
+      'Manage your product backlog, allocate resources, and track sprint performance.';
+
+  @override
+  String get kanban => 'Kanban';
+
+  @override
+  String get createSprint => 'Create Sprint';
+
+  @override
+  String get sprintName => 'Sprint name';
+
+  @override
+  String get noTasksInColumn => 'No tasks in this column';
+
+  @override
+  String points(int count) {
+    return '$count pts';
+  }
+
+  @override
+  String subtasksDone(int done, int total) {
+    return 'Subtasks: $done/$total done';
+  }
+
+  @override
+  String get moveTo => 'Move to';
+
+  @override
+  String get approved => 'Approved';
+
+  @override
+  String get rejected => 'Rejected';
+
+  @override
+  String get timesheetsTitle => 'Timesheets Dashboard';
+
+  @override
+  String get timesheetsBody =>
+      'Review logged hours, approvals and payouts across projects';
+
+  @override
+  String get totalHours => 'Total Hours';
+
+  @override
+  String get totalSalaries => 'Total Salaries';
+
+  @override
+  String get searchTimesheetsHint => 'Search task, project, employee...';
 }
