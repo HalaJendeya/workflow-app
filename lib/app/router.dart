@@ -14,8 +14,10 @@ import 'package:workflow_app/features/auth/presentation/password_screens.dart';
 import 'package:workflow_app/features/auth/presentation/register_screen.dart';
 import 'package:workflow_app/features/categories/presentation/client_categories.dart';
 import 'package:workflow_app/features/companies/presentation/companies_screen.dart';
+import 'package:workflow_app/features/conversations/presentation/conversations_screens.dart';
 import 'package:workflow_app/features/finance/presentation/invoices_screen.dart';
 import 'package:workflow_app/features/overview/presentation/overview_screen.dart';
+import 'package:workflow_app/features/projects/presentation/projects_screen.dart';
 import 'package:workflow_app/features/shell/app_shell.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -128,10 +130,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           _branch(Routes.client, const OverviewScreen()),
           _branch(Routes.clientCompanies, const CompaniesScreen()),
           _branch(Routes.clientInvoices, const InvoicesScreen()),
-          _branch(
-            Routes.clientChat,
-            const DesignPendingScreen(routeName: 'client/chat'),
-          ),
+          _branch(Routes.clientChat, const ConversationsScreen()),
           _branch(Routes.clientMore, const ClientCategoriesScreen()),
         ],
       ),
@@ -158,14 +157,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             Routes.employeeTasks,
             const DesignPendingScreen(routeName: 'employee/tasks'),
           ),
-          _branch(
-            Routes.employeeProjects,
-            const DesignPendingScreen(routeName: 'employee/projects'),
-          ),
-          _branch(
-            Routes.employeeChat,
-            const DesignPendingScreen(routeName: 'employee/chat'),
-          ),
+          _branch(Routes.employeeProjects, const ProjectsScreen()),
+          _branch(Routes.employeeChat, const ConversationsScreen()),
           _branch(Routes.employeeMore, const MoreScreen()),
         ],
       ),

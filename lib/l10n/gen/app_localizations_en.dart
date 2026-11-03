@@ -644,4 +644,167 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountMenu => 'Account';
+
+  @override
+  String get projectsTitle => 'Projects Management';
+
+  @override
+  String get projectsDescription =>
+      'Overview of all current and past initiatives.';
+
+  @override
+  String get searchProjectsHint => 'Search projects, client, or team...';
+
+  @override
+  String get metricTotalProjects => 'Total Projects';
+
+  @override
+  String get filterAllClients => 'All Clients';
+
+  @override
+  String get listView => 'List view';
+
+  @override
+  String get cardView => 'Card view';
+
+  @override
+  String get statusOnHold => 'On Hold';
+
+  @override
+  String get fieldBudget => 'Budget';
+
+  @override
+  String get fieldProgress => 'Progress';
+
+  @override
+  String get fieldTeam => 'Team';
+
+  @override
+  String get fieldTimeline => 'Timeline';
+
+  @override
+  String daysLeft(int count) {
+    return '$count Days left';
+  }
+
+  @override
+  String get moreActions => 'More actions';
+
+  @override
+  String get createNewProject => 'Create New Project';
+
+  @override
+  String get createNewProjectBody =>
+      'Assign teammates, set milestones & track budgets';
+
+  @override
+  String get addProject => 'Add Project';
+
+  @override
+  String get editProject => 'Edit Project';
+
+  @override
+  String get fieldProjectTitle => 'Project Title';
+
+  @override
+  String get fieldEmployees => 'Employees';
+
+  @override
+  String get newConversation => 'New conversation';
+
+  @override
+  String get filterDirect => 'Direct';
+
+  @override
+  String get filterTeams => 'Teams & Channels';
+
+  @override
+  String unreadCount(int count) {
+    return '$count unread';
+  }
+
+  @override
+  String get you => 'You';
+
+  @override
+  String get callsPending =>
+      'Calls will be available when the meetings backend is ready.';
+
+  @override
+  String get call => 'Call';
+
+  @override
+  String get videoCall => 'Video call';
+
+  @override
+  String get conversationInfo => 'Conversation info';
+
+  @override
+  String get groupChat => 'Group Chat';
+
+  @override
+  String get privateChat => 'Private Chat';
+
+  @override
+  String get participants => 'Participants';
+
+  @override
+  String membersCount(int count) {
+    return '$count members';
+  }
+
+  @override
+  String get activeNow => 'Active now';
+
+  @override
+  String get messageHint => 'Type a message or press \'/\' for commands...';
+
+  @override
+  String get attachmentsPending =>
+      'Attachments will be available when the backend supports uploads.';
+
+  @override
+  String get delivered => 'Delivered';
+
+  @override
+  String get newConversationTitle => 'Create a new conversation';
+
+  @override
+  String get newConversationBody => 'Choose type and participants';
+
+  @override
+  String get conversationType => 'Conversation Type';
+
+  @override
+  String get typeGroup => 'Group';
+
+  @override
+  String get typeDirect => 'Direct';
+
+  @override
+  String get groupName => 'Group Name';
+
+  @override
+  String get groupPicture => 'Group Picture';
+
+  @override
+  String get chooseFile => 'Choose File';
+
+  @override
+  String get noFileChosen => 'No file chosen';
+
+  @override
+  String get selectParticipants => 'Select multiple people to create a group.';
+
+  @override
+  String get selectOnePerson => 'Select one person to start a direct chat.';
+
+  @override
+  String get searchConversationsHint => 'Search conversations...';
+
+  @override
+  String get createGroup => 'Create Group';
+
+  @override
+  String get startChat => 'Start Chat';
 }

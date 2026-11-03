@@ -1255,6 +1255,312 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Account'**
   String get accountMenu;
+
+  /// No description provided for @projectsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects Management'**
+  String get projectsTitle;
+
+  /// No description provided for @projectsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview of all current and past initiatives.'**
+  String get projectsDescription;
+
+  /// No description provided for @searchProjectsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search projects, client, or team...'**
+  String get searchProjectsHint;
+
+  /// No description provided for @metricTotalProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Projects'**
+  String get metricTotalProjects;
+
+  /// No description provided for @filterAllClients.
+  ///
+  /// In en, this message translates to:
+  /// **'All Clients'**
+  String get filterAllClients;
+
+  /// No description provided for @listView.
+  ///
+  /// In en, this message translates to:
+  /// **'List view'**
+  String get listView;
+
+  /// No description provided for @cardView.
+  ///
+  /// In en, this message translates to:
+  /// **'Card view'**
+  String get cardView;
+
+  /// No description provided for @statusOnHold.
+  ///
+  /// In en, this message translates to:
+  /// **'On Hold'**
+  String get statusOnHold;
+
+  /// No description provided for @fieldBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get fieldBudget;
+
+  /// No description provided for @fieldProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get fieldProgress;
+
+  /// No description provided for @fieldTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Team'**
+  String get fieldTeam;
+
+  /// No description provided for @fieldTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get fieldTimeline;
+
+  /// No description provided for @daysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Days left'**
+  String daysLeft(int count);
+
+  /// No description provided for @moreActions.
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get moreActions;
+
+  /// No description provided for @createNewProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Create New Project'**
+  String get createNewProject;
+
+  /// No description provided for @createNewProjectBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign teammates, set milestones & track budgets'**
+  String get createNewProjectBody;
+
+  /// No description provided for @addProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Project'**
+  String get addProject;
+
+  /// No description provided for @editProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Project'**
+  String get editProject;
+
+  /// No description provided for @fieldProjectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Project Title'**
+  String get fieldProjectTitle;
+
+  /// No description provided for @fieldEmployees.
+  ///
+  /// In en, this message translates to:
+  /// **'Employees'**
+  String get fieldEmployees;
+
+  /// No description provided for @newConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'New conversation'**
+  String get newConversation;
+
+  /// No description provided for @filterDirect.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct'**
+  String get filterDirect;
+
+  /// No description provided for @filterTeams.
+  ///
+  /// In en, this message translates to:
+  /// **'Teams & Channels'**
+  String get filterTeams;
+
+  /// No description provided for @unreadCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} unread'**
+  String unreadCount(int count);
+
+  /// No description provided for @you.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get you;
+
+  /// No description provided for @callsPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls will be available when the meetings backend is ready.'**
+  String get callsPending;
+
+  /// No description provided for @call.
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get call;
+
+  /// No description provided for @videoCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Video call'**
+  String get videoCall;
+
+  /// No description provided for @conversationInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation info'**
+  String get conversationInfo;
+
+  /// No description provided for @groupChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Chat'**
+  String get groupChat;
+
+  /// No description provided for @privateChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Private Chat'**
+  String get privateChat;
+
+  /// No description provided for @participants.
+  ///
+  /// In en, this message translates to:
+  /// **'Participants'**
+  String get participants;
+
+  /// No description provided for @membersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} members'**
+  String membersCount(int count);
+
+  /// No description provided for @activeNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Active now'**
+  String get activeNow;
+
+  /// No description provided for @messageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a message or press \'/\' for commands...'**
+  String get messageHint;
+
+  /// No description provided for @attachmentsPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments will be available when the backend supports uploads.'**
+  String get attachmentsPending;
+
+  /// No description provided for @delivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get delivered;
+
+  /// No description provided for @newConversationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a new conversation'**
+  String get newConversationTitle;
+
+  /// No description provided for @newConversationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose type and participants'**
+  String get newConversationBody;
+
+  /// No description provided for @conversationType.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation Type'**
+  String get conversationType;
+
+  /// No description provided for @typeGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get typeGroup;
+
+  /// No description provided for @typeDirect.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct'**
+  String get typeDirect;
+
+  /// No description provided for @groupName.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Name'**
+  String get groupName;
+
+  /// No description provided for @groupPicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Picture'**
+  String get groupPicture;
+
+  /// No description provided for @chooseFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose File'**
+  String get chooseFile;
+
+  /// No description provided for @noFileChosen.
+  ///
+  /// In en, this message translates to:
+  /// **'No file chosen'**
+  String get noFileChosen;
+
+  /// No description provided for @selectParticipants.
+  ///
+  /// In en, this message translates to:
+  /// **'Select multiple people to create a group.'**
+  String get selectParticipants;
+
+  /// No description provided for @selectOnePerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Select one person to start a direct chat.'**
+  String get selectOnePerson;
+
+  /// No description provided for @searchConversationsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search conversations...'**
+  String get searchConversationsHint;
+
+  /// No description provided for @createGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Group'**
+  String get createGroup;
+
+  /// No description provided for @startChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Chat'**
+  String get startChat;
 }
 
 class _AppLocalizationsDelegate

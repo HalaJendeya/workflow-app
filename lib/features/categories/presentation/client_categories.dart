@@ -4,6 +4,7 @@ import 'package:workflow_app/core/widgets/design_pending_screen.dart';
 import 'package:workflow_app/features/categories/presentation/categories_screen.dart';
 import 'package:workflow_app/features/finance/presentation/invoices_screen.dart';
 import 'package:workflow_app/features/finance/presentation/payments_screen.dart';
+import 'package:workflow_app/features/projects/presentation/projects_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 /// Client "More" tab: Figma Categories (666:69807).
@@ -78,10 +79,7 @@ class ClientCategoriesScreen extends StatelessWidget {
             CategoryItem(
               label: l10n.navProjects,
               icon: 'cat_item_projects',
-              onOpen: (c) => push(
-                c,
-                const DesignPendingScreen(routeName: 'client/projects'),
-              ),
+              onOpen: (c) => push(c, const ProjectsScreen()),
             ),
           ],
         ),
@@ -111,6 +109,10 @@ class ClientCategoriesScreen extends StatelessWidget {
         CreateAction(
           l10n.createInvoice,
           (c) => pushRoot(c, const InvoiceFormScreen()),
+        ),
+        CreateAction(
+          l10n.addProject,
+          (c) => pushRoot(c, const ProjectFormScreen()),
         ),
         CreateAction(
           l10n.addPayment,

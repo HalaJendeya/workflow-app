@@ -279,5 +279,77 @@
         "type": "String"
       }
     }
+  },
+  "projectsTitle": "Projects Management",
+  "projectsDescription": "Overview of all current and past initiatives.",
+  "searchProjectsHint": "Search projects, client, or team...",
+  "metricTotalProjects": "Total Projects",
+  "filterAllClients": "All Clients",
+  "listView": "List view",
+  "cardView": "Card view",
+  "statusOnHold": "On Hold",
+  "fieldBudget": "Budget",
+  "fieldProgress": "Progress",
+  "fieldTeam": "Team",
+  "fieldTimeline": "Timeline",
+  "daysLeft": "{count} Days left",
+  "moreActions": "More actions",
+  "createNewProject": "Create New Project",
+  "createNewProjectBody": "Assign teammates, set milestones & track budgets",
+  "addProject": "Add Project",
+  "editProject": "Edit Project",
+  "fieldProjectTitle": "Project Title",
+  "fieldEmployees": "Employees",
+  "@daysLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "newConversation": "New conversation",
+  "filterDirect": "Direct",
+  "filterTeams": "Teams & Channels",
+  "unreadCount": "{count} unread",
+  "you": "You",
+  "callsPending": "Calls will be available when the meetings backend is ready.",
+  "call": "Call",
+  "videoCall": "Video call",
+  "conversationInfo": "Conversation info",
+  "groupChat": "Group Chat",
+  "privateChat": "Private Chat",
+  "participants": "Participants",
+  "membersCount": "{count} members",
+  "activeNow": "Active now",
+  "messageHint": "Type a message or press '/' for commands...",
+  "attachmentsPending": "Attachments will be available when the backend supports uploads.",
+  "delivered": "Delivered",
+  "newConversationTitle": "Create a new conversation",
+  "newConversationBody": "Choose type and participants",
+  "conversationType": "Conversation Type",
+  "typeGroup": "Group",
+  "typeDirect": "Direct",
+  "groupName": "Group Name",
+  "groupPicture": "Group Picture",
+  "chooseFile": "Choose File",
+  "noFileChosen": "No file chosen",
+  "selectParticipants": "Select multiple people to create a group.",
+  "selectOnePerson": "Select one person to start a direct chat.",
+  "searchConversationsHint": "Search conversations...",
+  "createGroup": "Create Group",
+  "startChat": "Start Chat",
+  "@unreadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@membersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

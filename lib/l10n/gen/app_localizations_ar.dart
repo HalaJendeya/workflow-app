@@ -646,4 +646,165 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get accountMenu => 'الحساب';
+
+  @override
+  String get projectsTitle => 'إدارة المشاريع';
+
+  @override
+  String get projectsDescription =>
+      'نظرة عامة على جميع المبادرات الحالية والسابقة.';
+
+  @override
+  String get searchProjectsHint => 'ابحث في المشاريع أو العميل أو الفريق...';
+
+  @override
+  String get metricTotalProjects => 'إجمالي المشاريع';
+
+  @override
+  String get filterAllClients => 'كل العملاء';
+
+  @override
+  String get listView => 'عرض القائمة';
+
+  @override
+  String get cardView => 'عرض البطاقات';
+
+  @override
+  String get statusOnHold => 'معلّق';
+
+  @override
+  String get fieldBudget => 'الميزانية';
+
+  @override
+  String get fieldProgress => 'التقدم';
+
+  @override
+  String get fieldTeam => 'الفريق';
+
+  @override
+  String get fieldTimeline => 'المدة';
+
+  @override
+  String daysLeft(int count) {
+    return 'متبقٍ $count يوم';
+  }
+
+  @override
+  String get moreActions => 'إجراءات إضافية';
+
+  @override
+  String get createNewProject => 'إنشاء مشروع جديد';
+
+  @override
+  String get createNewProjectBody =>
+      'عيّن أعضاء الفريق وحدد المراحل وتابع الميزانيات';
+
+  @override
+  String get addProject => 'إضافة مشروع';
+
+  @override
+  String get editProject => 'تعديل المشروع';
+
+  @override
+  String get fieldProjectTitle => 'عنوان المشروع';
+
+  @override
+  String get fieldEmployees => 'الموظفون';
+
+  @override
+  String get newConversation => 'محادثة جديدة';
+
+  @override
+  String get filterDirect => 'مباشرة';
+
+  @override
+  String get filterTeams => 'الفرق والقنوات';
+
+  @override
+  String unreadCount(int count) {
+    return '$count غير مقروءة';
+  }
+
+  @override
+  String get you => 'أنت';
+
+  @override
+  String get callsPending => 'ستتوفر المكالمات عندما تجهز خدمة الاجتماعات.';
+
+  @override
+  String get call => 'اتصال';
+
+  @override
+  String get videoCall => 'مكالمة فيديو';
+
+  @override
+  String get conversationInfo => 'معلومات المحادثة';
+
+  @override
+  String get groupChat => 'محادثة جماعية';
+
+  @override
+  String get privateChat => 'محادثة خاصة';
+
+  @override
+  String get participants => 'المشاركون';
+
+  @override
+  String membersCount(int count) {
+    return '$count أعضاء';
+  }
+
+  @override
+  String get activeNow => 'نشط الآن';
+
+  @override
+  String get messageHint => 'اكتب رسالة أو اضغط \'/\' للأوامر...';
+
+  @override
+  String get attachmentsPending => 'ستتوفر المرفقات عندما يدعم الخادم الرفع.';
+
+  @override
+  String get delivered => 'تم التسليم';
+
+  @override
+  String get newConversationTitle => 'إنشاء محادثة جديدة';
+
+  @override
+  String get newConversationBody => 'اختر النوع والمشاركين';
+
+  @override
+  String get conversationType => 'نوع المحادثة';
+
+  @override
+  String get typeGroup => 'مجموعة';
+
+  @override
+  String get typeDirect => 'مباشرة';
+
+  @override
+  String get groupName => 'اسم المجموعة';
+
+  @override
+  String get groupPicture => 'صورة المجموعة';
+
+  @override
+  String get chooseFile => 'اختر ملفًا';
+
+  @override
+  String get noFileChosen => 'لم يتم اختيار ملف';
+
+  @override
+  String get selectParticipants => 'اختر عدة أشخاص لإنشاء مجموعة.';
+
+  @override
+  String get selectOnePerson => 'اختر شخصًا واحدًا لبدء محادثة مباشرة.';
+
+  @override
+  String get searchConversationsHint => 'ابحث في المحادثات...';
+
+  @override
+  String get createGroup => 'إنشاء المجموعة';
+
+  @override
+  String get startChat => 'بدء المحادثة';
 }
