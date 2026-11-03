@@ -33,7 +33,8 @@ lib/l10n/arb/            app_en.arb, app_ar.arb (generated code in lib/l10n/gen)
 
 ## Rules
 
-- **Figma is the visual source of truth.** File `NGIAdfhxsrEy5hRorKjT8K`, start node `534:30389`. Don't build screens from guesses; routes stay `DesignPendingScreen` until their frame has been inspected.
+- **Figma is the visual source of truth.** File `NGIAdfhxsrEy5hRorKjT8K`. Mobile app frames are on page `534:30389` (client at y≈0, employee at y≈5900); mobile auth frames are in `130:20944` and `150:2174`. Don't build screens from guesses; routes stay `DesignPendingScreen` until their frame has been inspected.
+- `www.figma.com` is blocked in cloud sessions, so asset URLs can't be curled. Export icons with `use_figma` (`node.exportAsync({format: 'SVG_STRING'})`); export raster images as base64 in chunks of 46 KB or less, then decode them from the session transcript.
 - Theme values come only from `AppTheme` / `AppSpacing`. Never hardcode colors or sizes in screens.
 - Integrate an endpoint only when the collection documents its request and response. Model only the fields that are documented, and record anything missing in the backend gap report.
 - Never run requests marked ⚠️ (destructive) or that mutate data against a real server without explicit approval.
