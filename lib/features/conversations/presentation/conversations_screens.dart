@@ -1,11 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/network/api_exception.dart';
+import 'package:workflow_app/core/widgets/api_error_text.dart';
+import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
+import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/conversations/data/conversations_repository.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -70,6 +77,28 @@ class Conversation implements Identified {
         members: members,
       );
 }
+
+/// Maps an API conversation onto the Figma presentation model.
+Conversation conversationFromApi(ApiConversation c, int? me, String you) =>
+    Conversation(
+      id: '${c.id}',
+      name: c.name,
+      type: c.isGroup ? ConversationType.group : ConversationType.direct,
+      role: '',
+      unread: c.unread,
+      members: c.members,
+      messages: [
+        for (final m in c.messages)
+          ChatMessage(
+            author: m.senderId == me ? you : m.senderName,
+            text: m.text.isEmpty && m.attachments > 0
+                ? '📎 ×${m.attachments}'
+                : m.text,
+            at: m.createdAt,
+            mine: m.senderId == me,
+          ),
+      ],
+    );
 
 DateTime _today(int h, int m) {
   final n = DateTime.now();
@@ -187,7 +216,17 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final demo = ref.watch(demoModeProvider);
-    final all = ref.watch(conversationsProvider);
+    final me = ref.watch(sessionControllerProvider).value?.userId;
+    final source = demo
+        ? AsyncData(ref.watch(conversationsProvider))
+        : ref
+              .watch(apiConversationsProvider)
+              .whenData(
+                (list) => [
+                  for (final c in list) conversationFromApi(c, me, l10n.you),
+                ],
+              );
+    final all = source.value ?? const <Conversation>[];
     final q = _query.trim().toLowerCase();
     final unreadCount = all.where((c) => c.unread > 0).length;
     final visible = all.where((c) {
@@ -211,7 +250,6 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       ),
       createLabel: l10n.newConversation,
       children: [
-        if (!demo) const BackendPendingNotice(),
         ChipRow(
           children: [
             for (final f in _Filter.values)
@@ -227,7 +265,14 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
               ),
           ],
         ),
-        if (visible.isEmpty) EmptyNotice(text: l10n.noRecords),
+        if (source is! AsyncData)
+          AsyncSection(
+            value: source,
+            onRetry: () => ref.invalidate(apiConversationsProvider),
+            builder: (_) => const SizedBox.shrink(),
+          )
+        else if (visible.isEmpty)
+          EmptyNotice(text: l10n.noRecords),
         for (final c in visible)
           ModuleCard(
             key: Key('conversation-${c.id}'),
@@ -311,6 +356,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!ref.read(demoModeProvider)) {
+        unawaited(_markRead());
+        return;
+      }
       final n = ref.read(conversationsProvider.notifier);
       final c = n.byId(widget.id);
       if (c != null && c.unread > 0) n.replace(c.copyWith(unread: 0));
@@ -323,9 +372,43 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     super.dispose();
   }
 
+  int get _apiId => int.parse(widget.id);
+  bool _sending = false;
+
+  /// Clears the unread badge on the server; a failure only leaves the badge.
+  Future<void> _markRead() async {
+    try {
+      await ref.read(conversationsRepositoryProvider).markRead(_apiId);
+      ref.invalidate(apiConversationsProvider);
+    } on ApiException {
+      // Not a user action: the conversation still opens and stays unread.
+    }
+  }
+
+  Future<void> _sendApi(String text) async {
+    setState(() => _sending = true);
+    try {
+      await ref.read(conversationsRepositoryProvider).send(_apiId, text);
+      _text.clear();
+      ref
+        ..invalidate(apiConversationProvider(_apiId))
+        ..invalidate(apiConversationsProvider);
+    } on ApiException catch (e) {
+      if (mounted) {
+        showSnack(context, localizedError(AppLocalizations.of(context), e));
+      }
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
   void _send() {
     final text = _text.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _sending) return;
+    if (!ref.read(demoModeProvider)) {
+      unawaited(_sendApi(text));
+      return;
+    }
     final n = ref.read(conversationsProvider.notifier);
     final c = n.byId(widget.id);
     if (c == null) return;
@@ -348,10 +431,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final c = ref
-        .watch(conversationsProvider)
-        .where((x) => x.id == widget.id)
-        .firstOrNull;
+    final Conversation? found;
+    if (ref.watch(demoModeProvider)) {
+      found = ref
+          .watch(conversationsProvider)
+          .where((x) => x.id == widget.id)
+          .firstOrNull;
+    } else {
+      final api = ref.watch(apiConversationProvider(_apiId));
+      if (api is! AsyncData<ApiConversation>) {
+        return Scaffold(
+          backgroundColor: AppColors.appBackground,
+          appBar: AppBar(),
+          body: AsyncSection(
+            value: api,
+            onRetry: () => ref.invalidate(apiConversationProvider(_apiId)),
+            builder: (_) => const SizedBox.shrink(),
+          ),
+        );
+      }
+      found = conversationFromApi(
+        api.value,
+        ref.watch(sessionControllerProvider).value?.userId,
+        l10n.you,
+      );
+    }
+    final c = found;
     if (c == null) {
       return Scaffold(body: EmptyNotice(text: l10n.noRecords));
     }
