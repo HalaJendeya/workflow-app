@@ -904,5 +904,10 @@
   "dashProjects": "Projects",
   "dashCompleted": "Completed projects",
   "dashInProgress": "Projects in progress",
-  "dashLiveOnly": "The server reports project counts only; the other dashboard sections need a documented dashboard response."
+  "dashLiveOnly": "The server reports project counts only; the other dashboard sections need a documented dashboard response.",
+  "totalEarned": "Total earned",
+  "paidSalary": "Paid salary",
+  "unpaidSalary": "Unpaid salary",
+  "projectLeader": "Project leader",
+  "inReview": "In review"
 }

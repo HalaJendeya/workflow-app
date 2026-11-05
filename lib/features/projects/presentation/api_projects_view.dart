@@ -162,6 +162,10 @@ class ApiProjectCard extends StatelessWidget {
             symbol: p.currencySymbol ?? '',
           );
     final fields = [
+      if (p.companyName != null) DetailField(l10n.fieldCompany, p.companyName!),
+      if (p.leaderName != null) DetailField(l10n.projectLeader, p.leaderName!),
+      if (p.memberCount != null)
+        DetailField(l10n.fieldTeam, '${p.memberCount}'),
       if (budget != null) DetailField(l10n.fieldBudget, budget),
       if (p.completion != null)
         DetailField(l10n.fieldProgress, '${p.completion}%'),

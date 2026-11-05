@@ -5,13 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:workflow_app/app/routes.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/dashboard/domain/client_dashboard.dart';
 import 'package:workflow_app/features/dashboard/domain/employee_dashboard.dart';
 import 'package:workflow_app/features/dashboard/presentation/client_dashboard_screen.dart';
 import 'package:workflow_app/features/dashboard/presentation/dashboard_widgets.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
+import 'package:workflow_app/features/projects/data/projects_repository.dart';
+import 'package:workflow_app/features/projects/presentation/api_projects_view.dart';
 import 'package:workflow_app/features/projects/presentation/projects_screen.dart';
+import 'package:workflow_app/features/work/data/employee_work_repository.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -36,6 +40,7 @@ class _EmployeeDashboardScreenState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final data = ref.watch(employeeDashboardProvider);
+    if (data == null) return const _ApiEmployeeDashboard();
     final tasks = ref.watch(workTasksProvider);
     final q = _query.trim().toLowerCase();
     final projects = ref
@@ -56,7 +61,6 @@ class _EmployeeDashboardScreenState
       description: l10n.employeeDashboardBody,
       onSearch: (v) => setState(() => _query = v),
       children: [
-        if (data == null) const BackendPendingNotice(),
         ChipRow(
           children: [
             for (final p in DashboardPeriod.values)
@@ -69,7 +73,7 @@ class _EmployeeDashboardScreenState
           ],
         ),
         _KpiGrid(data: data, tasks: tasks),
-        if (data != null) _HoursCard(data: data),
+        _HoursCard(data: data),
         _DistributionCard(tasks: tasks, data: data),
         DashboardGroupHeader(
           title: l10n.activeTasksMilestones,
@@ -84,7 +88,7 @@ class _EmployeeDashboardScreenState
         ),
         if (focus.isEmpty) EmptyNotice(text: l10n.noRecords),
         for (final t in focus.take(3)) _FocusTaskCard(task: t),
-        if (data != null) ...[
+        ...[
           AllocationCard(allocation: data.allocation),
           _RevenueTrajectoryCard(data: data),
         ],
@@ -995,3 +999,119 @@ class _Bar extends StatelessWidget {
     ),
   );
 }
+
+/// API-mode employee dashboard: the figures GET /employee/dashboard returns
+/// live, task counts by status from GET /employee/tasks and the first page
+/// of real projects. The hours chart, revenue trajectory and allocation
+/// cards have no documented source, so they are not drawn with samples.
+class _ApiEmployeeDashboard extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final summary = ref.watch(employeeDashboardSummaryProvider);
+    final tasks = ref.watch(employeeTaskStatsProvider);
+    const projectsQuery = (search: '', status: null, page: 1);
+    final projects = ref.watch(apiProjectsProvider(projectsQuery));
+    String amount(double v) => money(v, currency: '', symbol: '');
+    return ModulePage(
+      title: l10n.catDashboard,
+      description: l10n.employeeDashboardBody,
+      children: [
+        AsyncSection(
+          value: summary,
+          onRetry: () => ref.invalidate(employeeDashboardSummaryProvider),
+          builder: (s) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              MetricCard(
+                key: const Key('emp-dash-tasks'),
+                title: l10n.activeTasks,
+                value: count(s.tasks),
+                delta: '—',
+              ),
+              const SizedBox(height: 16),
+              MetricCard(
+                title: l10n.loggedHours,
+                value: (s.loggedMinutes / 60).toStringAsFixed(1),
+                delta: '—',
+              ),
+              const SizedBox(height: 16),
+              MetricCard(
+                title: l10n.totalEarned,
+                value: amount(s.earned),
+                delta: '—',
+              ),
+              const SizedBox(height: 16),
+              MetricCard(
+                title: l10n.paidSalary,
+                value: amount(s.paid),
+                delta: '—',
+              ),
+              const SizedBox(height: 16),
+              MetricCard(
+                title: l10n.unpaidSalary,
+                value: amount(s.unpaid),
+                delta: '—',
+                negative: true,
+              ),
+            ],
+          ),
+        ),
+        AsyncSection(
+          value: tasks,
+          onRetry: () => ref.invalidate(employeeTaskStatsProvider),
+          builder: (t) => DashboardSection(
+            title: l10n.taskDistribution,
+            caption: l10n.taskDistributionBody,
+            children: [
+              for (final e in t.byStatus.entries)
+                LabelValue(
+                  label: serverTaskStatusLabel(l10n, e.key),
+                  value: '${e.value}',
+                ),
+            ],
+          ),
+        ),
+        DashboardGroupHeader(
+          title: l10n.activeClientProjects,
+          chips: [
+            FilterChipBox(
+              label: l10n.runningCount(projects.value?.stats.inProgress ?? 0),
+              selected: true,
+              onTap: () => context.go(Routes.employeeProjects),
+            ),
+          ],
+        ),
+        AsyncSection(
+          value: projects,
+          onRetry: () => ref.invalidate(apiProjectsProvider(projectsQuery)),
+          builder: (list) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (list.page.items.isEmpty) EmptyNotice(text: l10n.noRecords),
+              for (final p in list.page.items.take(3)) ...[
+                ApiProjectCard(project: p),
+                const SizedBox(height: 16),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Localized label for a task status key the server reports in
+/// `stats.by_status`; an unknown key is shown as sent.
+String serverTaskStatusLabel(AppLocalizations l10n, String key) =>
+    switch (key) {
+      'backlog' => l10n.backlog,
+      'todo' => l10n.toDo,
+      'pending' => l10n.statusPending,
+      'in_progress' => l10n.statusInProgress,
+      'in_review' => l10n.inReview,
+      'completed' => l10n.statusCompleted,
+      _ => key,
+    };

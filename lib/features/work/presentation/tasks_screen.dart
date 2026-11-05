@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
+import 'package:workflow_app/features/work/data/employee_work_repository.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -98,6 +100,10 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     final active = all.where((t) => t.status != TaskStatus.completed).length;
     final hours = all.fold<int>(0, (s, t) => s + t.duration.inMinutes) ~/ 60;
     final budget = all.fold<double>(0, (s, t) => s + t.amount);
+    // API mode: figures from `stats` of GET /employee/tasks. The employee
+    // role gets no cost/currency, so budget utilisation has no source.
+    final api = demo ? null : ref.watch(employeeTaskStatsProvider);
+    final stats = api?.value;
 
     return ModulePage(
       title: l10n.tasksManagement,
@@ -107,25 +113,34 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       createLabel: l10n.addTask,
       children: [
         if (!demo) const BackendPendingNotice(),
+        if (api case AsyncError(:final error))
+          ApiErrorCard(
+            error: error,
+            onRetry: () => ref.invalidate(employeeTaskStatsProvider),
+          ),
         IconMetricCard(
           icon: 'metric_task_0',
           tint: AppColors.primary50,
           title: l10n.activeTasks,
-          value: '$active',
+          value: demo ? '$active' : '${stats?.active ?? '—'}',
           caption: l10n.completionVelocity,
         ),
         IconMetricCard(
           icon: 'metric_task_1',
           tint: AppColors.surfaceSubtle,
           title: l10n.totalBudgetUtilization,
-          value: money(budget),
+          value: demo ? money(budget) : '—',
           caption: l10n.budgetAllocations,
         ),
         IconMetricCard(
           icon: 'metric_task_2',
           tint: ModuleColors.warningBg,
           title: l10n.loggedHours,
-          value: '$hours',
+          value: demo
+              ? '$hours'
+              : stats == null
+              ? '—'
+              : (stats.loggedMinutes / 60).toStringAsFixed(1),
           caption: l10n.hoursThisPeriod,
         ),
         WfSearchBox(

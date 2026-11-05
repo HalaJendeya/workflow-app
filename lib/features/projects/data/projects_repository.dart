@@ -24,8 +24,9 @@ ApiProjectStatus _status(Object? v) => switch (v) {
 /// Only fields the collection names for list rows are read: `id`, `title`
 /// (sort key, CSV column and options payload), `status`, `budget` (absent
 /// for the employee role), `currency {code, symbol}` and
-/// `completion_percentage` (0..100). Their presence on live rows is not yet
-/// confirmed because the test account has no projects.
+/// `completion_percentage` (0..100). On the live server an employee row
+/// also carries `company {id, name}`, `leader {id, name}` and `members[]`,
+/// and has no `budget` (checked 2026-11-05).
 class ProjectRecord {
   const new({
     required this.id,
@@ -35,10 +36,16 @@ class ProjectRecord {
     this.currencyCode,
     this.currencySymbol,
     this.completion,
+    this.companyName,
+    this.leaderName,
+    this.memberCount,
   });
 
   factory fromJson(Json j) {
     final currency = j['currency'];
+    final company = j['company'];
+    final leader = j['leader'];
+    final members = j['members'];
     return ProjectRecord(
       id: asInt(j['id']) ?? missingField('id'),
       title: j['title'] is String
@@ -49,6 +56,9 @@ class ProjectRecord {
       currencyCode: currency is Json ? currency['code'] as String? : null,
       currencySymbol: currency is Json ? currency['symbol'] as String? : null,
       completion: asInt(j['completion_percentage']),
+      companyName: company is Json ? company['name'] as String? : null,
+      leaderName: leader is Json ? leader['name'] as String? : null,
+      memberCount: members is List ? members.length : null,
     );
   }
 
@@ -59,6 +69,9 @@ class ProjectRecord {
   final String? currencyCode;
   final String? currencySymbol;
   final int? completion;
+  final String? companyName;
+  final String? leaderName;
+  final int? memberCount;
 }
 
 /// `stats {total, pending, in_progress, completed}`; ignores the status

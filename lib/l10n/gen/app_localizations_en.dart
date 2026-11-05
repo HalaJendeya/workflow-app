@@ -1715,4 +1715,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get dashLiveOnly =>
       'The server reports project counts only; the other dashboard sections need a documented dashboard response.';
+
+  @override
+  String get totalEarned => 'Total earned';
+
+  @override
+  String get paidSalary => 'Paid salary';
+
+  @override
+  String get unpaidSalary => 'Unpaid salary';
+
+  @override
+  String get projectLeader => 'Project leader';
+
+  @override
+  String get inReview => 'In review';
 }

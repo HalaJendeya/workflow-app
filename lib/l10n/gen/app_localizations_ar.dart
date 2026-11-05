@@ -1709,4 +1709,19 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get dashLiveOnly =>
       'يعرض الخادم أعداد المشاريع فقط؛ أما بقية أقسام اللوحة فتحتاج إلى ردّ موثّق من الخادم.';
+
+  @override
+  String get totalEarned => 'إجمالي المستحق';
+
+  @override
+  String get paidSalary => 'الراتب المدفوع';
+
+  @override
+  String get unpaidSalary => 'الراتب غير المدفوع';
+
+  @override
+  String get projectLeader => 'قائد المشروع';
+
+  @override
+  String get inReview => 'قيد المراجعة';
 }

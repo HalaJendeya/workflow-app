@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
+import 'package:workflow_app/features/work/data/employee_work_repository.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
@@ -59,6 +61,14 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
         .where((e) => e.status == TimesheetStatus.approved)
         .fold<double>(0, (s, e) => s + e.amount);
     final dt = DateFormat('yyyy/MM/dd - HH:mm', 'en');
+    // API mode: `stats` and per-currency `totals` of GET /employee/timesheets.
+    final api = demo ? null : ref.watch(employeeTimesheetSummaryProvider);
+    final sum = api?.value;
+    String apiMoney(TimesheetSummary s) => s.money.isEmpty
+        ? '0'
+        : s.money
+              .map((m) => money(m.approved, currency: m.code, symbol: m.symbol))
+              .join(' · ');
 
     return ModulePage(
       title: l10n.timesheetsTitle,
@@ -66,33 +76,50 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
       onSearch: (v) => setState(() => _query = v),
       children: [
         if (!demo) const BackendPendingNotice(),
+        if (api case AsyncError(:final error))
+          ApiErrorCard(
+            error: error,
+            onRetry: () => ref.invalidate(employeeTimesheetSummaryProvider),
+          ),
         IconMetricCard(
           icon: 'metric_ts_0',
           tint: ModuleColors.successBg,
           iconSize: 20,
           title: l10n.approved,
-          value: '${n(TimesheetStatus.approved)}',
+          value: demo
+              ? '${n(TimesheetStatus.approved)}'
+              : '${sum?.approved ?? '—'}',
         ),
         IconMetricCard(
           icon: 'metric_ts_1',
           tint: ModuleColors.warningBg,
           iconSize: 20,
           title: l10n.statusPending,
-          value: '${n(TimesheetStatus.pending)}',
+          value: demo
+              ? '${n(TimesheetStatus.pending)}'
+              : '${sum?.pending ?? '—'}',
         ),
         IconMetricCard(
           icon: 'metric_ts_2',
           tint: AppColors.primary50,
           iconSize: 20,
           title: l10n.totalHours,
-          value: hours.toStringAsFixed(1),
+          value: demo
+              ? hours.toStringAsFixed(1)
+              : sum == null
+              ? '—'
+              : (sum.totalMinutes / 60).toStringAsFixed(1),
         ),
         IconMetricCard(
           icon: 'metric_ts_3',
           tint: AppColors.surfaceSubtle,
           iconSize: 20,
           title: l10n.totalSalaries,
-          value: money(salaries),
+          value: demo
+              ? money(salaries)
+              : sum == null
+              ? '—'
+              : apiMoney(sum),
         ),
         WfSearchBox(
           fieldKey: const Key('timesheets-search'),

@@ -3187,6 +3187,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The server reports project counts only; the other dashboard sections need a documented dashboard response.'**
   String get dashLiveOnly;
+
+  /// No description provided for @totalEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'Total earned'**
+  String get totalEarned;
+
+  /// No description provided for @paidSalary.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid salary'**
+  String get paidSalary;
+
+  /// No description provided for @unpaidSalary.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpaid salary'**
+  String get unpaidSalary;
+
+  /// No description provided for @projectLeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Project leader'**
+  String get projectLeader;
+
+  /// No description provided for @inReview.
+  ///
+  /// In en, this message translates to:
+  /// **'In review'**
+  String get inReview;
 }
 
 class _AppLocalizationsDelegate
