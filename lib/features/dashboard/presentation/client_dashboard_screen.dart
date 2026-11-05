@@ -6,12 +6,18 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:workflow_app/app/routes.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
+import 'package:workflow_app/features/dashboard/data/client_dashboard_repository.dart';
 import 'package:workflow_app/features/dashboard/domain/client_dashboard.dart';
 import 'package:workflow_app/features/dashboard/presentation/dashboard_widgets.dart';
+import 'package:workflow_app/features/finance/data/client_finance_repository.dart';
 import 'package:workflow_app/features/finance/domain/finance_models.dart';
+import 'package:workflow_app/features/finance/presentation/api_invoices_view.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/finance/presentation/invoices_screen.dart';
+import 'package:workflow_app/features/projects/data/projects_repository.dart';
+import 'package:workflow_app/features/projects/presentation/api_projects_view.dart';
 import 'package:workflow_app/features/projects/presentation/projects_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -46,6 +52,7 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final data = ref.watch(clientDashboardProvider);
+    if (data == null) return const _ApiClientDashboard();
     final projects = ref
         .watch(projectsProvider)
         .where((p) => _matches('${p.name} ${p.client} ${p.company}'))
@@ -64,7 +71,6 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
       description: l10n.dashboardBody,
       onSearch: (v) => setState(() => _query = v),
       children: [
-        if (data == null) const BackendPendingNotice(),
         ChipRow(
           children: [
             for (final p in DashboardPeriod.values)
@@ -76,7 +82,7 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
               ),
           ],
         ),
-        if (data != null) ...[
+        ...[
           DashboardSection(
             title: l10n.overviewMetrics,
             badge: l10n.activeHub,
@@ -477,6 +483,118 @@ class _DashboardInvoiceCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// API-mode dashboard: the three counts `GET /client/dashboard` returns, then
+/// the first page of real projects and invoices. The remaining Figma
+/// sections (trends, allocation, milestones, escrow) have no documented
+/// source and are not filled with sample data.
+class _ApiClientDashboard extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final summary = ref.watch(clientDashboardSummaryProvider);
+    const projectsQuery = (search: '', status: null, page: 1);
+    final projects = ref.watch(apiProjectsProvider(projectsQuery));
+    const invoicesQuery = (
+      filter: InvoiceFilter.all,
+      search: '',
+      from: null,
+      to: null,
+      page: 1,
+    );
+    final invoices = ref.watch(clientInvoicesProvider(invoicesQuery));
+    return ModulePage(
+      title: l10n.catDashboard,
+      description: l10n.dashboardBody,
+      children: [
+        AsyncSection(
+          value: summary,
+          onRetry: () => ref.invalidate(clientDashboardSummaryProvider),
+          builder: (s) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              MetricCard(
+                key: const Key('dash-projects-count'),
+                title: l10n.dashProjects,
+                value: count(s.projects),
+                delta: '—',
+              ),
+              const SizedBox(height: 16),
+              MetricCard(
+                title: l10n.dashInProgress,
+                value: count(s.inProgress),
+                delta: '—',
+              ),
+              const SizedBox(height: 16),
+              MetricCard(
+                title: l10n.dashCompleted,
+                value: count(s.completed),
+                delta: '—',
+              ),
+              const SizedBox(height: 12),
+              Text(l10n.dashLiveOnly, style: dashCaption),
+            ],
+          ),
+        ),
+        DashboardGroupHeader(
+          title: l10n.activeClientProjects,
+          chips: [
+            FilterChipBox(
+              label: l10n.runningCount(projects.value?.stats.inProgress ?? 0),
+              selected: true,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const ProjectsScreen()),
+              ),
+            ),
+          ],
+        ),
+        AsyncSection(
+          value: projects,
+          onRetry: () => ref.invalidate(apiProjectsProvider(projectsQuery)),
+          builder: (list) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (list.page.items.isEmpty) EmptyNotice(text: l10n.noRecords),
+              for (final p in list.page.items.take(3)) ...[
+                ApiProjectCard(project: p),
+                const SizedBox(height: 16),
+              ],
+            ],
+          ),
+        ),
+        DashboardGroupHeader(
+          title: l10n.latestInvoices,
+          chips: [
+            FilterChipBox(
+              key: const Key('view-all-invoices'),
+              label: l10n.viewAllCount(invoices.value?.page.total ?? 0),
+              onTap: () => context.go(Routes.clientInvoices),
+            ),
+          ],
+        ),
+        AsyncSection(
+          value: invoices,
+          onRetry: () => ref.invalidate(clientInvoicesProvider(invoicesQuery)),
+          builder: (list) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (list.page.items.isEmpty) EmptyNotice(text: l10n.noRecords),
+              for (final i in list.page.items.take(3)) ...[
+                ApiInvoiceCard(
+                  invoice: i,
+                  currency: list.currencies[i.currencyId],
+                ),
+                const SizedBox(height: 16),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

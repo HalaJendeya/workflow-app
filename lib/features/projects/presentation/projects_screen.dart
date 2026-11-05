@@ -9,6 +9,7 @@ import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/finance/domain/finance_models.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
+import 'package:workflow_app/features/projects/presentation/api_projects_view.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 enum ProjectStatus { inProgress, completed, onHold }
@@ -119,8 +120,13 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final demo = ref.watch(demoModeProvider);
+    if (!demo) {
+      return ApiProjectsView(
+        onCreate: widget.canManage ? () => openProjectForm(context) : null,
+      );
+    }
+    final l10n = AppLocalizations.of(context);
     final all = ref.watch(projectsProvider);
     final q = _query.trim().toLowerCase();
     final visible = all.where((p) {
@@ -139,7 +145,6 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       onCreate: widget.canManage ? () => openProjectForm(context) : null,
       createLabel: l10n.addProject,
       children: [
-        if (!demo) const BackendPendingNotice(),
         MetricCard(
           title: l10n.metricTotalProjects,
           value: count(all.length),
@@ -252,8 +257,10 @@ class _ProjectCard extends ConsumerWidget {
     final fill = p.progress >= 50 ? AppColors.primary : const Color(0xFFE8D636);
     Future<void> delete() async {
       if (await confirmDelete(context, p.name)) {
-        ref.read(projectsProvider.notifier).remove(p.id);
-        if (context.mounted) showSnack(context, l10n.deletedLocally);
+        final removed = ref.read(projectsProvider.notifier).remove(p.id);
+        if (context.mounted) {
+          showLocalOutcome(context, applied: removed, deleted: true);
+        }
       }
     }
 
@@ -592,8 +599,11 @@ class _ProjectFormScreenState extends ConsumerState<ProjectFormScreen> {
       notes: _notes.text.trim(),
     );
     final notifier = ref.read(projectsProvider.notifier);
-    e == null ? notifier.add(project) : notifier.replace(project);
-    showSnack(context, AppLocalizations.of(context).savedLocally);
+    final applied = e == null
+        ? notifier.add(project)
+        : notifier.replace(project);
+    showLocalOutcome(context, applied: applied);
+    if (!applied) return;
     Navigator.of(context).pop();
   }
 

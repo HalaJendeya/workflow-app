@@ -5,6 +5,7 @@ import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/domain/finance_models.dart';
+import 'package:workflow_app/features/finance/presentation/api_invoices_view.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -25,9 +26,10 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final demo = ref.watch(demoModeProvider);
+    if (!demo) return ApiInvoicesView(onCreate: () => _openForm(context));
     final l10n = AppLocalizations.of(context);
     final all = ref.watch(invoicesProvider);
-    final demo = ref.watch(demoModeProvider);
     final now = DateTime.now();
     final q = _query.trim().toLowerCase();
     final visible = all.where((i) {
@@ -49,7 +51,6 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
       onCreate: () => _openForm(context),
       createLabel: l10n.createInvoice,
       children: [
-        if (!demo) const BackendPendingNotice(),
         const ExportReportChip(),
         MetricCard(
           title: l10n.metricTotalInvoices,
@@ -156,8 +157,10 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
       onEdit: () => _openForm(context, existing: i),
       onDelete: () async {
         if (await confirmDelete(context, i.reference)) {
-          ref.read(invoicesProvider.notifier).remove(i.id);
-          if (context.mounted) showSnack(context, l10n.deletedLocally);
+          final removed = ref.read(invoicesProvider.notifier).remove(i.id);
+          if (context.mounted) {
+            showLocalOutcome(context, applied: removed, deleted: true);
+          }
         }
       },
     );
@@ -218,13 +221,13 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
 
   void _save() {
     if (!_form.currentState!.validate()) return;
-    final l10n = AppLocalizations.of(context);
     final notifier = ref.read(invoicesProvider.notifier);
     final existing = widget.existing;
     final amount = double.parse(_amount.text);
+    final bool applied;
     if (existing == null) {
       final n = ref.read(invoicesProvider).length + 237;
-      notifier.add(
+      applied = notifier.add(
         Invoice(
           id: localId('inv'),
           reference: '#INV-${_issue.year}-${n.toString().padLeft(4, '0')}',
@@ -239,7 +242,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         ),
       );
     } else {
-      notifier.replace(
+      applied = notifier.replace(
         existing.copyWith(
           amount: amount,
           currency: _currency,
@@ -252,8 +255,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         ),
       );
     }
-    showSnack(context, l10n.savedLocally);
-    Navigator.of(context).pop();
+    showLocalOutcome(context, applied: applied);
+    if (applied) Navigator.of(context).pop();
   }
 
   @override

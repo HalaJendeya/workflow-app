@@ -1,0 +1,125 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
+import 'package:workflow_app/app/providers.dart';
+import 'package:workflow_app/core/network/api_client.dart';
+import 'package:workflow_app/core/network/api_page.dart';
+import 'package:workflow_app/core/network/api_response.dart';
+import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/auth/domain/session.dart';
+
+/// Project status as the server reports it. `stats` names exactly
+/// `pending`, `in_progress` and `completed` (confirmed live on
+/// `client/projects`); anything else is kept as [other].
+enum ApiProjectStatus { pending, inProgress, completed, other }
+
+ApiProjectStatus _status(Object? v) => switch (v) {
+  'pending' => ApiProjectStatus.pending,
+  'in_progress' => ApiProjectStatus.inProgress,
+  'completed' => ApiProjectStatus.completed,
+  _ => ApiProjectStatus.other,
+};
+
+/// A project row of `GET /api/v1/{client|employee}/projects`.
+///
+/// Only fields the collection names for list rows are read: `id`, `title`
+/// (sort key, CSV column and options payload), `status`, `budget` (absent
+/// for the employee role), `currency {code, symbol}` and
+/// `completion_percentage` (0..100). Their presence on live rows is not yet
+/// confirmed because the test account has no projects.
+class ProjectRecord {
+  const new({
+    required this.id,
+    required this.title,
+    required this.status,
+    this.budget,
+    this.currencyCode,
+    this.currencySymbol,
+    this.completion,
+  });
+
+  factory fromJson(Json j) {
+    final currency = j['currency'];
+    return ProjectRecord(
+      id: asInt(j['id']) ?? missingField('id'),
+      title: j['title'] is String
+          ? j['title'] as String
+          : missingField('title'),
+      status: _status(j['status']),
+      budget: asDouble(j['budget']),
+      currencyCode: currency is Json ? currency['code'] as String? : null,
+      currencySymbol: currency is Json ? currency['symbol'] as String? : null,
+      completion: asInt(j['completion_percentage']),
+    );
+  }
+
+  final int id;
+  final String title;
+  final ApiProjectStatus status;
+  final double? budget;
+  final String? currencyCode;
+  final String? currencySymbol;
+  final int? completion;
+}
+
+/// `stats {total, pending, in_progress, completed}`; ignores the status
+/// filter.
+typedef ProjectStats = ({int total, int pending, int inProgress, int done});
+
+class ProjectList {
+  const new({required this.page, required this.stats});
+
+  final ApiPage<ProjectRecord> page;
+  final ProjectStats stats;
+}
+
+typedef ProjectQuery = ({String search, ApiProjectStatus? status, int page});
+
+/// Read-only: neither the client nor the employee role has project create,
+/// update or delete routes in the collection.
+class ProjectsRepository {
+  new(this._client, Portal portal) : _path = '/api/v1/${portal.name}/projects';
+
+  final ApiClient _client;
+  final String _path;
+
+  Future<ProjectList> list(ProjectQuery q) async {
+    final body = ApiEnvelope.unwrapBody(
+      await _client.get(
+        _path,
+        query: {
+          'page': q.page,
+          'per_page': 10,
+          if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
+          if (q.status case final s? when s != ApiProjectStatus.other)
+            'status': switch (s) {
+              ApiProjectStatus.inProgress => 'in_progress',
+              _ => s.name,
+            },
+        },
+      ),
+    );
+    final s = body['stats'];
+    final stats = s is Json ? s : const <String, dynamic>{};
+    int n(String k) => asInt(stats[k]) ?? 0;
+    return ProjectList(
+      page: ApiPage.parse(body['data'] as Json, ProjectRecord.fromJson),
+      stats: (
+        total: n('total'),
+        pending: n('pending'),
+        inProgress: n('in_progress'),
+        done: n('completed'),
+      ),
+    );
+  }
+}
+
+final projectsRepositoryProvider = Provider<ProjectsRepository>((ref) {
+  final portal =
+      ref.watch(sessionControllerProvider).value?.portal ?? Portal.client;
+  return ProjectsRepository(ref.watch(apiClientProvider), portal);
+});
+
+final FutureProviderFamily<ProjectList, ProjectQuery> apiProjectsProvider =
+    FutureProvider.autoDispose.family<ProjectList, ProjectQuery>(
+      (ref, q) => ref.watch(projectsRepositoryProvider).list(q),
+    );

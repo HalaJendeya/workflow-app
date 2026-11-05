@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:workflow_app/core/data/local_collection.dart';
+import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
+import 'package:workflow_app/features/finance/data/client_finance_repository.dart';
 import 'package:workflow_app/features/finance/domain/finance_models.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -53,21 +55,24 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
       children: [
         if (!demo) const BackendPendingNotice(),
         const ExportReportChip(),
-        MetricCard(
-          title: l10n.metricTotalRevenue,
-          value: money(revenue),
-          delta: demo ? '12.5% ${l10n.vsLastMonth}' : '—',
-        ),
-        MetricCard(
-          title: l10n.metricPendingPayments,
-          value: money(pending.fold<double>(0, (s, p) => s + p.amount)),
-          delta: l10n.invoicesAwaiting(pending.length),
-        ),
-        MetricCard(
-          title: l10n.metricTransactionVolume,
-          value: count(all.length),
-          delta: demo ? '5.2% ${l10n.vsLastMonth}' : '—',
-        ),
+        if (demo) ...[
+          MetricCard(
+            title: l10n.metricTotalRevenue,
+            value: money(revenue),
+            delta: '12.5% ${l10n.vsLastMonth}',
+          ),
+          MetricCard(
+            title: l10n.metricPendingPayments,
+            value: money(pending.fold<double>(0, (s, p) => s + p.amount)),
+            delta: l10n.invoicesAwaiting(pending.length),
+          ),
+          MetricCard(
+            title: l10n.metricTransactionVolume,
+            value: count(all.length),
+            delta: '5.2% ${l10n.vsLastMonth}',
+          ),
+        ] else
+          const _ApiPaymentMetrics(),
         WfSearchBox(
           fieldKey: const Key('payments-search'),
           hint: l10n.searchPaymentsHint,
@@ -162,8 +167,10 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
       onEdit: () => _openForm(context, existing: p),
       onDelete: () async {
         if (await confirmDelete(context, p.reference)) {
-          ref.read(paymentsProvider.notifier).remove(p.id);
-          if (context.mounted) showSnack(context, l10n.deletedLocally);
+          final removed = ref.read(paymentsProvider.notifier).remove(p.id);
+          if (context.mounted) {
+            showLocalOutcome(context, applied: removed, deleted: true);
+          }
         }
       },
     );
@@ -227,8 +234,11 @@ class _PaymentFormScreenState extends ConsumerState<PaymentFormScreen> {
       notes: _notes.text.trim(),
     );
     final notifier = ref.read(paymentsProvider.notifier);
-    existing == null ? notifier.add(payment) : notifier.replace(payment);
-    showSnack(context, AppLocalizations.of(context).savedLocally);
+    final applied = existing == null
+        ? notifier.add(payment)
+        : notifier.replace(payment);
+    showLocalOutcome(context, applied: applied);
+    if (!applied) return;
     Navigator.of(context).pop();
   }
 
@@ -297,6 +307,57 @@ class _PaymentFormScreenState extends ConsumerState<PaymentFormScreen> {
           required: false,
         ),
       ],
+    );
+  }
+}
+
+/// Payment metrics from `GET /api/v1/client/payments` (`stats.total` and
+/// per-currency `totals[]`). Payment rows stay pending: the collection does
+/// not document their fields.
+class _ApiPaymentMetrics extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final summary = ref.watch(clientPaymentSummaryProvider);
+    return AsyncSection(
+      value: summary,
+      onRetry: () => ref.invalidate(clientPaymentSummaryProvider),
+      builder: (s) {
+        String sum(double Function(PaymentTotal) pick) => s.totals.isEmpty
+            ? '0'
+            : s.totals
+                  .map(
+                    (t) => money(pick(t), currency: t.code, symbol: t.symbol),
+                  )
+                  .join(' · ');
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            MetricCard(
+              key: const Key('api-payments-received'),
+              title: l10n.metricTotalRevenue,
+              value: sum((t) => t.received),
+              delta: '—',
+            ),
+            const SizedBox(height: 16),
+            MetricCard(
+              title: l10n.metricPendingPayments,
+              value: sum((t) => t.pending),
+              delta: '—',
+              negative: true,
+            ),
+            const SizedBox(height: 16),
+            MetricCard(
+              key: const Key('api-payments-count'),
+              title: l10n.metricTransactionVolume,
+              value: count(s.count),
+              delta: '—',
+            ),
+          ],
+        );
+      },
     );
   }
 }

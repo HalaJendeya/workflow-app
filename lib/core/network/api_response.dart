@@ -24,6 +24,14 @@ class ApiEnvelope {
     return body['data'];
   }
 
+  /// The whole successful body, for list endpoints that put `stats`,
+  /// `totals`, `series` or `facets` beside `data` (collection: "Work pages
+  /// full-stack" and "Finance full-stack", 2026-10-26/27).
+  static Json unwrapBody(Response<Object?> response) {
+    unwrapData(response);
+    return response.data! as Json;
+  }
+
   static Json unwrapObject(Response<Object?> response) {
     final data = unwrapData(response);
     if (data is Map<String, dynamic>) return data;
