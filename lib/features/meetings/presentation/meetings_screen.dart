@@ -254,8 +254,12 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
             onEdit: () => openScheduleMeeting(context, existing: m),
             onDelete: () async {
               if (await confirmDelete(context, m.title)) {
-                ref.read(meetingsProvider.notifier).remove(m.id);
-                if (context.mounted) showSnack(context, l10n.deletedLocally);
+                final removed = ref
+                    .read(meetingsProvider.notifier)
+                    .remove(m.id);
+                if (context.mounted) {
+                  showLocalOutcome(context, applied: removed, deleted: true);
+                }
               }
             },
           ),

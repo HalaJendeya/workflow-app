@@ -114,8 +114,9 @@ class _ScheduleMeetingScreenState extends ConsumerState<ScheduleMeetingScreen> {
       features: _features,
     );
     final n = ref.read(meetingsProvider.notifier);
-    e == null ? n.add(meeting) : n.replace(meeting);
-    showSnack(context, AppLocalizations.of(context).savedLocally);
+    final applied = e == null ? n.add(meeting) : n.replace(meeting);
+    showLocalOutcome(context, applied: applied);
+    if (!applied) return;
     Navigator.of(context).pop();
   }
 

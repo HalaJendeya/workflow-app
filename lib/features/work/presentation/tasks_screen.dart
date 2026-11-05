@@ -193,8 +193,12 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               onEdit: () => openTaskForm(context, existing: t),
               onDelete: () async {
                 if (await confirmDelete(context, t.code)) {
-                  ref.read(workTasksProvider.notifier).remove(t.id);
-                  if (context.mounted) showSnack(context, l10n.deletedLocally);
+                  final removed = ref
+                      .read(workTasksProvider.notifier)
+                      .remove(t.id);
+                  if (context.mounted) {
+                    showLocalOutcome(context, applied: removed, deleted: true);
+                  }
                 }
               },
             ),
@@ -249,8 +253,9 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
     final e = widget.existing;
     final start = DateTime(_date.year, _date.month, _date.day, 9);
     final notifier = ref.read(workTasksProvider.notifier);
+    final bool applied;
     if (e == null) {
-      notifier.add(
+      applied = notifier.add(
         WorkTask(
           id: localId('task'),
           code: 'TASK-${8900 + ref.read(workTasksProvider).length + 40}',
@@ -267,7 +272,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
         ),
       );
     } else {
-      notifier.replace(
+      applied = notifier.replace(
         e.copyWith(
           title: _title.text.trim(),
           project: _project,
@@ -280,8 +285,8 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
         ),
       );
     }
-    showSnack(context, AppLocalizations.of(context).savedLocally);
-    Navigator.of(context).pop();
+    showLocalOutcome(context, applied: applied);
+    if (applied) Navigator.of(context).pop();
   }
 
   @override

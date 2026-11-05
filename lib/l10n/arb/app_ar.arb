@@ -505,5 +505,14 @@
   "percentComplete": "{percent}% مكتمل",
   "revenueTrajectory": "مسار الإيرادات",
   "revenueTrajectoryBody": "الأرباح مقابل الأهداف الشهرية",
-  "yoyDelta": "+{percent}% سنويًا"
+  "yoyDelta": "+{percent}% سنويًا",
+  "actionNeedsBackend": "لم يتم الحفظ: لا يوجد endpoint موثّق لهذا الإجراء على الخادم بعد.",
+  "statusUnpaid": "غير مدفوعة",
+  "statusPartiallyPaid": "مدفوعة جزئياً",
+  "fieldPaid": "المدفوع",
+  "fieldRemaining": "المتبقي",
+  "dashProjects": "المشاريع",
+  "dashCompleted": "المشاريع المكتملة",
+  "dashInProgress": "المشاريع قيد التنفيذ",
+  "dashLiveOnly": "يعرض الخادم أعداد المشاريع فقط؛ أما بقية أقسام اللوحة فتحتاج إلى ردّ موثّق من الخادم."
 }

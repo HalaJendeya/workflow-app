@@ -1680,4 +1680,33 @@ class AppLocalizationsAr extends AppLocalizations {
   String yoyDelta(int percent) {
     return '+$percent% سنويًا';
   }
+
+  @override
+  String get actionNeedsBackend =>
+      'لم يتم الحفظ: لا يوجد endpoint موثّق لهذا الإجراء على الخادم بعد.';
+
+  @override
+  String get statusUnpaid => 'غير مدفوعة';
+
+  @override
+  String get statusPartiallyPaid => 'مدفوعة جزئياً';
+
+  @override
+  String get fieldPaid => 'المدفوع';
+
+  @override
+  String get fieldRemaining => 'المتبقي';
+
+  @override
+  String get dashProjects => 'المشاريع';
+
+  @override
+  String get dashCompleted => 'المشاريع المكتملة';
+
+  @override
+  String get dashInProgress => 'المشاريع قيد التنفيذ';
+
+  @override
+  String get dashLiveOnly =>
+      'يعرض الخادم أعداد المشاريع فقط؛ أما بقية أقسام اللوحة فتحتاج إلى ردّ موثّق من الخادم.';
 }

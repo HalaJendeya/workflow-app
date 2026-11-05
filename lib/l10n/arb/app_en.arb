@@ -895,5 +895,14 @@
         "type": "int"
       }
     }
-  }
+  },
+  "actionNeedsBackend": "Not saved: this action has no verified server endpoint yet.",
+  "statusUnpaid": "Unpaid",
+  "statusPartiallyPaid": "Partially paid",
+  "fieldPaid": "Paid",
+  "fieldRemaining": "Remaining",
+  "dashProjects": "Projects",
+  "dashCompleted": "Completed projects",
+  "dashInProgress": "Projects in progress",
+  "dashLiveOnly": "The server reports project counts only; the other dashboard sections need a documented dashboard response."
 }

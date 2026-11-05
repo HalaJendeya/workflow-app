@@ -3133,6 +3133,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'+{percent}% YoY'**
   String yoyDelta(int percent);
+
+  /// No description provided for @actionNeedsBackend.
+  ///
+  /// In en, this message translates to:
+  /// **'Not saved: this action has no verified server endpoint yet.'**
+  String get actionNeedsBackend;
+
+  /// No description provided for @statusUnpaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpaid'**
+  String get statusUnpaid;
+
+  /// No description provided for @statusPartiallyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Partially paid'**
+  String get statusPartiallyPaid;
+
+  /// No description provided for @fieldPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get fieldPaid;
+
+  /// No description provided for @fieldRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get fieldRemaining;
+
+  /// No description provided for @dashProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects'**
+  String get dashProjects;
+
+  /// No description provided for @dashCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed projects'**
+  String get dashCompleted;
+
+  /// No description provided for @dashInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects in progress'**
+  String get dashInProgress;
+
+  /// No description provided for @dashLiveOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'The server reports project counts only; the other dashboard sections need a documented dashboard response.'**
+  String get dashLiveOnly;
 }
 
 class _AppLocalizationsDelegate

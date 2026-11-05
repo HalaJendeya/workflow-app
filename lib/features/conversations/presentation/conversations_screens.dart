@@ -720,7 +720,10 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
       members: members,
       messages: const [],
     );
-    ref.read(conversationsProvider.notifier).add(conversation);
+    if (!ref.read(conversationsProvider.notifier).add(conversation)) {
+      showLocalOutcome(context, applied: false);
+      return;
+    }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(builder: (_) => ChatScreen(id: conversation.id)),
     );

@@ -8,6 +8,14 @@ import 'package:workflow_app/l10n/gen/app_localizations.dart';
 enum DateRange { last30, last90, thisYear, all }
 
 extension DateRangeX on DateRange {
+  /// First day of the range, for server-side `from` filters; null = no bound.
+  DateTime? start(DateTime now) => switch (this) {
+    DateRange.last30 => DateTime(now.year, now.month, now.day - 30),
+    DateRange.last90 => DateTime(now.year, now.month, now.day - 90),
+    DateRange.thisYear => DateTime(now.year),
+    DateRange.all => null,
+  };
+
   bool contains(DateTime d, DateTime now) => switch (this) {
     DateRange.last30 => now.difference(d).inDays <= 30,
     DateRange.last90 => now.difference(d).inDays <= 90,
@@ -23,16 +31,22 @@ extension DateRangeX on DateRange {
   };
 }
 
-String money(double v, {String currency = 'USD'}) => NumberFormat.currency(
-  locale: 'en',
-  name: currency,
-  symbol: switch (currency) {
-    'EUR' => '€',
-    'ILS' => '₪',
-    _ => r'$',
-  },
-  decimalDigits: v == v.roundToDouble() ? 0 : 2,
-).format(v);
+/// Formats [v] in [currency]. An API row whose currency the response does
+/// not name passes `symbol: ''`, so no currency is guessed.
+String money(double v, {String currency = 'USD', String? symbol}) =>
+    NumberFormat.currency(
+      locale: 'en',
+      name: currency,
+      symbol:
+          symbol ??
+          switch (currency) {
+            'EUR' => '€',
+            'ILS' => '₪',
+            'USD' => r'$',
+            _ => '$currency ',
+          },
+      decimalDigits: v == v.roundToDouble() ? 0 : 2,
+    ).format(v).trim();
 
 String count(int v) => NumberFormat.decimalPattern('en').format(v);
 
@@ -55,6 +69,25 @@ void showSnack(BuildContext context, String text) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text(text)));
+}
+
+/// Reports a `LocalCollection` mutation honestly: the demo message when it
+/// was applied on the device, otherwise that nothing was saved because the
+/// action has no verified server endpoint.
+void showLocalOutcome(
+  BuildContext context, {
+  required bool applied,
+  bool deleted = false,
+}) {
+  final l10n = AppLocalizations.of(context);
+  showSnack(
+    context,
+    !applied
+        ? l10n.actionNeedsBackend
+        : deleted
+        ? l10n.deletedLocally
+        : l10n.savedLocally,
+  );
 }
 
 /// Read-only detail sheet opened by "View Details".

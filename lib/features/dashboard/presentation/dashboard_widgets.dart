@@ -260,9 +260,15 @@ class DashboardProjectCard extends ConsumerWidget {
                 tooltip: l10n.delete,
                 onPressed: () async {
                   if (await confirmDelete(context, p.name)) {
-                    ref.read(projectsProvider.notifier).remove(p.id);
+                    final removed = ref
+                        .read(projectsProvider.notifier)
+                        .remove(p.id);
                     if (context.mounted) {
-                      showSnack(context, l10n.deletedLocally);
+                      showLocalOutcome(
+                        context,
+                        applied: removed,
+                        deleted: true,
+                      );
                     }
                   }
                 },

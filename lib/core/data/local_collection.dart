@@ -11,7 +11,9 @@ abstract interface class Identified {
 /// * Demo mode (`APP_MODE=mock`): seeded with typed sample records; create,
 ///   edit and delete work locally and are never sent to a server.
 /// * API mode: starts empty and the screen shows `BackendPendingNotice`, so
-///   sample data is never presented as server data.
+///   sample data is never presented as server data. Mutations are refused
+///   (they return false and change nothing), so an action with no server
+///   endpoint can never look like it succeeded.
 class LocalCollection<T extends Identified> extends Notifier<List<T>> {
   new(this._seed);
 
@@ -23,13 +25,28 @@ class LocalCollection<T extends Identified> extends Notifier<List<T>> {
     return _seed();
   }
 
-  void add(T item) => state = [item, ...state];
+  bool get _writable => ref.read(appConfigProvider).isMock;
 
-  void replace(T item) =>
-      state = state.map((x) => x.id == item.id ? item : x).toList();
+  /// Adds [item]; false (and no change) outside demo mode.
+  bool add(T item) {
+    if (!_writable) return false;
+    state = [item, ...state];
+    return true;
+  }
 
-  void remove(String id) =>
-      state = state.where((x) => x.id != id).toList(growable: false);
+  /// Replaces the record with [item]'s id; false outside demo mode.
+  bool replace(T item) {
+    if (!_writable) return false;
+    state = state.map((x) => x.id == item.id ? item : x).toList();
+    return true;
+  }
+
+  /// Removes the record [id]; false outside demo mode.
+  bool remove(String id) {
+    if (!_writable) return false;
+    state = state.where((x) => x.id != id).toList(growable: false);
+    return true;
+  }
 
   T? byId(String id) {
     for (final x in state) {

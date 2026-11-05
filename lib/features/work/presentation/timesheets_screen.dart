@@ -176,16 +176,22 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
                   ),
                 );
                 if (s != null) {
-                  ref
+                  final applied = ref
                       .read(timesheetsProvider.notifier)
                       .replace(e.withStatus(s));
-                  if (context.mounted) showSnack(context, l10n.savedLocally);
+                  if (context.mounted) {
+                    showLocalOutcome(context, applied: applied);
+                  }
                 }
               },
               onDelete: () async {
                 if (await confirmDelete(context, e.task)) {
-                  ref.read(timesheetsProvider.notifier).remove(e.id);
-                  if (context.mounted) showSnack(context, l10n.deletedLocally);
+                  final removed = ref
+                      .read(timesheetsProvider.notifier)
+                      .remove(e.id);
+                  if (context.mounted) {
+                    showLocalOutcome(context, applied: removed, deleted: true);
+                  }
                 }
               },
             ),

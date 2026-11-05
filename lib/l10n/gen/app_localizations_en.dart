@@ -1686,4 +1686,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String yoyDelta(int percent) {
     return '+$percent% YoY';
   }
+
+  @override
+  String get actionNeedsBackend =>
+      'Not saved: this action has no verified server endpoint yet.';
+
+  @override
+  String get statusUnpaid => 'Unpaid';
+
+  @override
+  String get statusPartiallyPaid => 'Partially paid';
+
+  @override
+  String get fieldPaid => 'Paid';
+
+  @override
+  String get fieldRemaining => 'Remaining';
+
+  @override
+  String get dashProjects => 'Projects';
+
+  @override
+  String get dashCompleted => 'Completed projects';
+
+  @override
+  String get dashInProgress => 'Projects in progress';
+
+  @override
+  String get dashLiveOnly =>
+      'The server reports project counts only; the other dashboard sections need a documented dashboard response.';
 }

@@ -315,7 +315,11 @@ class _SprintScreenState extends ConsumerState<SprintScreen> {
       ),
     );
     name.dispose();
-    if ((ok ?? false) && context.mounted) showSnack(context, l10n.savedLocally);
+    // Sprints are not stored locally, and creating one needs the
+    // company-admin sprint routes, so say plainly that nothing was saved.
+    if ((ok ?? false) && context.mounted) {
+      showLocalOutcome(context, applied: false);
+    }
   }
 }
 
@@ -496,10 +500,10 @@ class _KanbanCard extends ConsumerWidget {
       ),
     );
     if (target != null && target != task.status) {
-      ref
+      final applied = ref
           .read(workTasksProvider.notifier)
           .replace(task.copyWith(status: target));
-      if (context.mounted) showSnack(context, l10n.savedLocally);
+      if (context.mounted) showLocalOutcome(context, applied: applied);
     }
   }
 }
