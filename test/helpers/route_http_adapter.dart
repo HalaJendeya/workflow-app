@@ -8,10 +8,14 @@ import 'package:dio/dio.dart';
 /// documented error envelope. Fixtures follow the WorkFlow Postman
 /// collection and shapes seen on the live server; they are test doubles.
 class RouteHttpAdapter implements HttpClientAdapter {
-  new(this.routes);
+  new(this.routes, {this.handlers = const {}});
 
   /// `METHOD /path` → (status, body).
   final Map<String, (int, Object?)> routes;
+
+  /// `METHOD /path` → reply computed from the request (query, body), for
+  /// routes whose answer depends on more than the path. Checked first.
+  final Map<String, (int, Object?) Function(RequestOptions)> handlers;
   final List<RequestOptions> requests = [];
 
   @override
@@ -21,8 +25,10 @@ class RouteHttpAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     requests.add(options);
+    final key = '${options.method} ${options.uri.path}';
     final (status, body) =
-        routes['${options.method} ${options.uri.path}'] ??
+        handlers[key]?.call(options) ??
+        routes[key] ??
         (404, {'success': false, 'message': 'Not found', 'errors': <Object>[]});
     return ResponseBody.fromString(
       jsonEncode(body),

@@ -1,0 +1,392 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
+import 'package:workflow_app/app/providers.dart';
+import 'package:workflow_app/core/network/api_client.dart';
+import 'package:workflow_app/core/network/api_page.dart';
+import 'package:workflow_app/core/network/api_response.dart';
+import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/auth/domain/session.dart';
+
+/// `status` of a meeting: `waiting | live | ended | cancelled` (the list
+/// route's documented filter values). Anything else is [other].
+enum ApiMeetingStatus { waiting, live, ended, cancelled, other }
+
+/// `type`: `instant | scheduled`.
+enum ApiMeetingType { instant, scheduled, other }
+
+ApiMeetingStatus _status(Object? v) => switch (v) {
+  'waiting' => ApiMeetingStatus.waiting,
+  'live' => ApiMeetingStatus.live,
+  'ended' => ApiMeetingStatus.ended,
+  'cancelled' => ApiMeetingStatus.cancelled,
+  _ => ApiMeetingStatus.other,
+};
+
+ApiMeetingType _type(Object? v) => switch (v) {
+  'instant' => ApiMeetingType.instant,
+  'scheduled' => ApiMeetingType.scheduled,
+  _ => ApiMeetingType.other,
+};
+
+DateTime? _time(Object? v) =>
+    v is String ? DateTime.tryParse(v)?.toLocal() : null;
+
+String? _name(Object? v) => v is Json ? v['name'] as String? : null;
+
+/// The caller's own invitation embedded in a meeting row: `{id, status}`
+/// (`pending | accepted | declined | expired`, seen live 2026-11-07).
+typedef MyInvitation = ({int id, String status});
+
+/// One meeting of `GET /api/v1/{client|employee}/meetings[/{id}]`.
+///
+/// Both roles reach the same controller (`Admin\MeetingController`). The
+/// fields are those of the collection's "200 — live meeting" example and
+/// the live employee response. `duration` is whole seconds and stays `0`
+/// until the meeting ends; `elapsed_seconds` counts from the start while
+/// live and is `null` before it (Phase 2 notes, 2026-10-22).
+class ApiMeeting {
+  const new({
+    required this.id,
+    required this.title,
+    required this.status,
+    required this.type,
+    required this.code,
+    required this.createdAt,
+    this.description,
+    this.creatorName,
+    this.projectTitle,
+    this.isPrivate = false,
+    this.allowChat = false,
+    this.allowScreenShare = false,
+    this.allowWhiteboard = false,
+    this.allowFileShare = false,
+    this.maxParticipants,
+    this.scheduledAt,
+    this.startedAt,
+    this.endedAt,
+    this.durationSeconds,
+    this.elapsedSeconds,
+    this.peakParticipants,
+    this.myInvitation,
+  });
+
+  factory fromJson(Json j) {
+    final inv = j['my_invitation'];
+    final invId = inv is Json ? asInt(inv['id']) : null;
+    return ApiMeeting(
+      id: asInt(j['id']) ?? missingField('id'),
+      title: j['title'] is String
+          ? j['title'] as String
+          : missingField('title'),
+      status: _status(j['status'] ?? missingField('status')),
+      type: _type(j['type']),
+      code: (j['meeting_code'] as String?) ?? '',
+      createdAt: _time(j['created_at']) ?? missingField('created_at'),
+      description: j['description'] as String?,
+      creatorName: _name(j['creator']),
+      projectTitle: switch (j['project']) {
+        final Json p => p['title'] as String?,
+        _ => null,
+      },
+      isPrivate: j['is_private'] == true,
+      allowChat: j['allow_chat'] == true,
+      allowScreenShare: j['allow_screen_share'] == true,
+      allowWhiteboard: j['allow_whiteboard'] == true,
+      allowFileShare: j['allow_file_share'] == true,
+      maxParticipants: asInt(j['max_participants']),
+      scheduledAt: _time(j['scheduled_at']),
+      startedAt: _time(j['started_at']),
+      endedAt: _time(j['ended_at']),
+      durationSeconds: asInt(j['duration']),
+      elapsedSeconds: asInt(j['elapsed_seconds']),
+      peakParticipants: asInt(j['peak_participants']),
+      myInvitation: inv is Json && invId != null
+          ? (id: invId, status: (inv['status'] as String?) ?? '')
+          : null,
+    );
+  }
+
+  final int id;
+  final String title;
+  final ApiMeetingStatus status;
+  final ApiMeetingType type;
+  final String code;
+  final DateTime createdAt;
+  final String? description;
+  final String? creatorName;
+  final String? projectTitle;
+  final bool isPrivate;
+  final bool allowChat;
+  final bool allowScreenShare;
+  final bool allowWhiteboard;
+  final bool allowFileShare;
+  final int? maxParticipants;
+  final DateTime? scheduledAt;
+  final DateTime? startedAt;
+  final DateTime? endedAt;
+  final int? durationSeconds;
+  final int? elapsedSeconds;
+
+  /// `null` = not recorded (meetings older than the field).
+  final int? peakParticipants;
+  final MyInvitation? myInvitation;
+
+  /// The date the meeting belongs to on the calendar: when it is planned,
+  /// else when it started, else when it was created. Never a guessed time.
+  DateTime get anchor => scheduledAt ?? startedAt ?? createdAt;
+
+  /// Seconds the meeting has run: the final `duration` once ended, the
+  /// server's `elapsed_seconds` while live, null before the start.
+  int? get runSeconds => switch (status) {
+    ApiMeetingStatus.ended => durationSeconds,
+    ApiMeetingStatus.live => elapsedSeconds,
+    _ => null,
+  };
+
+  /// A scheduled meeting that has not started and whose planned time has
+  /// passed. Derived only from `type`, `status` and `scheduled_at`.
+  bool isOverdue(DateTime now) =>
+      type == ApiMeetingType.scheduled &&
+      status == ApiMeetingStatus.waiting &&
+      scheduledAt != null &&
+      scheduledAt!.isBefore(now);
+}
+
+/// A row of `GET …/meetings/{id}/participants`. `duration` is cumulative
+/// seconds over finished sessions; `user {id, name, avatar, type}`.
+class ApiParticipant {
+  const new({
+    required this.id,
+    required this.name,
+    required this.role,
+    required this.connection,
+    this.userType,
+  });
+
+  factory fromJson(Json j) => ApiParticipant(
+    id: asInt(j['id']) ?? missingField('id'),
+    name: _name(j['user']) ?? '—',
+    userType: switch (j['user']) {
+      final Json u => u['type'] as String?,
+      _ => null,
+    },
+    role: (j['role'] as String?) ?? '',
+    connection: (j['connection_status'] as String?) ?? '',
+  );
+
+  final int id;
+  final String name;
+  final String? userType;
+
+  /// `host | participant | …` as returned.
+  final String role;
+
+  /// `waiting | connected | disconnected`.
+  final String connection;
+
+  bool get isHost => role == 'host';
+  bool get isConnected => connection == 'connected';
+}
+
+/// A row of `GET /employee/meetings/{id}/invitations` or of the caller's
+/// own `GET …/meeting-invitations`.
+class ApiInvitation {
+  const new({
+    required this.id,
+    required this.status,
+    this.userName,
+    this.inviterName,
+    this.meetingId,
+    this.meetingTitle,
+    this.meetingStatus,
+    this.meetingScheduledAt,
+  });
+
+  factory fromJson(Json j) {
+    final m = j['meeting'];
+    return ApiInvitation(
+      id: asInt(j['id']) ?? missingField('id'),
+      status: (j['status'] as String?) ?? '',
+      userName: _name(j['user']),
+      inviterName: _name(j['inviter']),
+      meetingId: asInt(j['meeting_id']) ?? (m is Json ? asInt(m['id']) : null),
+      meetingTitle: m is Json ? m['title'] as String? : null,
+      meetingStatus: m is Json ? _status(m['status']) : null,
+      meetingScheduledAt: m is Json ? _time(m['scheduled_at']) : null,
+    );
+  }
+
+  final int id;
+
+  /// `pending | accepted | declined | expired`.
+  final String status;
+  final String? userName;
+  final String? inviterName;
+  final int? meetingId;
+  final String? meetingTitle;
+  final ApiMeetingStatus? meetingStatus;
+  final DateTime? meetingScheduledAt;
+
+  bool get isPending => status == 'pending';
+}
+
+typedef MeetingQuery = ({String search, ApiMeetingStatus? status, int page});
+
+/// Counts per status, read from each filtered list's paginator `total`
+/// (the meetings route returns no `stats` block).
+typedef MeetingCounts = ({int total, int waiting, int live, int ended});
+
+/// Meetings for the signed-in role. Reads are open to both roles
+/// (`meetings.view`). The only write here is the invitee's own answer to
+/// an invitation (`PUT …/meeting-invitations/{id}`, `status ∈ accepted,
+/// declined`). Creating meetings has no client or employee route; joining
+/// a room needs LiveKit, which the app does not ship yet.
+class MeetingsRepository {
+  new(this._client, this.portal) : _base = '/api/v1/${portal.name}';
+
+  final ApiClient _client;
+  final Portal portal;
+  final String _base;
+
+  static String statusParam(ApiMeetingStatus s) => s.name;
+
+  Future<ApiPage<ApiMeeting>> list(MeetingQuery q, {int perPage = 10}) async {
+    final body = ApiEnvelope.unwrapBody(
+      await _client.get(
+        '$_base/meetings',
+        query: {
+          'page': q.page,
+          'per_page': perPage,
+          if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
+          if (q.status case final s? when s != ApiMeetingStatus.other)
+            'status': statusParam(s),
+        },
+      ),
+    );
+    return ApiPage.parse(_data(body), ApiMeeting.fromJson);
+  }
+
+  Future<MeetingCounts> counts() async {
+    Future<int> total(ApiMeetingStatus? s) async {
+      final body = ApiEnvelope.unwrapBody(
+        await _client.get(
+          '$_base/meetings',
+          query: {'per_page': 1, if (s != null) 'status': statusParam(s)},
+        ),
+      );
+      return asInt(_data(body)['total']) ?? missingField('data.total');
+    }
+
+    final r = await Future.wait([
+      total(null),
+      total(ApiMeetingStatus.waiting),
+      total(ApiMeetingStatus.live),
+      total(ApiMeetingStatus.ended),
+    ]);
+    return (total: r[0], waiting: r[1], live: r[2], ended: r[3]);
+  }
+
+  Future<ApiMeeting> get(int id) async => ApiMeeting.fromJson(
+    ApiEnvelope.unwrapObject(await _client.get('$_base/meetings/$id')),
+  );
+
+  Future<ApiPage<ApiParticipant>> participants(int meetingId) async {
+    final body = ApiEnvelope.unwrapBody(
+      await _client.get(
+        '$_base/meetings/$meetingId/participants',
+        query: {'per_page': 100},
+      ),
+    );
+    return ApiPage.parse(_data(body), ApiParticipant.fromJson);
+  }
+
+  /// Employee only: the client role has no route for a meeting's
+  /// invitation list.
+  Future<ApiPage<ApiInvitation>> invitations(int meetingId) async {
+    assert(portal == Portal.employee, 'No client route for this list.');
+    final body = ApiEnvelope.unwrapBody(
+      await _client.get(
+        '$_base/meetings/$meetingId/invitations',
+        query: {'per_page': 100},
+      ),
+    );
+    return ApiPage.parse(_data(body), ApiInvitation.fromJson);
+  }
+
+  Future<ApiPage<ApiInvitation>> myInvitations({int page = 1}) async {
+    final body = ApiEnvelope.unwrapBody(
+      await _client.get(
+        '$_base/meeting-invitations',
+        query: {'page': page, 'per_page': 20},
+      ),
+    );
+    return ApiPage.parse(_data(body), ApiInvitation.fromJson);
+  }
+
+  /// Accepts or declines the caller's own invitation.
+  Future<void> respond(int invitationId, {required bool accept}) async {
+    ApiEnvelope.unwrapData(
+      await _client.put(
+        '$_base/meeting-invitations/$invitationId',
+        body: {'status': accept ? 'accepted' : 'declined'},
+      ),
+    );
+  }
+
+  static Json _data(Json body) {
+    final d = body['data'];
+    if (d is! Json) missingField('data');
+    return d;
+  }
+}
+
+final meetingsRepositoryProvider = Provider<MeetingsRepository>((ref) {
+  final portal =
+      ref.watch(sessionControllerProvider).value?.portal ?? Portal.client;
+  return MeetingsRepository(ref.watch(apiClientProvider), portal);
+});
+
+final FutureProviderFamily<ApiPage<ApiMeeting>, MeetingQuery>
+apiMeetingsProvider = FutureProvider.autoDispose
+    .family<ApiPage<ApiMeeting>, MeetingQuery>(
+      (ref, q) => ref.watch(meetingsRepositoryProvider).list(q),
+    );
+
+/// The first 100 meetings, for the calendar and the day list. The list
+/// route has no date filter, so the calendar can only mark what it loads.
+final FutureProvider<ApiPage<ApiMeeting>> apiMeetingCalendarProvider =
+    FutureProvider.autoDispose(
+      (ref) => ref.watch(meetingsRepositoryProvider).list((
+        search: '',
+        status: null,
+        page: 1,
+      ), perPage: 100),
+    );
+
+final FutureProvider<MeetingCounts> apiMeetingCountsProvider =
+    FutureProvider.autoDispose(
+      (ref) => ref.watch(meetingsRepositoryProvider).counts(),
+    );
+
+final FutureProviderFamily<ApiMeeting, int> apiMeetingProvider = FutureProvider
+    .autoDispose
+    .family<ApiMeeting, int>(
+      (ref, id) => ref.watch(meetingsRepositoryProvider).get(id),
+    );
+
+final FutureProviderFamily<ApiPage<ApiParticipant>, int>
+apiParticipantsProvider = FutureProvider.autoDispose
+    .family<ApiPage<ApiParticipant>, int>(
+      (ref, id) => ref.watch(meetingsRepositoryProvider).participants(id),
+    );
+
+final FutureProviderFamily<ApiPage<ApiInvitation>, int>
+apiMeetingInvitationsProvider = FutureProvider.autoDispose
+    .family<ApiPage<ApiInvitation>, int>(
+      (ref, id) => ref.watch(meetingsRepositoryProvider).invitations(id),
+    );
+
+final FutureProvider<ApiPage<ApiInvitation>> apiMyInvitationsProvider =
+    FutureProvider.autoDispose(
+      (ref) => ref.watch(meetingsRepositoryProvider).myInvitations(),
+    );

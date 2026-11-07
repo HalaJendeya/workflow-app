@@ -3217,6 +3217,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'In review'**
   String get inReview;
+
+  /// No description provided for @meetingCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get meetingCancelled;
+
+  /// No description provided for @meetingTypeInstant.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant'**
+  String get meetingTypeInstant;
+
+  /// No description provided for @acceptInvitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get acceptInvitation;
+
+  /// No description provided for @declineInvitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get declineInvitation;
+
+  /// No description provided for @invitationAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation accepted.'**
+  String get invitationAccepted;
+
+  /// No description provided for @invitationDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation declined.'**
+  String get invitationDeclined;
+
+  /// No description provided for @myInvitations.
+  ///
+  /// In en, this message translates to:
+  /// **'My invitations'**
+  String get myInvitations;
+
+  /// No description provided for @yourInvitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Your invitation'**
+  String get yourInvitation;
+
+  /// No description provided for @invitationStatusAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get invitationStatusAccepted;
+
+  /// No description provided for @invitationStatusDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined'**
+  String get invitationStatusDeclined;
+
+  /// No description provided for @invitationStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get invitationStatusExpired;
+
+  /// No description provided for @invitedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited by {name}'**
+  String invitedBy(String name);
+
+  /// No description provided for @meetingJoinUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Joining a meeting from the app isn’t available yet — the WorkFlow API has no meeting lookup by code, and the app does not include the LiveKit media client.'**
+  String get meetingJoinUnavailable;
+
+  /// No description provided for @meetingCreateUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Meetings can’t be created from this account — the WorkFlow API has no create route for your role.'**
+  String get meetingCreateUnavailable;
+
+  /// No description provided for @durationSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{h}h {m}m {s}s'**
+  String durationSeconds(int h, int m, int s);
+
+  /// No description provided for @calendarShowsLatest.
+  ///
+  /// In en, this message translates to:
+  /// **'The calendar shows the latest {count} meetings.'**
+  String calendarShowsLatest(int count);
 }
 
 class _AppLocalizationsDelegate

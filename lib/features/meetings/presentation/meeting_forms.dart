@@ -413,6 +413,11 @@ class _JoinByCodeScreenState extends ConsumerState<JoinByCodeScreen> {
   Future<void> _join() async {
     if (!_form.currentState!.validate()) return;
     final l10n = AppLocalizations.of(context);
+    if (!ref.read(demoModeProvider)) {
+      // The API has no lookup by code and the app has no LiveKit client.
+      showSnack(context, l10n.meetingJoinUnavailable);
+      return;
+    }
     final code = _code.text.trim().toUpperCase();
     final m = ref
         .read(meetingsProvider)

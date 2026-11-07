@@ -6,6 +6,7 @@ import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/meetings/domain/meeting.dart';
+import 'package:workflow_app/features/meetings/presentation/api_meetings_view.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_details_screen.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_forms.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -17,6 +18,7 @@ String meetingStatusLabel(AppLocalizations l10n, MeetingStatus s) =>
       MeetingStatus.waiting => l10n.meetingWaiting,
       MeetingStatus.overdue => l10n.statusOverdue,
       MeetingStatus.ended => l10n.meetingEnded,
+      MeetingStatus.cancelled => l10n.meetingCancelled,
     };
 
 BadgeTone meetingTone(MeetingStatus s) => switch (s) {
@@ -25,6 +27,7 @@ BadgeTone meetingTone(MeetingStatus s) => switch (s) {
   MeetingStatus.waiting => BadgeTone.warning,
   MeetingStatus.overdue => BadgeTone.danger,
   MeetingStatus.ended => BadgeTone.neutral,
+  MeetingStatus.cancelled => BadgeTone.danger,
 };
 
 String hm(DateTime t) => DateFormat('HH:mm', 'en').format(t);
@@ -53,7 +56,7 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final demo = ref.watch(demoModeProvider);
+    if (!ref.watch(demoModeProvider)) return const ApiMeetingsView();
     final all = ref.watch(meetingsProvider);
     final today = all.where((m) => m.isOn(_day)).where((m) {
       return switch (_tab) {
@@ -83,7 +86,6 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
       onCreate: () => openScheduleMeeting(context),
       createLabel: l10n.scheduleMeeting,
       children: [
-        if (!demo) const BackendPendingNotice(),
         Align(
           alignment: AlignmentDirectional.centerStart,
           child: FilterChipBox(
@@ -100,10 +102,12 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(child: _Kpi(l10n.totalMeetings, '${all.length}')),
+                  Expanded(
+                    child: MeetingKpi(l10n.totalMeetings, '${all.length}'),
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _Kpi(
+                    child: MeetingKpi(
                       l10n.liveNow,
                       l10n.activeCount(n(MeetingStatus.live)),
                     ),
@@ -114,7 +118,7 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _Kpi(
+                    child: MeetingKpi(
                       l10n.meetingScheduled,
                       (n(MeetingStatus.scheduled) + n(MeetingStatus.waiting))
                           .toString(),
@@ -122,7 +126,10 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _Kpi(l10n.meetingEnded, '${n(MeetingStatus.ended)}'),
+                    child: MeetingKpi(
+                      l10n.meetingEnded,
+                      '${n(MeetingStatus.ended)}',
+                    ),
                   ),
                 ],
               ),
@@ -131,7 +138,7 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
         ),
         Text(l10n.meetingsCalendar, style: h16),
         ModuleCard(
-          child: _MonthCalendar(
+          child: MeetingMonthCalendar(
             month: _month,
             selected: _day,
             marked: {
@@ -267,20 +274,23 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
     );
   }
 
-  static bool _isToday(DateTime d) {
-    final n = DateTime.now();
-    return d.year == n.year && d.month == n.month && d.day == n.day;
-  }
+  static bool _isToday(DateTime d) => isSameDay(d, DateTime.now());
 
-  static String _utcOffset() {
-    final o = DateTime.now().timeZoneOffset;
-    final h = o.inHours;
-    return 'GMT${h >= 0 ? '+' : ''}$h';
-  }
+  static String _utcOffset() => utcOffsetLabel();
 }
 
-class _Kpi extends StatelessWidget {
-  const new(this.label, this.value);
+bool isSameDay(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
+
+/// `GMT+3`-style label of the device time zone; meeting times are shown in
+/// it.
+String utcOffsetLabel() {
+  final h = DateTime.now().timeZoneOffset.inHours;
+  return 'GMT${h >= 0 ? '+' : ''}$h';
+}
+
+class MeetingKpi extends StatelessWidget {
+  const new(this.label, this.value, {super.key});
   final String label;
   final String value;
 
@@ -307,13 +317,14 @@ class _Kpi extends StatelessWidget {
 
 /// Month grid from the "Meetings Calendar" card: 38×34 cells, selected day
 /// in a 12 px-radius primary tile, days outside the month in #9E9E9E.
-class _MonthCalendar extends StatelessWidget {
+class MeetingMonthCalendar extends StatelessWidget {
   const new({
     required this.month,
     required this.selected,
     required this.marked,
     required this.onMonth,
     required this.onDay,
+    super.key,
   });
 
   final DateTime month;

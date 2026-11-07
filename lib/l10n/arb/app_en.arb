@@ -909,5 +909,48 @@
   "paidSalary": "Paid salary",
   "unpaidSalary": "Unpaid salary",
   "projectLeader": "Project leader",
-  "inReview": "In review"
+  "inReview": "In review",
+  "meetingCancelled": "Cancelled",
+  "meetingTypeInstant": "Instant",
+  "acceptInvitation": "Accept",
+  "declineInvitation": "Decline",
+  "invitationAccepted": "Invitation accepted.",
+  "invitationDeclined": "Invitation declined.",
+  "myInvitations": "My invitations",
+  "yourInvitation": "Your invitation",
+  "invitationStatusAccepted": "Accepted",
+  "invitationStatusDeclined": "Declined",
+  "invitationStatusExpired": "Expired",
+  "invitedBy": "Invited by {name}",
+  "@invitedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "meetingJoinUnavailable": "Joining a meeting from the app isn’t available yet — the WorkFlow API has no meeting lookup by code, and the app does not include the LiveKit media client.",
+  "meetingCreateUnavailable": "Meetings can’t be created from this account — the WorkFlow API has no create route for your role.",
+  "durationSeconds": "{h}h {m}m {s}s",
+  "@durationSeconds": {
+    "placeholders": {
+      "h": {
+        "type": "int"
+      },
+      "m": {
+        "type": "int"
+      },
+      "s": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarShowsLatest": "The calendar shows the latest {count} meetings.",
+  "@calendarShowsLatest": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

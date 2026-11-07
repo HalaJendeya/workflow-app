@@ -1724,4 +1724,60 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get inReview => 'قيد المراجعة';
+
+  @override
+  String get meetingCancelled => 'ملغى';
+
+  @override
+  String get meetingTypeInstant => 'فوري';
+
+  @override
+  String get acceptInvitation => 'قبول';
+
+  @override
+  String get declineInvitation => 'رفض';
+
+  @override
+  String get invitationAccepted => 'تم قبول الدعوة.';
+
+  @override
+  String get invitationDeclined => 'تم رفض الدعوة.';
+
+  @override
+  String get myInvitations => 'دعواتي';
+
+  @override
+  String get yourInvitation => 'دعوتك';
+
+  @override
+  String get invitationStatusAccepted => 'مقبولة';
+
+  @override
+  String get invitationStatusDeclined => 'مرفوضة';
+
+  @override
+  String get invitationStatusExpired => 'منتهية';
+
+  @override
+  String invitedBy(String name) {
+    return 'دعوة من $name';
+  }
+
+  @override
+  String get meetingJoinUnavailable =>
+      'الانضمام إلى اجتماع من التطبيق غير متاح بعد — لا توفر واجهة WorkFlow بحثاً عن الاجتماع برمزه، والتطبيق لا يتضمن عميل الوسائط LiveKit.';
+
+  @override
+  String get meetingCreateUnavailable =>
+      'لا يمكن إنشاء اجتماعات من هذا الحساب — لا توفر واجهة WorkFlow مسار إنشاء لدورك.';
+
+  @override
+  String durationSeconds(int h, int m, int s) {
+    return '$hس $mد $sث';
+  }
+
+  @override
+  String calendarShowsLatest(int count) {
+    return 'يعرض التقويم آخر $count اجتماع.';
+  }
 }

@@ -1730,4 +1730,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inReview => 'In review';
+
+  @override
+  String get meetingCancelled => 'Cancelled';
+
+  @override
+  String get meetingTypeInstant => 'Instant';
+
+  @override
+  String get acceptInvitation => 'Accept';
+
+  @override
+  String get declineInvitation => 'Decline';
+
+  @override
+  String get invitationAccepted => 'Invitation accepted.';
+
+  @override
+  String get invitationDeclined => 'Invitation declined.';
+
+  @override
+  String get myInvitations => 'My invitations';
+
+  @override
+  String get yourInvitation => 'Your invitation';
+
+  @override
+  String get invitationStatusAccepted => 'Accepted';
+
+  @override
+  String get invitationStatusDeclined => 'Declined';
+
+  @override
+  String get invitationStatusExpired => 'Expired';
+
+  @override
+  String invitedBy(String name) {
+    return 'Invited by $name';
+  }
+
+  @override
+  String get meetingJoinUnavailable =>
+      'Joining a meeting from the app isn’t available yet — the WorkFlow API has no meeting lookup by code, and the app does not include the LiveKit media client.';
+
+  @override
+  String get meetingCreateUnavailable =>
+      'Meetings can’t be created from this account — the WorkFlow API has no create route for your role.';
+
+  @override
+  String durationSeconds(int h, int m, int s) {
+    return '${h}h ${m}m ${s}s';
+  }
+
+  @override
+  String calendarShowsLatest(int count) {
+    return 'The calendar shows the latest $count meetings.';
+  }
 }

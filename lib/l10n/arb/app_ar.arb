@@ -519,5 +519,21 @@
   "paidSalary": "الراتب المدفوع",
   "unpaidSalary": "الراتب غير المدفوع",
   "projectLeader": "قائد المشروع",
-  "inReview": "قيد المراجعة"
+  "inReview": "قيد المراجعة",
+  "meetingCancelled": "ملغى",
+  "meetingTypeInstant": "فوري",
+  "acceptInvitation": "قبول",
+  "declineInvitation": "رفض",
+  "invitationAccepted": "تم قبول الدعوة.",
+  "invitationDeclined": "تم رفض الدعوة.",
+  "myInvitations": "دعواتي",
+  "yourInvitation": "دعوتك",
+  "invitationStatusAccepted": "مقبولة",
+  "invitationStatusDeclined": "مرفوضة",
+  "invitationStatusExpired": "منتهية",
+  "invitedBy": "دعوة من {name}",
+  "meetingJoinUnavailable": "الانضمام إلى اجتماع من التطبيق غير متاح بعد — لا توفر واجهة WorkFlow بحثاً عن الاجتماع برمزه، والتطبيق لا يتضمن عميل الوسائط LiveKit.",
+  "meetingCreateUnavailable": "لا يمكن إنشاء اجتماعات من هذا الحساب — لا توفر واجهة WorkFlow مسار إنشاء لدورك.",
+  "durationSeconds": "{h}س {m}د {s}ث",
+  "calendarShowsLatest": "يعرض التقويم آخر {count} اجتماع."
 }

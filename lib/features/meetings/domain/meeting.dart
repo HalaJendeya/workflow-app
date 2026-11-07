@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/core/data/local_collection.dart';
 
-enum MeetingStatus { scheduled, live, waiting, overdue, ended }
+enum MeetingStatus { scheduled, live, waiting, overdue, ended, cancelled }
 
 enum MeetingFeature { chat, screen, whiteboard, files }
 
