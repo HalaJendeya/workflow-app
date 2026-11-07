@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:workflow_app/core/design_system/app_icons.dart';
@@ -81,7 +83,11 @@ class ModulePage extends StatelessWidget {
     floatingActionButton: onCreate == null
         ? null
         : Padding(
-            padding: const EdgeInsets.only(bottom: 96),
+            // 96 px above the shell's 103 px navigation surface, which
+            // grows by the system navigation bar; 0 outside the shell.
+            padding: EdgeInsets.only(
+              bottom: math.max(0, MediaQuery.paddingOf(context).bottom - 7),
+            ),
             child: CreateFab(onPressed: onCreate!, label: createLabel),
           ),
     body: CustomScrollView(
@@ -95,7 +101,15 @@ class ModulePage extends StatelessWidget {
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 150),
+          // Clears the floating navigation surface the shell reports in
+          // `padding.bottom` (103 px, plus any system navigation bar), with
+          // the same 47 px breathing room as before.
+          padding: EdgeInsets.fromLTRB(
+            20,
+            24,
+            20,
+            47 + MediaQuery.paddingOf(context).bottom,
+          ),
           sliver: SliverList.list(
             children: [
               for (var i = 0; i < children.length; i++) ...[
@@ -428,31 +442,63 @@ class DropdownChip<T> extends StatelessWidget {
   Widget build(BuildContext context) => FilterChipBox(
     label: '${labelOf(value)} ⌄',
     onTap: () async {
-      final picked = await showModalBottomSheet<T>(
-        context: context,
-        builder: (context) => SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final o in options)
-                ListTile(
-                  title: Text(
-                    labelOf(o),
-                    style: AppTextStyles.mobileBaseRegular,
-                  ),
-                  trailing: o == value
-                      ? const Icon(Icons.check, color: AppColors.primary)
-                      : null,
-                  onTap: () => Navigator.of(context).pop(o),
-                ),
-            ],
-          ),
-        ),
+      final picked = await showOptionSheet<T>(
+        context,
+        options: options,
+        labelOf: labelOf,
+        selected: value,
       );
       if (picked != null) onChanged(picked);
     },
   );
 }
+
+/// Bottom sheet listing [options] with a check on [selected]. The list
+/// scrolls inside the sheet, so long option lists never overflow a small
+/// phone. [extra] tiles (e.g. "View details") follow the options.
+Future<T?> showOptionSheet<T>(
+  BuildContext context, {
+  required List<T> options,
+  required String Function(T) labelOf,
+  T? selected,
+  String? title,
+  Key Function(T)? keyOf,
+  List<Widget> Function(BuildContext sheet) extra = _noExtra,
+}) => showModalBottomSheet<T>(
+  context: context,
+  // Above the shell's floating navigation surface, which would otherwise
+  // cover the last options and take their taps.
+  useRootNavigator: true,
+  builder: (sheet) => SafeArea(
+    child: ListView(
+      key: const Key('option-sheet'),
+      shrinkWrap: true,
+      children: [
+        if (title != null)
+          ListTile(
+            title: Text(
+              title,
+              style: AppTextStyles.mobileLgSemiBold.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+        for (final o in options)
+          ListTile(
+            key: keyOf?.call(o),
+            title: Text(labelOf(o), style: AppTextStyles.mobileBaseRegular),
+            trailing: o == selected
+                ? const Icon(Icons.check, color: AppColors.primary)
+                : null,
+            onTap: () => Navigator.of(sheet).pop(o),
+          ),
+        ...extra(sheet),
+      ],
+    ),
+  ),
+);
+
+List<Widget> _noExtra(BuildContext _) => const [];
 
 /// Horizontal wrap of chips, 8 px apart.
 class ChipRow extends StatelessWidget {

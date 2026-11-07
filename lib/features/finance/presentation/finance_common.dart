@@ -99,6 +99,7 @@ Future<void> showRecordDetails(
   required List<DetailField> fields,
 }) => showModalBottomSheet<void>(
   context: context,
+  useRootNavigator: true,
   isScrollControlled: true,
   builder: (context) => SafeArea(
     child: Padding(

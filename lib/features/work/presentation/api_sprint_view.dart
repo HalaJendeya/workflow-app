@@ -86,26 +86,12 @@ class _ApiSprintViewState extends ConsumerState<ApiSprintView> {
           onTap: projects.length < 2
               ? null
               : () async {
-                  final picked = await showModalBottomSheet<int>(
-                    context: context,
-                    builder: (s) => SafeArea(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          for (final p in projects)
-                            ListTile(
-                              title: Text(p.title),
-                              trailing: p.id == selected
-                                  ? const Icon(
-                                      Icons.check,
-                                      color: AppColors.primary,
-                                    )
-                                  : null,
-                              onTap: () => Navigator.pop(s, p.id),
-                            ),
-                        ],
-                      ),
-                    ),
+                  final picked = await showOptionSheet<int>(
+                    context,
+                    options: [for (final p in projects) p.id],
+                    labelOf: (id) =>
+                        projects.firstWhere((p) => p.id == id).title,
+                    selected: selected,
                   );
                   if (picked != null) setState(() => _projectId = picked);
                 },
@@ -500,32 +486,13 @@ class _ApiTaskCardState extends ConsumerState<ApiTaskCard> {
   Future<void> _move() async {
     final l10n = AppLocalizations.of(context);
     final t = widget.task;
-    final target = await showModalBottomSheet<ApiTaskStatus>(
-      context: context,
-      builder: (s) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: Text(
-                l10n.moveTo,
-                style: AppTextStyles.mobileLgSemiBold.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-            for (final c in kanbanStatuses)
-              ListTile(
-                key: Key('move-${c.name}'),
-                title: Text(apiTaskStatusLabel(l10n, c)),
-                trailing: c == t.status
-                    ? const Icon(Icons.check, color: AppColors.primary)
-                    : null,
-                onTap: () => Navigator.pop(s, c),
-              ),
-          ],
-        ),
-      ),
+    final target = await showOptionSheet<ApiTaskStatus>(
+      context,
+      title: l10n.moveTo,
+      options: kanbanStatuses,
+      labelOf: (c) => apiTaskStatusLabel(l10n, c),
+      selected: t.status,
+      keyOf: (c) => Key('move-${c.name}'),
     );
     if (target == null || target == t.status || !mounted) return;
     setState(() => _busy = true);
@@ -576,6 +543,8 @@ class _ApiTaskCardState extends ConsumerState<ApiTaskCard> {
                         '#${t.id}',
                         if (t.sprintName != null) t.sprintName!,
                       ].join(' • '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.mobileXsSemiBold.copyWith(
                         color: AppColors.textSecondary,
                       ),

@@ -73,23 +73,11 @@ class _SprintScreenState extends ConsumerState<SprintScreen> {
       children: [
         ModuleCard(
           onTap: () async {
-            final picked = await showModalBottomSheet<String>(
-              context: context,
-              builder: (s) => SafeArea(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final p in workProjects)
-                      ListTile(
-                        title: Text(p),
-                        trailing: p == _project
-                            ? const Icon(Icons.check, color: AppColors.primary)
-                            : null,
-                        onTap: () => Navigator.pop(s, p),
-                      ),
-                  ],
-                ),
-              ),
+            final picked = await showOptionSheet<String>(
+              context,
+              options: workProjects,
+              labelOf: (p) => p,
+              selected: _project,
             );
             if (picked != null) setState(() => _project = picked);
           },
@@ -291,35 +279,63 @@ class _SprintScreenState extends ConsumerState<SprintScreen> {
   }
 
   Future<void> _createSprint(BuildContext context) async {
-    final l10n = AppLocalizations.of(context);
-    final name = TextEditingController();
-    final ok = await showDialog<bool>(
+    final name = await showDialog<String>(
       context: context,
-      builder: (d) => AlertDialog(
-        title: Text(l10n.createSprint),
-        content: TextField(
-          key: const Key('sprint-name'),
-          controller: name,
-          decoration: InputDecoration(hintText: l10n.sprintName),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(d, false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(d, name.text.trim().isNotEmpty),
-            child: Text(l10n.save),
-          ),
-        ],
-      ),
+      builder: (_) => const _CreateSprintDialog(),
     );
-    name.dispose();
     // Sprints are not stored locally, and creating one needs the
     // company-admin sprint routes, so say plainly that nothing was saved.
-    if ((ok ?? false) && context.mounted) {
+    if (name != null && context.mounted) {
       showLocalOutcome(context, applied: false);
     }
+  }
+}
+
+/// Owns its text controller, so the controller outlives the dialog's
+/// closing animation (disposing it right after `showDialog` returned
+/// crashed the route while it faded out).
+class _CreateSprintDialog extends StatefulWidget {
+  const new();
+
+  @override
+  State<_CreateSprintDialog> createState() => _CreateSprintDialogState();
+}
+
+class _CreateSprintDialogState extends State<_CreateSprintDialog> {
+  final _name = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final v = _name.text.trim();
+    if (v.isNotEmpty) Navigator.pop(context, v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.createSprint),
+      content: TextField(
+        key: const Key('sprint-name'),
+        controller: _name,
+        autofocus: true,
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _save(),
+        decoration: InputDecoration(hintText: l10n.sprintName),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(onPressed: _save, child: Text(l10n.save)),
+      ],
+    );
   }
 }
 
@@ -359,6 +375,8 @@ class _KanbanCard extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       t.code,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.mobileXsSemiBold.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -465,39 +483,22 @@ class _KanbanCard extends ConsumerWidget {
 
   Future<void> _move(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
-    final target = await showModalBottomSheet<TaskStatus>(
-      context: context,
-      builder: (s) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: Text(
-                l10n.moveTo,
-                style: AppTextStyles.mobileLgSemiBold.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-            for (final c in TaskStatus.values)
-              ListTile(
-                key: Key('move-${c.name}'),
-                title: Text(taskStatusLabel(l10n, c)),
-                trailing: c == task.status
-                    ? const Icon(Icons.check, color: AppColors.primary)
-                    : null,
-                onTap: () => Navigator.pop(s, c),
-              ),
-            ListTile(
-              title: Text(l10n.viewDetails),
-              onTap: () {
-                Navigator.pop(s);
-                showTaskDetails(context, task);
-              },
-            ),
-          ],
+    final target = await showOptionSheet<TaskStatus>(
+      context,
+      title: l10n.moveTo,
+      options: TaskStatus.values,
+      labelOf: (c) => taskStatusLabel(l10n, c),
+      selected: task.status,
+      keyOf: (c) => Key('move-${c.name}'),
+      extra: (sheet) => [
+        ListTile(
+          title: Text(l10n.viewDetails),
+          onTap: () {
+            Navigator.pop(sheet);
+            showTaskDetails(context, task);
+          },
         ),
-      ),
+      ],
     );
     if (target != null && target != task.status) {
       final applied = ref
