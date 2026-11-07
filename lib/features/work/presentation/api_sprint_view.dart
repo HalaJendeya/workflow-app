@@ -9,6 +9,7 @@ import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/work/data/board_repository.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
+import 'package:workflow_app/features/work/presentation/kanban_drag.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -54,11 +55,93 @@ class ApiSprintView extends ConsumerStatefulWidget {
   ConsumerState<ApiSprintView> createState() => _ApiSprintViewState();
 }
 
-class _ApiSprintViewState extends ConsumerState<ApiSprintView> {
+class _ApiSprintViewState extends ConsumerState<ApiSprintView>
+    with KanbanDropBarHost {
   bool _kanban = true;
   ApiTaskStatus _column = ApiTaskStatus.inProgress;
   int? _projectId;
   String _query = '';
+
+  /// Moves sent to the server and not yet confirmed, by task id. The card
+  /// is shown in its destination with a spinner meanwhile; a second move
+  /// of the same task is refused until this one settles.
+  final Map<int, ApiTaskStatus> _pending = {};
+
+  /// Whether [t] may be moved to [target]: a documented kanban status other
+  /// than its current one, a task the server lets the user update, and no
+  /// move already in flight. The server still decides (leader/assignee
+  /// rules) and its refusal is shown as is.
+  bool _canMove(ApiTask t, ApiTaskStatus target) =>
+      kanbanStatuses.contains(target) &&
+      target != (_pending[t.id] ?? t.status) &&
+      t.canUpdate != false &&
+      !_pending.containsKey(t.id);
+
+  Future<void> _move(ApiTask t, ApiTaskStatus target) async {
+    if (!_canMove(t, target)) return;
+    final l10n = AppLocalizations.of(context);
+    setState(() => _pending[t.id] = target);
+    try {
+      await ref.read(boardRepositoryProvider).updateStatus(t.id, target);
+      if (!mounted) return;
+      showSnack(context, l10n.taskStatusUpdated);
+      // Reconcile with the server before dropping the local placement.
+      ref
+        ..invalidate(kanbanProvider(_projectId))
+        // Every backlog page, whichever project key it was read with.
+        ..invalidate(planningProvider);
+      try {
+        await ref.read(kanbanProvider(_projectId).future);
+      } on Object {
+        // The board shows its own error and retry.
+      }
+    } on Object catch (e) {
+      // The card returns to where it was; the server's reason is shown.
+      if (mounted) showSnack(context, localizedError(l10n, e));
+    } finally {
+      if (mounted) setState(() => _pending.remove(t.id));
+    }
+  }
+
+  Future<void> _chooseMove(ApiTask t) async {
+    final l10n = AppLocalizations.of(context);
+    final target = await showOptionSheet<ApiTaskStatus>(
+      context,
+      title: l10n.moveTo,
+      options: kanbanStatuses,
+      labelOf: (c) => apiTaskStatusLabel(l10n, c),
+      selected: _pending[t.id] ?? t.status,
+      keyOf: (c) => Key('move-${c.name}'),
+    );
+    if (target != null && mounted) await _move(t, target);
+  }
+
+  Widget _board(KanbanBoard b, bool Function(ApiTask) matches) => _Board(
+    board: b,
+    column: _column,
+    matches: matches,
+    pending: _pending,
+    onColumn: (c) => setState(() => _column = c),
+    onTapTask: _chooseMove,
+    accepts: _canMove,
+    onDrop: _move,
+    onDragStarted: _startDrag,
+    onDragEnd: hideDropBar,
+  );
+
+  void _startDrag(ApiTask t) {
+    final l10n = AppLocalizations.of(context);
+    showDropBar(
+      (_) => KanbanDropBar<ApiTask, ApiTaskStatus>(
+        title: l10n.moveTo,
+        statuses: kanbanStatuses,
+        labelOf: (c) => apiTaskStatusLabel(l10n, c),
+        held: t,
+        accepts: _canMove,
+        onDrop: _move,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,19 +243,23 @@ class _ApiSprintViewState extends ConsumerState<ApiSprintView> {
           ],
         ),
         if (_kanban)
-          AsyncSection(
-            value: board,
-            onRetry: () => ref.invalidate(kanbanProvider(_projectId)),
-            builder: (b) => _Board(
-              board: b,
-              column: _column,
-              matches: matches,
-              onColumn: (c) => setState(() => _column = c),
-              onMoved: () => ref.invalidate(kanbanProvider(_projectId)),
-            ),
-          )
+          // While a move is being reconciled the board keeps its cards on
+          // screen instead of flashing a spinner.
+          if (board.hasValue && !board.hasError)
+            _board(board.requireValue, matches)
+          else
+            AsyncSection(
+              value: board,
+              onRetry: () => ref.invalidate(kanbanProvider(_projectId)),
+              builder: (b) => _board(b, matches),
+            )
         else
-          _Backlog(projectId: selected, matches: matches),
+          _Backlog(
+            projectId: selected,
+            matches: matches,
+            pending: _pending,
+            onTapTask: _chooseMove,
+          ),
       ],
     );
   }
@@ -183,15 +270,39 @@ class _Board extends StatelessWidget {
     required this.board,
     required this.column,
     required this.matches,
+    required this.pending,
     required this.onColumn,
-    required this.onMoved,
+    required this.onTapTask,
+    required this.accepts,
+    required this.onDrop,
+    required this.onDragStarted,
+    required this.onDragEnd,
   });
 
   final KanbanBoard board;
   final ApiTaskStatus column;
   final bool Function(ApiTask) matches;
+  final Map<int, ApiTaskStatus> pending;
   final ValueChanged<ApiTaskStatus> onColumn;
-  final VoidCallback onMoved;
+  final ValueChanged<ApiTask> onTapTask;
+  final bool Function(ApiTask, ApiTaskStatus) accepts;
+  final void Function(ApiTask, ApiTaskStatus) onDrop;
+  final ValueChanged<ApiTask> onDragStarted;
+  final VoidCallback onDragEnd;
+
+  ApiTaskStatus _statusOf(ApiTask t) => pending[t.id] ?? t.status;
+
+  /// The server's whole-sprint count, shifted by moves still pending.
+  int _count(ApiTaskStatus c) {
+    var n = board.byStatus[c] ?? board.tasks.where((t) => t.status == c).length;
+    for (final t in board.tasks) {
+      final to = pending[t.id];
+      if (to == null) continue;
+      if (t.status == c) n--;
+      if (to == c) n++;
+    }
+    return n < 0 ? 0 : n;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -205,7 +316,7 @@ class _Board extends StatelessWidget {
     );
     final date = DateFormat('yyyy-MM-dd', 'en');
     final inColumn = board.tasks
-        .where((t) => t.status == column && matches(t))
+        .where((t) => _statusOf(t) == column && matches(t))
         .toList();
     final (bg, border) = _columnColors(column);
     return Column(
@@ -280,27 +391,37 @@ class _Board extends StatelessWidget {
             children: [
               for (final c in _columns)
                 Expanded(
-                  child: InkWell(
-                    key: Key('column-${c.name}'),
-                    borderRadius: BorderRadius.circular(6),
-                    onTap: () => onColumn(c),
-                    child: Container(
-                      height: 34,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: column == c
-                            ? AppColors.primary50.withValues(alpha: 0.6)
-                            : null,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        apiTaskStatusLabel(l10n, c),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.mobileXsMedium.copyWith(
-                          color: column == c
-                              ? AppColors.primaryStrong
-                              : AppColors.textSecondary,
+                  child: KanbanDropTarget<ApiTask, ApiTaskStatus>(
+                    status: c,
+                    accepts: accepts,
+                    onDrop: onDrop,
+                    builder: (context, {required hovering}) => InkWell(
+                      key: Key('column-${c.name}'),
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () => onColumn(c),
+                      child: Container(
+                        height: 34,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: hovering
+                              ? AppColors.primary50
+                              : column == c
+                              ? AppColors.primary50.withValues(alpha: 0.6)
+                              : null,
+                          border: hovering
+                              ? Border.all(color: AppColors.primary, width: 2)
+                              : null,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          apiTaskStatusLabel(l10n, c),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.mobileXsMedium.copyWith(
+                            color: column == c
+                                ? AppColors.primaryStrong
+                                : AppColors.textSecondary,
+                          ),
                         ),
                       ),
                     ),
@@ -358,7 +479,7 @@ class _Board extends StatelessWidget {
                         // The whole-sprint count from stats, which can be
                         // larger than the cards when scope is "mine".
                         child: Text(
-                          '${board.byStatus[column] ?? inColumn.length}',
+                          '${_count(column)}',
                           style: AppTextStyles.mobileXsMedium.copyWith(
                             color: const Color(0xFF3D4E60),
                           ),
@@ -380,7 +501,18 @@ class _Board extends StatelessWidget {
               for (final t in inColumn)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                  child: ApiTaskCard(task: t, onMoved: onMoved),
+                  child: KanbanDraggable<ApiTask>(
+                    key: Key('drag-${t.id}'),
+                    data: t,
+                    enabled: t.canUpdate != false && !pending.containsKey(t.id),
+                    onDragStarted: () => onDragStarted(t),
+                    onDragEnd: onDragEnd,
+                    child: ApiTaskCard(
+                      task: t,
+                      pending: pending.containsKey(t.id),
+                      onTap: () => onTapTask(t),
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -391,10 +523,17 @@ class _Board extends StatelessWidget {
 }
 
 class _Backlog extends ConsumerWidget {
-  const new({required this.projectId, required this.matches});
+  const new({
+    required this.projectId,
+    required this.matches,
+    required this.pending,
+    required this.onTapTask,
+  });
 
   final int? projectId;
   final bool Function(ApiTask) matches;
+  final Map<int, ApiTaskStatus> pending;
+  final ValueChanged<ApiTask> onTapTask;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -450,7 +589,8 @@ class _Backlog extends ConsumerWidget {
             for (final t in rows) ...[
               ApiTaskCard(
                 task: t,
-                onMoved: () => ref.invalidate(planningProvider(projectId)),
+                pending: pending.containsKey(t.id),
+                onTap: () => onTapTask(t),
               ),
               const SizedBox(height: 10),
             ],
@@ -469,49 +609,24 @@ class _Backlog extends ConsumerWidget {
 }
 
 /// A task card in the Figma kanban style. Tapping it offers the kanban
-/// statuses; a status change is sent to the server and the board reloads.
-class ApiTaskCard extends ConsumerStatefulWidget {
-  const new({required this.task, required this.onMoved, super.key});
+/// statuses (the accessible alternative to dragging); [pending] shows a
+/// spinner while a move is being saved and disables the card.
+class ApiTaskCard extends StatelessWidget {
+  const new({
+    required this.task,
+    required this.onTap,
+    this.pending = false,
+    super.key,
+  });
 
   final ApiTask task;
-  final VoidCallback onMoved;
-
-  @override
-  ConsumerState<ApiTaskCard> createState() => _ApiTaskCardState();
-}
-
-class _ApiTaskCardState extends ConsumerState<ApiTaskCard> {
-  bool _busy = false;
-
-  Future<void> _move() async {
-    final l10n = AppLocalizations.of(context);
-    final t = widget.task;
-    final target = await showOptionSheet<ApiTaskStatus>(
-      context,
-      title: l10n.moveTo,
-      options: kanbanStatuses,
-      labelOf: (c) => apiTaskStatusLabel(l10n, c),
-      selected: t.status,
-      keyOf: (c) => Key('move-${c.name}'),
-    );
-    if (target == null || target == t.status || !mounted) return;
-    setState(() => _busy = true);
-    try {
-      await ref.read(boardRepositoryProvider).updateStatus(t.id, target);
-      if (!mounted) return;
-      showSnack(context, l10n.taskStatusUpdated);
-      widget.onMoved();
-    } on Object catch (e) {
-      if (mounted) showSnack(context, localizedError(l10n, e));
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
+  final VoidCallback onTap;
+  final bool pending;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final t = widget.task;
+    final t = task;
     final canMove = t.canUpdate ?? true;
     final d = t.duration;
     return Material(
@@ -523,7 +638,7 @@ class _ApiTaskCardState extends ConsumerState<ApiTaskCard> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: _busy || !canMove ? null : _move,
+        onTap: pending || !canMove ? null : onTap,
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -615,8 +730,9 @@ class _ApiTaskCardState extends ConsumerState<ApiTaskCard> {
                     ),
                   ],
                   const Spacer(),
-                  if (_busy)
+                  if (pending)
                     const SizedBox.square(
+                      key: Key('kanban-pending'),
                       dimension: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )

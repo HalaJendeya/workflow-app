@@ -9,6 +9,7 @@ import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/features/work/presentation/api_sprint_view.dart';
+import 'package:workflow_app/features/work/presentation/kanban_drag.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -41,7 +42,34 @@ class SprintScreen extends ConsumerStatefulWidget {
   ConsumerState<SprintScreen> createState() => _SprintScreenState();
 }
 
-class _SprintScreenState extends ConsumerState<SprintScreen> {
+class _SprintScreenState extends ConsumerState<SprintScreen>
+    with KanbanDropBarHost {
+  /// Demo moves are applied to the local list straight away.
+  bool _canMove(WorkTask t, TaskStatus target) => target != t.status;
+
+  void _drop(WorkTask t, TaskStatus target) {
+    if (!_canMove(t, target)) return;
+    // Re-read the task: the list may have changed since it was picked up.
+    final notifier = ref.read(workTasksProvider.notifier);
+    final current = notifier.byId(t.id) ?? t;
+    final applied = notifier.replace(current.copyWith(status: target));
+    showLocalOutcome(context, applied: applied);
+  }
+
+  void _startDrag(WorkTask t) {
+    final l10n = AppLocalizations.of(context);
+    showDropBar(
+      (_) => KanbanDropBar<WorkTask, TaskStatus>(
+        title: l10n.moveTo,
+        statuses: TaskStatus.values,
+        labelOf: (c) => taskStatusLabel(l10n, c),
+        held: t,
+        accepts: _canMove,
+        onDrop: _drop,
+      ),
+    );
+  }
+
   bool _kanban = true;
   TaskStatus _column = TaskStatus.inProgress;
   String _query = '';
@@ -156,25 +184,35 @@ class _SprintScreenState extends ConsumerState<SprintScreen> {
               children: [
                 for (final c in _columns)
                   Expanded(
-                    child: InkWell(
-                      key: Key('column-${c.name}'),
-                      borderRadius: BorderRadius.circular(6),
-                      onTap: () => setState(() => _column = c),
-                      child: Container(
-                        height: 34,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: _column == c
-                              ? AppColors.primary50.withValues(alpha: 0.6)
-                              : null,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          taskStatusLabel(l10n, c),
-                          style: AppTextStyles.mobileXsMedium.copyWith(
-                            color: _column == c
-                                ? AppColors.primaryStrong
-                                : AppColors.textSecondary,
+                    child: KanbanDropTarget<WorkTask, TaskStatus>(
+                      status: c,
+                      accepts: _canMove,
+                      onDrop: _drop,
+                      builder: (context, {required hovering}) => InkWell(
+                        key: Key('column-${c.name}'),
+                        borderRadius: BorderRadius.circular(6),
+                        onTap: () => setState(() => _column = c),
+                        child: Container(
+                          height: 34,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: hovering
+                                ? AppColors.primary50
+                                : _column == c
+                                ? AppColors.primary50.withValues(alpha: 0.6)
+                                : null,
+                            border: hovering
+                                ? Border.all(color: AppColors.primary, width: 2)
+                                : null,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            taskStatusLabel(l10n, c),
+                            style: AppTextStyles.mobileXsMedium.copyWith(
+                              color: _column == c
+                                  ? AppColors.primaryStrong
+                                  : AppColors.textSecondary,
+                            ),
                           ),
                         ),
                       ),
@@ -265,14 +303,27 @@ class _SprintScreenState extends ConsumerState<SprintScreen> {
                 for (final t in inColumn)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                    child: _KanbanCard(task: t),
+                    child: KanbanDraggable<WorkTask>(
+                      key: Key('drag-${t.id}'),
+                      data: t,
+                      onDragStarted: () => _startDrag(t),
+                      onDragEnd: hideDropBar,
+                      child: _KanbanCard(task: t),
+                    ),
                   ),
               ],
             ),
           ),
         ] else ...[
           if (backlog.isEmpty) EmptyNotice(text: l10n.noRecords),
-          for (final t in backlog) _KanbanCard(task: t),
+          for (final t in backlog)
+            KanbanDraggable<WorkTask>(
+              key: Key('drag-${t.id}'),
+              data: t,
+              onDragStarted: () => _startDrag(t),
+              onDragEnd: hideDropBar,
+              child: _KanbanCard(task: t),
+            ),
         ],
       ],
     );
