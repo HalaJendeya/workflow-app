@@ -363,10 +363,22 @@ final FutureProvider<ApiPage<ApiMeeting>> apiMeetingCalendarProvider =
       ), perPage: 100),
     );
 
+/// Status counts. When the calendar page already holds every meeting they
+/// are counted from it; otherwise one `per_page=1` request per status
+/// reads the paginator totals.
 final FutureProvider<MeetingCounts> apiMeetingCountsProvider =
-    FutureProvider.autoDispose(
-      (ref) => ref.watch(meetingsRepositoryProvider).counts(),
-    );
+    FutureProvider.autoDispose((ref) async {
+      final repo = ref.watch(meetingsRepositoryProvider);
+      final all = await ref.watch(apiMeetingCalendarProvider.future);
+      if (all.total > all.items.length) return await repo.counts();
+      int n(ApiMeetingStatus s) => all.items.where((m) => m.status == s).length;
+      return (
+        total: all.total,
+        waiting: n(ApiMeetingStatus.waiting),
+        live: n(ApiMeetingStatus.live),
+        ended: n(ApiMeetingStatus.ended),
+      );
+    });
 
 final FutureProviderFamily<ApiMeeting, int> apiMeetingProvider = FutureProvider
     .autoDispose

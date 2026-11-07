@@ -420,8 +420,17 @@ void main() {
     expect(find.textContaining('section is ready'), findsNothing);
     expect(find.byKey(const Key('meeting-41')), findsOneWidget);
     expect(find.byKey(const Key('meeting-42')), findsOneWidget);
-    // KPIs come from paginator totals per status.
+    // KPIs are counted from the complete calendar page: no extra
+    // per-status requests.
     expect(find.text('1 Active'), findsOneWidget);
+    expect(
+      adapter.requests.where(
+        (o) =>
+            o.uri.path == '/api/v1/employee/meetings' &&
+            '${o.queryParameters['per_page']}' == '1',
+      ),
+      isEmpty,
+    );
 
     // Join by code is reported as unavailable instead of failing silently.
     await tester.tap(find.text('join by code').first);
