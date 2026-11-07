@@ -303,6 +303,8 @@ class SprintPlanning {
   final int? backlogPoints;
 }
 
+typedef TaskQuery = ({String search, TaskPriority? priority, int page});
+
 /// Employee sprint board and backlog. The only write is moving a task
 /// between kanban columns (`kanban.manage_status`); creating sprints has
 /// no employee route.
@@ -332,6 +334,27 @@ class BoardRepository {
         ),
       );
 
+  /// `GET /employee/tasks` rows over all months, newest first (the
+  /// route's default sort). `stats` is read separately by
+  /// `EmployeeWorkRepository.taskStats`.
+  Future<ApiPage<ApiTask>> tasks(TaskQuery q) async {
+    final body = ApiEnvelope.unwrapBody(
+      await _client.get(
+        '/api/v1/employee/tasks',
+        query: {
+          'month': 'all',
+          'page': q.page,
+          'per_page': 10,
+          if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
+          if (q.priority case final p?) 'priority': p.name,
+        },
+      ),
+    );
+    final data = body['data'];
+    if (data is! Json) missingField('data');
+    return ApiPage.parse(data, ApiTask.fromJson);
+  }
+
   Future<void> updateStatus(int taskId, ApiTaskStatus status) async {
     ApiEnvelope.unwrapData(
       await _client.post(
@@ -357,4 +380,9 @@ final FutureProviderFamily<SprintPlanning, int?> planningProvider =
     FutureProvider.autoDispose.family<SprintPlanning, int?>(
       (ref, projectId) =>
           ref.watch(boardRepositoryProvider).planning(projectId: projectId),
+    );
+
+final FutureProviderFamily<ApiPage<ApiTask>, TaskQuery> apiTasksProvider =
+    FutureProvider.autoDispose.family<ApiPage<ApiTask>, TaskQuery>(
+      (ref, q) => ref.watch(boardRepositoryProvider).tasks(q),
     );

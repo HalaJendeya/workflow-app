@@ -237,6 +237,35 @@ void main() {
       );
     });
 
+    test('task rows use month=all and server filters', () async {
+      http.reply(
+        200,
+        ok({
+          'current_page': 1,
+          'data': [taskJson(3, 'todo')],
+          'last_page': 1,
+          'per_page': 10,
+          'total': 1,
+        })..addAll({
+          'stats': {'total': 1},
+        }),
+      );
+      final p = await repo().tasks((
+        search: ' login ',
+        priority: TaskPriority.high,
+        page: 2,
+      ));
+      expect(http.last.path, '/api/v1/employee/tasks');
+      expect(http.last.queryParameters, {
+        'month': 'all',
+        'page': 2,
+        'per_page': 10,
+        'search': 'login',
+        'priority': 'high',
+      });
+      expect(p.items.single.title, 'Task 3');
+    });
+
     test('a 422 from update-status is surfaced', () async {
       http.reply(422, failure('The status field is invalid.'));
       await expectLater(
@@ -379,5 +408,97 @@ void main() {
     await tester.tap(find.byKey(const Key('create-sprint')));
     await tester.pump();
     expect(find.textContaining('no sprint create route'), findsOneWidget);
+  });
+
+  testWidgets('task rows come from the API with no sample data', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(390, 2400) * 3
+      ..devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    final storage = InMemorySessionStorage();
+    await storage.writeAll(
+      const Session(
+        token: 't',
+        tokenType: 'Bearer',
+        userId: 10,
+        companyId: 3,
+        portal: Portal.employee,
+      ).toStorage(),
+    );
+    final adapter = RouteHttpAdapter({
+      'GET /api/v1/employee/account': (200, ok({'id': 10, 'name': 'Me'})),
+      'GET /api/v1/employee/dashboard': (
+        200,
+        ok({
+          'myTasks': 1,
+          'myHours': 1,
+          'myMinutes': 10,
+          'totalEarned': 0,
+          'paidSalary': 0,
+          'unpaidSalary': 0,
+        }),
+      ),
+      'GET /api/v1/employee/projects': (
+        200,
+        ok({
+          'current_page': 1,
+          'data': <Object>[],
+          'last_page': 1,
+          'per_page': 1,
+          'total': 0,
+        }),
+      ),
+      'GET /api/v1/employee/tasks': (
+        200,
+        {
+          ...ok({
+            'current_page': 1,
+            'data': [taskJson(3, 'in_progress')],
+            'last_page': 1,
+            'per_page': 10,
+            'total': 1,
+          }),
+          'stats': {
+            'total': 1,
+            'by_status': {'in_progress': 1},
+            'active': 1,
+            'logged_minutes': 70,
+          },
+          'totals': <Object>[],
+        },
+      ),
+    });
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: (_, _) => null,
+        overrides: [
+          appConfigProvider.overrideWithValue(
+            const AppConfig(mode: AppMode.api, apiBaseUrl: 'https://api.test'),
+          ),
+          sessionStorageProvider.overrideWithValue(storage),
+          apiClientProvider.overrideWith(
+            (ref) => ApiClient(
+              baseUrl: 'https://api.test',
+              credentials: ref.watch(sessionCredentialsProvider),
+              adapter: adapter,
+            ),
+          ),
+        ],
+        child: const WorkFlowApp(locale: Locale('en')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('More').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('category-Tasks')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('section is ready'), findsNothing);
+    expect(find.byKey(const Key('api-task-3')), findsOneWidget);
+    expect(find.text('Task 3'), findsOneWidget);
+    expect(find.text('1h 10m'), findsOneWidget);
+    // Demo rows never appear in API mode.
+    expect(find.text('Integrate payment webhooks'), findsNothing);
   });
 }

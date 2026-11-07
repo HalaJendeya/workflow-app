@@ -9,8 +9,10 @@ import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
+import 'package:workflow_app/features/work/data/board_repository.dart';
 import 'package:workflow_app/features/work/data/employee_work_repository.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
+import 'package:workflow_app/features/work/presentation/api_sprint_view.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -112,7 +114,6 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       onCreate: () => openTaskForm(context),
       createLabel: l10n.addTask,
       children: [
-        if (!demo) const BackendPendingNotice(),
         if (api case AsyncError(:final error))
           ApiErrorCard(
             error: error,
@@ -143,87 +144,106 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               : (stats.loggedMinutes / 60).toStringAsFixed(1),
           caption: l10n.hoursThisPeriod,
         ),
-        WfSearchBox(
-          fieldKey: const Key('tasks-search'),
-          hint: l10n.searchTasksHint,
-          onChanged: (v) => setState(() {
-            _query = v;
-            _page = 0;
-          }),
-        ),
-        ChipRow(
-          children: [
-            DropdownChip<String?>(
-              value: _project,
-              options: [
-                null,
-                ...{for (final t in all) t.project},
-              ],
-              labelOf: (p) => p ?? l10n.allProjects,
-              onChanged: (p) => setState(() {
-                _project = p;
-                _page = 0;
-              }),
-            ),
-            DropdownChip<String?>(
-              value: _assignee,
-              options: [
-                null,
-                ...{for (final t in all) t.assignee},
-              ],
-              labelOf: (p) => p ?? l10n.allAssignees,
-              onChanged: (p) => setState(() {
-                _assignee = p;
-                _page = 0;
-              }),
-            ),
-            DropdownChip<TaskPriority?>(
-              value: _priority,
-              options: const [null, ...TaskPriority.values],
-              labelOf: (p) =>
-                  p == null ? l10n.priorityLevel : priorityLabel(l10n, p),
-              onChanged: (p) => setState(() {
-                _priority = p;
-                _page = 0;
-              }),
-            ),
-          ],
-        ),
-        if (visible.isEmpty) EmptyNotice(text: l10n.noRecords),
-        for (final t in visible)
-          StackedRecordCard(
-            key: Key('task-${t.id}'),
-            title: t.title,
-            subtitle: '${t.code} • ${t.sprint}',
-            amount: money(t.amount),
-            rows: [
-              (l10n.fieldProject, t.project),
-              (l10n.fieldEmployee, t.assignee),
-              (l10n.startDate, _dt.format(t.start)),
-              (l10n.endDate, _dt.format(t.end)),
-              (l10n.duration, durationLabel(t.duration)),
-            ],
-            actions: TintedActions(
-              onView: () => showTaskDetails(context, t),
-              onEdit: () => openTaskForm(context, existing: t),
-              onDelete: () async {
-                if (await confirmDelete(context, t.code)) {
-                  final removed = ref
-                      .read(workTasksProvider.notifier)
-                      .remove(t.id);
-                  if (context.mounted) {
-                    showLocalOutcome(context, applied: removed, deleted: true);
-                  }
-                }
-              },
-            ),
+        if (!demo)
+          _ApiTaskRows(
+            query: (search: _query, priority: _priority, page: _page + 1),
+            onSearch: (v) => setState(() {
+              _query = v;
+              _page = 0;
+            }),
+            onPriority: (p) => setState(() {
+              _priority = p;
+              _page = 0;
+            }),
+            onPage: (p) => setState(() => _page = p),
+          )
+        else ...[
+          WfSearchBox(
+            fieldKey: const Key('tasks-search'),
+            hint: l10n.searchTasksHint,
+            onChanged: (v) => setState(() {
+              _query = v;
+              _page = 0;
+            }),
           ),
-        Pager(
-          page: page,
-          pageSize: _pageSize,
-          total: filtered.length,
-          onPage: (p) => setState(() => _page = p),
-        ),
+          ChipRow(
+            children: [
+              DropdownChip<String?>(
+                value: _project,
+                options: [
+                  null,
+                  ...{for (final t in all) t.project},
+                ],
+                labelOf: (p) => p ?? l10n.allProjects,
+                onChanged: (p) => setState(() {
+                  _project = p;
+                  _page = 0;
+                }),
+              ),
+              DropdownChip<String?>(
+                value: _assignee,
+                options: [
+                  null,
+                  ...{for (final t in all) t.assignee},
+                ],
+                labelOf: (p) => p ?? l10n.allAssignees,
+                onChanged: (p) => setState(() {
+                  _assignee = p;
+                  _page = 0;
+                }),
+              ),
+              DropdownChip<TaskPriority?>(
+                value: _priority,
+                options: const [null, ...TaskPriority.values],
+                labelOf: (p) =>
+                    p == null ? l10n.priorityLevel : priorityLabel(l10n, p),
+                onChanged: (p) => setState(() {
+                  _priority = p;
+                  _page = 0;
+                }),
+              ),
+            ],
+          ),
+          if (visible.isEmpty) EmptyNotice(text: l10n.noRecords),
+          for (final t in visible)
+            StackedRecordCard(
+              key: Key('task-${t.id}'),
+              title: t.title,
+              subtitle: '${t.code} • ${t.sprint}',
+              amount: money(t.amount),
+              rows: [
+                (l10n.fieldProject, t.project),
+                (l10n.fieldEmployee, t.assignee),
+                (l10n.startDate, _dt.format(t.start)),
+                (l10n.endDate, _dt.format(t.end)),
+                (l10n.duration, durationLabel(t.duration)),
+              ],
+              actions: TintedActions(
+                onView: () => showTaskDetails(context, t),
+                onEdit: () => openTaskForm(context, existing: t),
+                onDelete: () async {
+                  if (await confirmDelete(context, t.code)) {
+                    final removed = ref
+                        .read(workTasksProvider.notifier)
+                        .remove(t.id);
+                    if (context.mounted) {
+                      showLocalOutcome(
+                        context,
+                        applied: removed,
+                        deleted: true,
+                      );
+                    }
+                  }
+                },
+              ),
+            ),
+          Pager(
+            page: page,
+            pageSize: _pageSize,
+            total: filtered.length,
+            onPage: (p) => setState(() => _page = p),
+          ),
+        ],
       ],
     );
   }
@@ -355,6 +375,121 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
           label: l10n.taskDate,
           value: _date,
           onChanged: (d) => setState(() => _date = d),
+        ),
+      ],
+    );
+  }
+}
+
+/// Task rows of `GET /employee/tasks`, with server-side search, priority
+/// filter and pagination. Project and assignee filters need the shape of
+/// `facets`, which is undocumented, so they are not offered here.
+class _ApiTaskRows extends ConsumerWidget {
+  const new({
+    required this.query,
+    required this.onSearch,
+    required this.onPriority,
+    required this.onPage,
+  });
+
+  final TaskQuery query;
+  final ValueChanged<String> onSearch;
+  final ValueChanged<TaskPriority?> onPriority;
+  final ValueChanged<int> onPage;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final value = ref.watch(apiTasksProvider(query));
+    final date = DateFormat('yyyy/MM/dd', 'en');
+    final time = DateFormat('HH:mm', 'en');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        WfSearchBox(
+          fieldKey: const Key('tasks-search'),
+          hint: l10n.searchTasksHint,
+          onChanged: onSearch,
+        ),
+        const SizedBox(height: 20),
+        ChipRow(
+          children: [
+            DropdownChip<TaskPriority?>(
+              value: query.priority,
+              options: const [null, ...TaskPriority.values],
+              labelOf: (p) =>
+                  p == null ? l10n.priorityLevel : priorityLabel(l10n, p),
+              onChanged: onPriority,
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        AsyncSection(
+          value: value,
+          onRetry: () => ref.invalidate(apiTasksProvider(query)),
+          builder: (page) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (page.items.isEmpty) EmptyNotice(text: l10n.noRecords),
+              for (final t in page.items) ...[
+                StackedRecordCard(
+                  key: Key('api-task-${t.id}'),
+                  title: t.title,
+                  subtitle: [
+                    '#${t.id}',
+                    apiTaskStatusLabel(l10n, t.status),
+                    ?t.sprintName,
+                  ].join(' • '),
+                  // The employee role receives no task cost.
+                  amount: t.storyPoints == null
+                      ? '—'
+                      : l10n.points(t.storyPoints!),
+                  rows: [
+                    (l10n.fieldProject, t.projectTitle ?? '—'),
+                    (l10n.fieldEmployee, t.assigneeName ?? '—'),
+                    (
+                      l10n.startDate,
+                      [
+                        if (t.taskDate != null) date.format(t.taskDate!),
+                        if (t.start != null) time.format(t.start!),
+                      ].join(' - '),
+                    ),
+                    (l10n.endDate, t.end == null ? '—' : time.format(t.end!)),
+                    (
+                      l10n.duration,
+                      t.duration == null ? '—' : durationLabel(t.duration!),
+                    ),
+                  ],
+                  actions: TintedActions(
+                    onView: () => showRecordDetails(
+                      context,
+                      title: t.title,
+                      status: apiTaskStatusLabel(l10n, t.status),
+                      tone: BadgeTone.info,
+                      fields: [
+                        DetailField(l10n.fieldProject, t.projectTitle ?? '—'),
+                        DetailField(
+                          l10n.priority,
+                          t.priority == null
+                              ? '—'
+                              : priorityLabel(l10n, t.priority!),
+                        ),
+                        DetailField(l10n.fieldEmployee, t.assigneeName ?? '—'),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+              if (page.lastPage > 1)
+                Pager(
+                  page: page.currentPage - 1,
+                  pageSize: page.perPage,
+                  total: page.total,
+                  onPage: onPage,
+                ),
+            ],
+          ),
         ),
       ],
     );
