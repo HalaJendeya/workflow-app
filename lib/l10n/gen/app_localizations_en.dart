@@ -1786,4 +1786,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String calendarShowsLatest(int count) {
     return 'The calendar shows the latest $count meetings.';
   }
+
+  @override
+  String get noActiveSprint => 'This project has no current sprint.';
+
+  @override
+  String sprintPoints(int done, int total, int percent) {
+    return '$done / $total points · $percent%';
+  }
+
+  @override
+  String get taskStatusUpdated => 'Task status updated.';
+
+  @override
+  String get sprintCreateUnavailable =>
+      'Sprints can’t be created from an employee account — the WorkFlow API has no sprint create route for this role.';
+
+  @override
+  String backlogFirstPage(int shown, int total) {
+    return 'Showing $shown of $total backlog tasks.';
+  }
+
+  @override
+  String sprintsCount(int count) {
+    return 'Sprints ($count)';
+  }
 }

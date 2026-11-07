@@ -1780,4 +1780,29 @@ class AppLocalizationsAr extends AppLocalizations {
   String calendarShowsLatest(int count) {
     return 'يعرض التقويم آخر $count اجتماع.';
   }
+
+  @override
+  String get noActiveSprint => 'لا يوجد سبرنت حالي لهذا المشروع.';
+
+  @override
+  String sprintPoints(int done, int total, int percent) {
+    return '$done / $total نقطة · $percent%';
+  }
+
+  @override
+  String get taskStatusUpdated => 'تم تحديث حالة المهمة.';
+
+  @override
+  String get sprintCreateUnavailable =>
+      'لا يمكن إنشاء سبرنت من حساب موظف — لا توفر واجهة WorkFlow مسار إنشاء سبرنت لهذا الدور.';
+
+  @override
+  String backlogFirstPage(int shown, int total) {
+    return 'عرض $shown من $total مهمة في الـ Backlog.';
+  }
+
+  @override
+  String sprintsCount(int count) {
+    return 'السبرنتات ($count)';
+  }
 }

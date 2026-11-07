@@ -8,6 +8,7 @@ import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
+import 'package:workflow_app/features/work/presentation/api_sprint_view.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -49,7 +50,7 @@ class _SprintScreenState extends ConsumerState<SprintScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final demo = ref.watch(demoModeProvider);
+    if (!ref.watch(demoModeProvider)) return const ApiSprintView();
     final q = _query.trim().toLowerCase();
     final all = ref
         .watch(workTasksProvider)
@@ -70,7 +71,6 @@ class _SprintScreenState extends ConsumerState<SprintScreen> {
       onCreate: () => openTaskForm(context),
       createLabel: l10n.addTask,
       children: [
-        if (!demo) const BackendPendingNotice(),
         ModuleCard(
           onTap: () async {
             final picked = await showModalBottomSheet<String>(

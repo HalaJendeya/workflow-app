@@ -952,5 +952,41 @@
         "type": "int"
       }
     }
+  },
+  "noActiveSprint": "This project has no current sprint.",
+  "sprintPoints": "{done} / {total} points · {percent}%",
+  "@sprintPoints": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "taskStatusUpdated": "Task status updated.",
+  "sprintCreateUnavailable": "Sprints can’t be created from an employee account — the WorkFlow API has no sprint create route for this role.",
+  "backlogFirstPage": "Showing {shown} of {total} backlog tasks.",
+  "@backlogFirstPage": {
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sprintsCount": "Sprints ({count})",
+  "@sprintsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

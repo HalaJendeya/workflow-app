@@ -535,5 +535,11 @@
   "meetingJoinUnavailable": "الانضمام إلى اجتماع من التطبيق غير متاح بعد — لا توفر واجهة WorkFlow بحثاً عن الاجتماع برمزه، والتطبيق لا يتضمن عميل الوسائط LiveKit.",
   "meetingCreateUnavailable": "لا يمكن إنشاء اجتماعات من هذا الحساب — لا توفر واجهة WorkFlow مسار إنشاء لدورك.",
   "durationSeconds": "{h}س {m}د {s}ث",
-  "calendarShowsLatest": "يعرض التقويم آخر {count} اجتماع."
+  "calendarShowsLatest": "يعرض التقويم آخر {count} اجتماع.",
+  "noActiveSprint": "لا يوجد سبرنت حالي لهذا المشروع.",
+  "sprintPoints": "{done} / {total} نقطة · {percent}%",
+  "taskStatusUpdated": "تم تحديث حالة المهمة.",
+  "sprintCreateUnavailable": "لا يمكن إنشاء سبرنت من حساب موظف — لا توفر واجهة WorkFlow مسار إنشاء سبرنت لهذا الدور.",
+  "backlogFirstPage": "عرض {shown} من {total} مهمة في الـ Backlog.",
+  "sprintsCount": "السبرنتات ({count})"
 }

@@ -3313,6 +3313,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The calendar shows the latest {count} meetings.'**
   String calendarShowsLatest(int count);
+
+  /// No description provided for @noActiveSprint.
+  ///
+  /// In en, this message translates to:
+  /// **'This project has no current sprint.'**
+  String get noActiveSprint;
+
+  /// No description provided for @sprintPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} / {total} points · {percent}%'**
+  String sprintPoints(int done, int total, int percent);
+
+  /// No description provided for @taskStatusUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Task status updated.'**
+  String get taskStatusUpdated;
+
+  /// No description provided for @sprintCreateUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Sprints can’t be created from an employee account — the WorkFlow API has no sprint create route for this role.'**
+  String get sprintCreateUnavailable;
+
+  /// No description provided for @backlogFirstPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {shown} of {total} backlog tasks.'**
+  String backlogFirstPage(int shown, int total);
+
+  /// No description provided for @sprintsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Sprints ({count})'**
+  String sprintsCount(int count);
 }
 
 class _AppLocalizationsDelegate
