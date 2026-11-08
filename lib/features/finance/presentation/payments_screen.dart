@@ -177,12 +177,17 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
   }
 
   Future<void> _openForm(BuildContext context, {Payment? existing}) =>
-      Navigator.of(context, rootNavigator: true).push(
-        MaterialPageRoute<void>(
-          builder: (_) => PaymentFormScreen(existing: existing),
-        ),
-      );
+      openPaymentForm(context, existing: existing);
 }
+
+/// Add/edit payment. Demo only: the client role has no payment write
+/// route, so in API mode this explains that instead of opening the form.
+Future<void> openPaymentForm(BuildContext context, {Payment? existing}) =>
+    openDemoForm(
+      context,
+      page: (_) => PaymentFormScreen(existing: existing),
+      unavailable: AppLocalizations.of(context).paymentCreateUnavailable,
+    );
 
 /// Figma "Add Payment" (643:35666). Saves to the local demo collection.
 class PaymentFormScreen extends ConsumerStatefulWidget {
@@ -287,6 +292,7 @@ class _PaymentFormScreenState extends ConsumerState<PaymentFormScreen> {
           controller: _amount,
           number: true,
           hint: '0',
+          validator: (v) => positiveAmount(context, v),
         ),
         SelectField<String>(
           label: l10n.fieldPaymentMethod,

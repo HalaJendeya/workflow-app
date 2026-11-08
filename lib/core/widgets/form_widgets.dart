@@ -151,6 +151,8 @@ InputDecoration _decoration({String? hint, Widget? suffix}) {
     constraints: const BoxConstraints(minHeight: 48),
     suffixIcon: suffix,
     suffixIconConstraints: const BoxConstraints(minWidth: 52, minHeight: 20),
+    // Long messages wrap instead of being cut off on small phones.
+    errorMaxLines: 3,
     border: b(ModuleColors.chipBorder),
     enabledBorder: b(ModuleColors.chipBorder),
     focusedBorder: b(AppColors.primary),
@@ -268,41 +270,75 @@ class TextInputField extends StatelessWidget {
   );
 }
 
-/// Date input showing dd-MM-yyyy with the Figma calendar icon.
+/// Rejects anything but a number greater than zero (an amount).
+String? positiveAmount(BuildContext context, String? v) {
+  final n = double.tryParse(v ?? '');
+  return n != null && n <= 0
+      ? AppLocalizations.of(context).validationPositive
+      : null;
+}
+
+/// Rejects anything but a whole number (story points).
+String? wholeNumber(BuildContext context, String? v) =>
+    v == null || v.isEmpty || int.tryParse(v) != null
+    ? null
+    : AppLocalizations.of(context).validationWholeNumber;
+
+/// Date input showing dd-MM-yyyy with the Figma calendar icon. It is a form
+/// field, so [validator] errors show under it like the other inputs.
 class DateField extends StatelessWidget {
   const new({
     required this.label,
     required this.value,
     required this.onChanged,
+    this.validator,
     super.key,
   });
+
+  /// Range offered by the picker.
+  static final first = DateTime(2020);
+  static final last = DateTime(2035, 12, 31);
 
   final String label;
   final DateTime value;
   final ValueChanged<DateTime> onChanged;
+  final String? Function(DateTime value)? validator;
 
   @override
   Widget build(BuildContext context) => _Labeled(
     label: label,
-    child: InkWell(
-      borderRadius: BorderRadius.circular(AppRadii.input),
-      onTap: () async {
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: value,
-          firstDate: DateTime(2020),
-          lastDate: DateTime(2035),
-        );
-        if (picked != null) onChanged(picked);
-      },
-      child: InputDecorator(
-        decoration: _decoration(
-          suffix: const WfSvg('field_calendar', size: 20),
-        ),
-        child: Text(
-          DateFormat('dd-MM-yyyy').format(value),
-          style: AppTextStyles.mobileBaseRegular.copyWith(
-            color: AppColors.textPrimary,
+    child: FormField<DateTime>(
+      key: ValueKey(value),
+      initialValue: value,
+      validator: validator == null ? null : (_) => validator!(value),
+      builder: (field) => InkWell(
+        key: Key('date-$label'),
+        borderRadius: BorderRadius.circular(AppRadii.input),
+        onTap: () async {
+          // A stored date outside the range used to trip the picker's
+          // assertion; open on the nearest allowed day instead.
+          final initial = value.isBefore(first)
+              ? first
+              : value.isAfter(last)
+              ? last
+              : value;
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: initial,
+            firstDate: first,
+            lastDate: last,
+          );
+          if (picked != null) onChanged(picked);
+        },
+        child: InputDecorator(
+          decoration: _decoration(
+            suffix: const WfSvg('field_calendar', size: 20),
+          ).copyWith(errorText: field.errorText, errorMaxLines: 3),
+          child: Text(
+            DateFormat('dd-MM-yyyy').format(value),
+            style: AppTextStyles.mobileBaseRegular.copyWith(
+              color: AppColors.textPrimary,
+            ),
           ),
         ),
       ),

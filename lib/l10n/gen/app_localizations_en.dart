@@ -1811,4 +1811,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String sprintsCount(int count) {
     return 'Sprints ($count)';
   }
+
+  @override
+  String get validationPositive => 'Enter an amount greater than 0';
+
+  @override
+  String get validationWholeNumber => 'Enter a whole number';
+
+  @override
+  String get validationDueBeforeIssue =>
+      'The due date can’t be before the invoice date';
+
+  @override
+  String get invoiceCreateUnavailable =>
+      'Invoices can’t be created from this account — the WorkFlow API has no invoice create route for clients.';
+
+  @override
+  String get paymentCreateUnavailable =>
+      'Payments can’t be recorded from this account — the WorkFlow API has no payment create route for clients.';
+
+  @override
+  String get projectCreateUnavailable =>
+      'Projects can’t be created from this account — the WorkFlow API has no project create route for your role.';
+
+  @override
+  String get taskCreateUnavailable =>
+      'Tasks can’t be created here yet — the WorkFlow API accepts new tasks only from a project leader, and this form isn’t connected to it.';
 }

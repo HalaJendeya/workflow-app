@@ -167,12 +167,17 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
   }
 
   Future<void> _openForm(BuildContext context, {Invoice? existing}) =>
-      Navigator.of(context, rootNavigator: true).push(
-        MaterialPageRoute<void>(
-          builder: (_) => InvoiceFormScreen(existing: existing),
-        ),
-      );
+      openInvoiceForm(context, existing: existing);
 }
+
+/// Create/edit invoice. Demo only: the client role has no invoice write
+/// route, so in API mode this explains that instead of opening the form.
+Future<void> openInvoiceForm(BuildContext context, {Invoice? existing}) =>
+    openDemoForm(
+      context,
+      page: (_) => InvoiceFormScreen(existing: existing),
+      unavailable: AppLocalizations.of(context).invoiceCreateUnavailable,
+    );
 
 String invoiceStatusLabel(AppLocalizations l10n, InvoiceStatus s) =>
     switch (s) {
@@ -303,6 +308,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           controller: _amount,
           number: true,
           hint: '0',
+          validator: (v) => positiveAmount(context, v),
         ),
         DateField(
           label: l10n.fieldInvoiceDate,
@@ -313,6 +319,10 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           label: l10n.fieldDueDate,
           value: _due,
           onChanged: (d) => setState(() => _due = d),
+          validator: (d) =>
+              DateUtils.dateOnly(d).isBefore(DateUtils.dateOnly(_issue))
+              ? l10n.validationDueBeforeIssue
+              : null,
         ),
         SelectField<InvoiceStatus>(
           label: l10n.fieldStatus,

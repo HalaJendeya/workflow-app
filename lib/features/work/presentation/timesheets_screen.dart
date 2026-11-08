@@ -181,26 +181,11 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
                 ],
               ),
               onEdit: () async {
-                final s = await showModalBottomSheet<TimesheetStatus>(
-                  context: context,
-                  builder: (sheet) => SafeArea(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        for (final st in TimesheetStatus.values)
-                          ListTile(
-                            title: Text(timesheetStatusLabel(l10n, st)),
-                            trailing: st == e.status
-                                ? const Icon(
-                                    Icons.check,
-                                    color: AppColors.primary,
-                                  )
-                                : null,
-                            onTap: () => Navigator.pop(sheet, st),
-                          ),
-                      ],
-                    ),
-                  ),
+                final s = await showOptionSheet<TimesheetStatus>(
+                  context,
+                  options: TimesheetStatus.values,
+                  labelOf: (st) => timesheetStatusLabel(l10n, st),
+                  selected: e.status,
                 );
                 if (s != null) {
                   final applied = ref

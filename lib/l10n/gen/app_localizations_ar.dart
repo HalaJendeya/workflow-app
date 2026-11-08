@@ -1805,4 +1805,30 @@ class AppLocalizationsAr extends AppLocalizations {
   String sprintsCount(int count) {
     return 'السبرنتات ($count)';
   }
+
+  @override
+  String get validationPositive => 'أدخل مبلغاً أكبر من 0';
+
+  @override
+  String get validationWholeNumber => 'أدخل عدداً صحيحاً';
+
+  @override
+  String get validationDueBeforeIssue =>
+      'لا يمكن أن يسبق تاريخ الاستحقاق تاريخ الفاتورة';
+
+  @override
+  String get invoiceCreateUnavailable =>
+      'لا يمكن إنشاء فواتير من هذا الحساب — لا توفر واجهة WorkFlow مسار إنشاء فاتورة للعملاء.';
+
+  @override
+  String get paymentCreateUnavailable =>
+      'لا يمكن تسجيل دفعات من هذا الحساب — لا توفر واجهة WorkFlow مسار إنشاء دفعة للعملاء.';
+
+  @override
+  String get projectCreateUnavailable =>
+      'لا يمكن إنشاء مشاريع من هذا الحساب — لا توفر واجهة WorkFlow مسار إنشاء مشروع لدورك.';
+
+  @override
+  String get taskCreateUnavailable =>
+      'لا يمكن إنشاء مهام من هنا بعد — تقبل واجهة WorkFlow المهام الجديدة من قائد المشروع فقط، وهذا النموذج غير مربوط بها.';
 }

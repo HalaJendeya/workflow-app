@@ -988,5 +988,12 @@
         "type": "int"
       }
     }
-  }
+  },
+  "validationPositive": "Enter an amount greater than 0",
+  "validationWholeNumber": "Enter a whole number",
+  "validationDueBeforeIssue": "The due date can’t be before the invoice date",
+  "invoiceCreateUnavailable": "Invoices can’t be created from this account — the WorkFlow API has no invoice create route for clients.",
+  "paymentCreateUnavailable": "Payments can’t be recorded from this account — the WorkFlow API has no payment create route for clients.",
+  "projectCreateUnavailable": "Projects can’t be created from this account — the WorkFlow API has no project create route for your role.",
+  "taskCreateUnavailable": "Tasks can’t be created here yet — the WorkFlow API accepts new tasks only from a project leader, and this form isn’t connected to it."
 }

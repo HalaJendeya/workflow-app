@@ -18,10 +18,6 @@ class ClientCategoriesScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     void push(BuildContext c, Widget page) =>
         Navigator.of(c).push(MaterialPageRoute<void>(builder: (_) => page));
-    void pushRoot(BuildContext c, Widget page) => Navigator.of(
-      c,
-      rootNavigator: true,
-    ).push(MaterialPageRoute<void>(builder: (_) => page));
 
     return CategoriesScreen(
       sections: [
@@ -104,18 +100,9 @@ class ClientCategoriesScreen extends StatelessWidget {
       createActions: [
         CreateAction(l10n.scheduleMeeting, openScheduleMeeting),
         CreateAction(l10n.joinByCodeTitle, openJoinByCode),
-        CreateAction(
-          l10n.createInvoice,
-          (c) => pushRoot(c, const InvoiceFormScreen()),
-        ),
-        CreateAction(
-          l10n.addProject,
-          (c) => pushRoot(c, const ProjectFormScreen()),
-        ),
-        CreateAction(
-          l10n.addPayment,
-          (c) => pushRoot(c, const PaymentFormScreen()),
-        ),
+        CreateAction(l10n.createInvoice, openInvoiceForm),
+        CreateAction(l10n.addProject, openProjectForm),
+        CreateAction(l10n.addPayment, openPaymentForm),
       ],
     );
   }

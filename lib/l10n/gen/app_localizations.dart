@@ -3349,6 +3349,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sprints ({count})'**
   String sprintsCount(int count);
+
+  /// No description provided for @validationPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount greater than 0'**
+  String get validationPositive;
+
+  /// No description provided for @validationWholeNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a whole number'**
+  String get validationWholeNumber;
+
+  /// No description provided for @validationDueBeforeIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'The due date can’t be before the invoice date'**
+  String get validationDueBeforeIssue;
+
+  /// No description provided for @invoiceCreateUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices can’t be created from this account — the WorkFlow API has no invoice create route for clients.'**
+  String get invoiceCreateUnavailable;
+
+  /// No description provided for @paymentCreateUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments can’t be recorded from this account — the WorkFlow API has no payment create route for clients.'**
+  String get paymentCreateUnavailable;
+
+  /// No description provided for @projectCreateUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects can’t be created from this account — the WorkFlow API has no project create route for your role.'**
+  String get projectCreateUnavailable;
+
+  /// No description provided for @taskCreateUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks can’t be created here yet — the WorkFlow API accepts new tasks only from a project leader, and this form isn’t connected to it.'**
+  String get taskCreateUnavailable;
 }
 
 class _AppLocalizationsDelegate

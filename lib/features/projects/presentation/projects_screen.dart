@@ -216,11 +216,13 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   }
 }
 
+/// Add/edit project. Demo only: neither role has a project write route,
+/// so in API mode this explains that instead of opening the form.
 Future<void> openProjectForm(BuildContext context, {Project? existing}) =>
-    Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ProjectFormScreen(existing: existing),
-      ),
+    openDemoForm(
+      context,
+      page: (_) => ProjectFormScreen(existing: existing),
+      unavailable: AppLocalizations.of(context).projectCreateUnavailable,
     );
 
 void showProjectDetails(BuildContext context, Project p) {
@@ -299,6 +301,8 @@ class _ProjectCard extends ConsumerWidget {
                   tooltip: l10n.moreActions,
                   onPressed: () => showModalBottomSheet<void>(
                     context: context,
+                    // Above the employee tab bar, which covered "Delete".
+                    useRootNavigator: true,
                     builder: (sheet) => SafeArea(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,

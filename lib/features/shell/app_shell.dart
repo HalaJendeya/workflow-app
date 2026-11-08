@@ -70,10 +70,12 @@ class WfNavigationSurface extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Center(
         heightFactor: 1,
-        child: SizedBox(
-          width: 350,
-          height: 63,
+        // 350 x 63 in Figma; it grows with the system text size instead of
+        // clipping its labels (63 px overflowed by 5 px at 130 % text).
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 350, minHeight: 63),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               for (var i = 0; i < destinations.length; i++)
                 Expanded(
@@ -114,6 +116,7 @@ class _Destination extends StatelessWidget {
         onTap: onTap,
         radius: 36,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
               height: 44,

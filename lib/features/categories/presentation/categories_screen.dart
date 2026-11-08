@@ -109,9 +109,13 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
 
   Future<void> _openCreate() => showModalBottomSheet<void>(
     context: context,
+    // Above the floating navigation surface, and scrollable: the client
+    // list overflowed a 740 px phone by 15 px.
+    useRootNavigator: true,
     builder: (sheet) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: ListView(
+        key: const Key('create-sheet'),
+        shrinkWrap: true,
         children: [
           for (final a in widget.createActions)
             ListTile(

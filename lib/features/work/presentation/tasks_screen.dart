@@ -34,11 +34,14 @@ String durationLabel(Duration d) => '${d.inHours}h ${d.inMinutes % 60}m';
 
 final _dt = DateFormat('yyyy/MM/dd - HH:mm', 'en');
 
+/// Add/edit task. Demo only for now: the API accepts new tasks only from a
+/// project leader and this form does not send them yet, so in API mode
+/// this explains that instead of opening the form.
 Future<void> openTaskForm(BuildContext context, {WorkTask? existing}) =>
-    Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute<void>(
-        builder: (_) => TaskFormScreen(existing: existing),
-      ),
+    openDemoForm(
+      context,
+      page: (_) => TaskFormScreen(existing: existing),
+      unavailable: AppLocalizations.of(context).taskCreateUnavailable,
     );
 
 void showTaskDetails(BuildContext context, WorkTask t) {
@@ -300,7 +303,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
           assignee: _assignee!,
           status: _status!,
           priority: _priority!,
-          points: int.tryParse(_points.text) ?? 1,
+          points: int.parse(_points.text),
           start: start,
           end: start.add(const Duration(hours: 2)),
           amount: 0,
@@ -314,7 +317,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
           assignee: _assignee,
           status: _status,
           priority: _priority,
-          points: int.tryParse(_points.text),
+          points: int.parse(_points.text),
           start: start,
           end: start.add(e.duration),
         ),
@@ -367,9 +370,12 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
           onChanged: (v) => setState(() => _status = v),
         ),
         TextInputField(
+          fieldKey: const Key('task-points'),
           label: l10n.storyPoints,
           controller: _points,
           number: true,
+          // Points are whole numbers; "1.5" used to be saved as 1.
+          validator: (v) => wholeNumber(context, v),
         ),
         DateField(
           label: l10n.taskDate,

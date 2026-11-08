@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -102,7 +104,9 @@ Future<void> showRecordDetails(
   useRootNavigator: true,
   isScrollControlled: true,
   builder: (context) => SafeArea(
-    child: Padding(
+    // Scrolls when the details are taller than the screen (long values at
+    // a large text size overflowed a 640 px phone).
+    child: SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -153,3 +157,25 @@ Future<void> showRecordDetails(
     ),
   ),
 );
+
+/// Opens a form that can only save in demo mode. In API mode the form is
+/// not opened, so nobody fills it in for nothing: [unavailable] says which
+/// server route is missing.
+Future<void> openDemoForm(
+  BuildContext context, {
+  required WidgetBuilder page,
+  required String unavailable,
+}) async {
+  final demo = ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(demoModeProvider);
+  if (!demo) {
+    showSnack(context, unavailable);
+    return;
+  }
+  await Navigator.of(
+    context,
+    rootNavigator: true,
+  ).push(MaterialPageRoute<void>(builder: page));
+}
