@@ -49,7 +49,9 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
     return ModulePage(
       title: l10n.paymentsTitle,
       description: l10n.paymentsDescription,
-      onSearch: (v) => setState(() => _query = v),
+      // Search and filters only work on demo rows: the API's payment rows
+      // are not wired in, so API mode shows no controls that do nothing.
+      onSearch: demo ? (v) => setState(() => _query = v) : null,
       onCreate: () => _openForm(context),
       createLabel: l10n.addPayment,
       children: [
@@ -73,58 +75,68 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
           ),
         ] else
           const _ApiPaymentMetrics(),
-        WfSearchBox(
-          fieldKey: const Key('payments-search'),
-          hint: l10n.searchPaymentsHint,
-          onChanged: (v) => setState(() => _query = v),
-        ),
-        ChipRow(
-          children: [
-            DropdownChip<String?>(
-              value: _method,
-              options: const [null, ...FinanceOptions.methods],
-              labelOf: (m) => m ?? l10n.filterAllMethods,
-              onChanged: (m) => setState(() => _method = m),
-            ),
-            DropdownChip<DateRange>(
-              value: _range,
-              options: DateRange.values,
-              labelOf: (r) => r.label(l10n),
-              onChanged: (r) => setState(() => _range = r),
-            ),
-          ],
-        ),
-        ChipRow(
-          children: [
-            FilterChipBox(
-              label: '${l10n.filterAll} (${count(all.length)})',
-              selected: _direction == null,
-              onTap: () => setState(() => _direction = null),
-            ),
-            FilterChipBox(
-              label:
-                  '${l10n.directionIncoming} '
-                  '(${count(dir(PaymentDirection.incoming))})',
-              selected: _direction == PaymentDirection.incoming,
-              onTap: () =>
-                  setState(() => _direction = PaymentDirection.incoming),
-            ),
-            FilterChipBox(
-              label:
-                  '${l10n.directionOutgoing} '
-                  '(${count(dir(PaymentDirection.outgoing))})',
-              selected: _direction == PaymentDirection.outgoing,
-              onTap: () =>
-                  setState(() => _direction = PaymentDirection.outgoing),
-            ),
-          ],
-        ),
-        if (visible.isEmpty)
-          EmptyNotice(text: l10n.noRecords)
-        else
-          for (final p in visible) _card(context, p),
+        if (demo) ..._localRecords(context, visible, all.length, dir),
       ],
     );
+  }
+
+  List<Widget> _localRecords(
+    BuildContext context,
+    List<Payment> visible,
+    int total,
+    int Function(PaymentDirection) dir,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    return [
+      WfSearchBox(
+        fieldKey: const Key('payments-search'),
+        hint: l10n.searchPaymentsHint,
+        onChanged: (v) => setState(() => _query = v),
+      ),
+      ChipRow(
+        children: [
+          DropdownChip<String?>(
+            value: _method,
+            options: const [null, ...FinanceOptions.methods],
+            labelOf: (m) => m ?? l10n.filterAllMethods,
+            onChanged: (m) => setState(() => _method = m),
+          ),
+          DropdownChip<DateRange>(
+            value: _range,
+            options: DateRange.values,
+            labelOf: (r) => r.label(l10n),
+            onChanged: (r) => setState(() => _range = r),
+          ),
+        ],
+      ),
+      ChipRow(
+        children: [
+          FilterChipBox(
+            label: '${l10n.filterAll} (${count(total)})',
+            selected: _direction == null,
+            onTap: () => setState(() => _direction = null),
+          ),
+          FilterChipBox(
+            label:
+                '${l10n.directionIncoming} '
+                '(${count(dir(PaymentDirection.incoming))})',
+            selected: _direction == PaymentDirection.incoming,
+            onTap: () => setState(() => _direction = PaymentDirection.incoming),
+          ),
+          FilterChipBox(
+            label:
+                '${l10n.directionOutgoing} '
+                '(${count(dir(PaymentDirection.outgoing))})',
+            selected: _direction == PaymentDirection.outgoing,
+            onTap: () => setState(() => _direction = PaymentDirection.outgoing),
+          ),
+        ],
+      ),
+      if (visible.isEmpty)
+        EmptyNotice(text: l10n.noRecords)
+      else
+        for (final p in visible) _card(context, p),
+    ];
   }
 
   Widget _card(BuildContext context, Payment p) {

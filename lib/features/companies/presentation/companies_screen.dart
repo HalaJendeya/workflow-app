@@ -115,7 +115,8 @@ class _CompaniesScreenState extends ConsumerState<CompaniesScreen> {
     return ModulePage(
       title: l10n.companiesTitle,
       description: l10n.companiesDescription,
-      onSearch: (v) => setState(() => _query = v),
+      // No company data in API mode yet, so nothing to search.
+      onSearch: demo ? (v) => setState(() => _query = v) : null,
       children: [
         if (!demo) const BackendPendingNotice(),
         if (items.isEmpty)

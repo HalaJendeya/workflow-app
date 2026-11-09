@@ -184,7 +184,10 @@ class ModuleMasthead extends StatelessWidget {
                     const SizedBox(width: 2),
                   ],
                   Expanded(
-                    child: Text(
+                    // Wraps between words; shrinks only when one word is
+                    // wider than the line ("Management" broke as
+                    // "Managemen / t" at 320 px with large text).
+                    child: WordFitText(
                       title,
                       style: AppTextStyles.mobile5xlBold.copyWith(color: white),
                     ),
@@ -289,7 +292,8 @@ class MetricCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Text(
+        // Large sums shrink rather than break across lines.
+        WordFitText(
           value,
           style: AppTextStyles.mobile2xlSemiBold.copyWith(
             fontWeight: FontWeight.w700,
@@ -583,7 +587,7 @@ class RecordCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Text(
+          WordFitText(
             title,
             style: AppTextStyles.mobile2xlSemiBold.copyWith(
               fontSize: 22,
@@ -647,7 +651,9 @@ class _Field extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 4),
-      Text(
+      // Names wrap between words; a long number ("$98,765,432.10") shrinks
+      // instead of breaking at its decimal point.
+      WordFitText(
         field.value,
         style: AppTextStyles.mobileBaseSemiBold.copyWith(
           color: AppColors.textPrimary,
@@ -848,6 +854,59 @@ class FitText extends StatelessWidget {
         softWrap: false,
         overflow: TextOverflow.ellipsis,
         textAlign: textAlign,
+        style: style,
+        textScaler: TextScaler.linear(base * factor),
+      );
+    },
+  );
+}
+
+/// Multi-line text at its Figma size that wraps between words; when a
+/// single word is wider than the line (narrow phone, large system text)
+/// the whole text shrinks just enough for that word, down to [minScale],
+/// instead of breaking the word across lines.
+class WordFitText extends StatelessWidget {
+  const new(this.text, {required this.style, this.minScale = 0.7, super.key});
+
+  final String text;
+  final TextStyle style;
+  final double minScale;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final size = style.fontSize ?? 14;
+      final base = MediaQuery.textScalerOf(context).scale(size) / size;
+      final effective = DefaultTextStyle.of(context).style.merge(style);
+      final direction = Directionality.of(context);
+      double widest(double scale) {
+        var w = 0.0;
+        for (final word in text.split(RegExp(r'\s+'))) {
+          final p = TextPainter(
+            text: TextSpan(text: word, style: effective),
+            textDirection: direction,
+            textScaler: TextScaler.linear(scale),
+            maxLines: 1,
+          )..layout();
+          if (p.width > w) w = p.width;
+          p.dispose();
+        }
+        return w;
+      }
+
+      var factor = 1.0;
+      if (constraints.hasBoundedWidth) {
+        final max = constraints.maxWidth;
+        final full = widest(base);
+        if (full > max) {
+          factor = (max / full).clamp(minScale, 1.0);
+          while (factor > minScale && widest(base * factor) > max) {
+            factor = (factor - 0.02).clamp(minScale, 1.0);
+          }
+        }
+      }
+      return Text(
+        text,
         style: style,
         textScaler: TextScaler.linear(base * factor),
       );
