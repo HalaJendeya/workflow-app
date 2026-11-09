@@ -228,9 +228,9 @@ class _IdentityCard extends ConsumerWidget {
             key: const Key('upload-image'),
             label: l10n.uploadNewImage,
             height: 44,
-            // Needs a file picker; the multipart endpoint is documented but
-            // the app has no picker dependency yet.
-            onPressed: () => showSnack(context, l10n.backendPending),
+            // The multipart endpoint is documented; the app has no image
+            // picker yet, and the message says exactly that.
+            onPressed: () => showSnack(context, l10n.imagePickerPending),
           ),
           field(l10n.accountId, '#${profile.id}'),
           field(l10n.emailLabel, profile.email),
@@ -281,7 +281,7 @@ class _PersonalInfoCardState extends ConsumerState<_PersonalInfoCard> {
 
   Future<void> _save() async {
     setState(() => _serverErrors = const {});
-    if (!_form.currentState!.validate()) return;
+    if (!validateAndReveal(_form)) return;
     final l10n = AppLocalizations.of(context);
     final name = '${_first.text.trim()} ${_last.text.trim()}'.trim();
     final email = _email.text.trim();
@@ -476,7 +476,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
 
   Future<void> _save() async {
     setState(() => _currentError = null);
-    if (!_form.currentState!.validate()) return;
+    if (!validateAndReveal(_form)) return;
     final l10n = AppLocalizations.of(context);
     setState(() => _saving = true);
     try {
@@ -571,7 +571,15 @@ class _DangerZoneCardState extends ConsumerState<_DangerZoneCard> {
 
   Future<void> _delete() async {
     final l10n = AppLocalizations.of(context);
-    if (!await confirmDelete(context, l10n.yourAccount)) return;
+    if (!await confirmDelete(
+      context,
+      l10n.yourAccount,
+      title: l10n.deleteAccountTitle,
+      body: l10n.deleteAccountConfirmBody,
+      confirmLabel: l10n.deleteAccount,
+    )) {
+      return;
+    }
     setState(() => _deleting = true);
     try {
       await ref.read(profileRepositoryProvider).deleteAccount();
@@ -586,6 +594,22 @@ class _DangerZoneCardState extends ConsumerState<_DangerZoneCard> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // The collection lists DELETE /employee/account/delete under the
+    // permission boundary (expected 403): employees cannot delete their own
+    // account, so they get the reason instead of a button that fails.
+    final employee =
+        ref.watch(sessionControllerProvider).value?.portal == Portal.employee;
+    if (employee) {
+      return ModuleCard(
+        key: const Key('employee-delete-unavailable'),
+        child: Text(
+          l10n.employeeDeleteUnavailable,
+          style: AppTextStyles.mobileBaseRegular.copyWith(
+            color: AppColors.textPrimary,
+          ),
+        ),
+      );
+    }
     return ModuleCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

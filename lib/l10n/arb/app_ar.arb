@@ -228,7 +228,7 @@
   "membersCount": "{count} أعضاء",
   "activeNow": "نشط الآن",
   "messageHint": "اكتب رسالة أو اضغط '/' للأوامر...",
-  "attachmentsPending": "ستتوفر المرفقات عندما يدعم الخادم الرفع.",
+  "attachmentsPending": "المرفقات غير متاحة في التطبيق بعد — تحتاج أداة لاختيار الملفات. واجهة WorkFlow تقبل الصور وملفات PDF والنصوص.",
   "delivered": "تم التسليم",
   "newConversationTitle": "إنشاء محادثة جديدة",
   "newConversationBody": "اختر النوع والمشاركين",
@@ -548,5 +548,17 @@
   "invoiceCreateUnavailable": "لا يمكن إنشاء فواتير من هذا الحساب — لا توفر واجهة WorkFlow مسار إنشاء فاتورة للعملاء.",
   "paymentCreateUnavailable": "لا يمكن تسجيل دفعات من هذا الحساب — لا توفر واجهة WorkFlow مسار إنشاء دفعة للعملاء.",
   "projectCreateUnavailable": "لا يمكن إنشاء مشاريع من هذا الحساب — لا توفر واجهة WorkFlow مسار إنشاء مشروع لدورك.",
-  "taskCreateUnavailable": "لا يمكن إنشاء مهام من هنا بعد — تقبل واجهة WorkFlow المهام الجديدة من قائد المشروع فقط، وهذا النموذج غير مربوط بها."
+  "taskCreateUnavailable": "لا يمكن إنشاء مهام من هنا بعد — تقبل واجهة WorkFlow المهام الجديدة من قائد المشروع فقط، وهذا النموذج غير مربوط بها.",
+  "emojiUseKeyboard": "استخدم زر الرموز التعبيرية في لوحة المفاتيح — لا يوجد في التطبيق منتقٍ للرموز بعد.",
+  "voiceNotSupported": "الرسائل الصوتية غير مدعومة — تقبل واجهة WorkFlow الصور وملفات PDF والنصوص فقط.",
+  "imagePickerPending": "تغيير الصورة غير متاح في التطبيق بعد — يحتاج أداة لاختيار الصور. واجهة WorkFlow تقبل الرفع.",
+  "conversationCreateUnavailable": "بدء محادثة غير مربوط بواجهة WorkFlow بعد — هذا النموذج يعمل في الوضع التجريبي فقط.",
+  "meetingTimeInPast": "اختر تاريخاً ووقتاً لم يمضيا",
+  "deleteAccountTitle": "حذف حسابك؟",
+  "deleteAccountConfirmBody": "سيُحذف حسابك في WorkFlow وبياناته نهائياً. لا يمكن التراجع عن ذلك.",
+  "employeeDeleteUnavailable": "حسابات الموظفين يغلقها مسؤول الشركة — لا تسمح واجهة WorkFlow للموظف بحذف حسابه بنفسه.",
+  "tipEmoji": "رموز تعبيرية",
+  "tipAttachFile": "إرفاق ملف",
+  "tipAttachImage": "إرفاق صورة",
+  "tipVoice": "رسالة صوتية"
 }

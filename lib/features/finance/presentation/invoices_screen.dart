@@ -225,7 +225,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
   }
 
   void _save() {
-    if (!_form.currentState!.validate()) return;
+    if (!validateAndReveal(_form)) return;
     final notifier = ref.read(invoicesProvider.notifier);
     final existing = widget.existing;
     final amount = double.parse(_amount.text);

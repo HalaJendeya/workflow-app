@@ -34,84 +34,117 @@ class FormPage extends StatelessWidget {
       body: SafeArea(
         child: Form(
           key: formKey,
-          child: ListView(
+          // Built all at once (not lazily) so a field scrolled out of view
+          // keeps its value and its validation error.
+          child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
-            children: [
-              Row(
-                children: [
-                  if (Navigator.of(context).canPop())
-                    IconButton(
-                      tooltip: MaterialLocalizations.of(context)
-                          .backButtonTooltip,
-                      onPressed: () => Navigator.of(context).maybePop(),
-                      icon: const BackButtonIcon(),
-                      color: AppColors.textPrimary,
-                    ),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: AppTextStyles.mobile2xlSemiBold.copyWith(
-                        fontSize: 22,
-                        height: 31 / 22,
-                        fontWeight: FontWeight.w700,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    if (Navigator.of(context).canPop())
+                      IconButton(
+                        tooltip: MaterialLocalizations.of(context)
+                            .backButtonTooltip,
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        icon: const BackButtonIcon(),
                         color: AppColors.textPrimary,
                       ),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: AppTextStyles.mobile2xlSemiBold.copyWith(
+                          fontSize: 22,
+                          height: 31 / 22,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              ModuleCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (var i = 0; i < fields.length; i++) ...[
-                      if (i > 0) const SizedBox(height: 16),
-                      fields[i],
-                    ],
                   ],
                 ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                height: 48,
-                child: FilledButton(
-                  key: const Key('form-save'),
-                  onPressed: saving ? null : onSave,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadii.button),
-                      side: const BorderSide(color: AppColors.borderDefault),
-                    ),
-                    textStyle: AppTextStyles.mobileBaseSemiBold,
+                const SizedBox(height: 20),
+                ModuleCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (var i = 0; i < fields.length; i++) ...[
+                        if (i > 0) const SizedBox(height: 16),
+                        fields[i],
+                      ],
+                    ],
                   ),
-                  child: Text(saveLabel ?? l10n.save),
                 ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 44,
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: AppColors.white,
-                    foregroundColor: AppColors.textPrimary,
-                    side: const BorderSide(color: ModuleColors.chipBorder),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadii.button),
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 48,
+                  child: FilledButton(
+                    key: const Key('form-save'),
+                    onPressed: saving ? null : onSave,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadii.button),
+                        side: const BorderSide(color: AppColors.borderDefault),
+                      ),
+                      textStyle: AppTextStyles.mobileBaseSemiBold,
                     ),
-                    textStyle: AppTextStyles.mobileBaseSemiBold,
+                    child: Text(saveLabel ?? l10n.save),
                   ),
-                  child: Text(l10n.cancel),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 44,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: AppColors.white,
+                      foregroundColor: AppColors.textPrimary,
+                      side: const BorderSide(color: ModuleColors.chipBorder),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadii.button),
+                      ),
+                      textStyle: AppTextStyles.mobileBaseSemiBold,
+                    ),
+                    child: Text(l10n.cancel),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+/// Validates [form] and, when a field is invalid, scrolls the first one on
+/// screen so its message is seen even if the user tapped Save far below it.
+bool validateAndReveal(GlobalKey<FormState> form) {
+  final state = form.currentState;
+  if (state == null) return false;
+  final invalid = state.validateGranularly();
+  if (invalid.isEmpty) return true;
+  FormFieldState<Object?>? first;
+  var top = double.infinity;
+  for (final f in invalid) {
+    final box = f.context.findRenderObject();
+    if (box is! RenderBox || !box.attached) continue;
+    final y = box.localToGlobal(Offset.zero).dy;
+    if (y < top) {
+      top = y;
+      first = f;
+    }
+  }
+  if (first != null) {
+    Scrollable.ensureVisible(
+      first.context,
+      alignment: 0.2,
+      duration: const Duration(milliseconds: 250),
+    );
+  }
+  return false;
 }
 
 class _Labeled extends StatelessWidget {

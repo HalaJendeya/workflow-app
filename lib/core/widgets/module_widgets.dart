@@ -758,14 +758,22 @@ class EmptyNotice extends StatelessWidget {
   );
 }
 
-/// Confirms a destructive local action.
-Future<bool> confirmDelete(BuildContext context, String what) async {
+/// Confirms a destructive action. By default the wording is for a local
+/// record; pass [title], [body] and [confirmLabel] for anything else (an
+/// account deletion on the server is not "removed from this device").
+Future<bool> confirmDelete(
+  BuildContext context,
+  String what, {
+  String? title,
+  String? body,
+  String? confirmLabel,
+}) async {
   final l10n = AppLocalizations.of(context);
   final ok = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      title: Text(l10n.deleteTitle),
-      content: Text(l10n.deleteBody(what)),
+      title: Text(title ?? l10n.deleteTitle),
+      content: Text(body ?? l10n.deleteBody(what)),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
@@ -775,10 +783,74 @@ Future<bool> confirmDelete(BuildContext context, String what) async {
           key: const Key('confirm-delete'),
           onPressed: () => Navigator.pop(context, true),
           style: TextButton.styleFrom(foregroundColor: ModuleColors.dangerFg),
-          child: Text(l10n.delete),
+          child: Text(confirmLabel ?? l10n.delete),
         ),
       ],
     ),
   );
   return ok ?? false;
+}
+
+/// One line of text at its Figma size when it fits; on narrow phones or
+/// with large system text it shrinks (down to [minScale] of that size)
+/// before it is ever cut off with an ellipsis.
+class FitText extends StatelessWidget {
+  const new(
+    this.text, {
+    required this.style,
+    this.minScale = 0.7,
+    this.textAlign,
+    super.key,
+  });
+
+  final String text;
+  final TextStyle style;
+  final double minScale;
+  final TextAlign? textAlign;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final size = style.fontSize ?? 14;
+      final base = MediaQuery.textScalerOf(context).scale(size) / size;
+      final direction = Directionality.of(context);
+      // Measure with what Text will actually draw: the inherited default
+      // style (letter spacing, features…) merged with [style].
+      final effective = DefaultTextStyle.of(context).style.merge(style);
+      double widthAt(double scale) {
+        final p = TextPainter(
+          text: TextSpan(text: text, style: effective),
+          textDirection: direction,
+          textScaler: TextScaler.linear(scale),
+          maxLines: 1,
+        )..layout();
+        final w = p.width;
+        p.dispose();
+        return w;
+      }
+
+      // Glyph widths do not scale exactly linearly, so the guess from the
+      // ratio is checked and stepped down until it really fits.
+      var factor = 1.0;
+      if (constraints.hasBoundedWidth) {
+        final max = constraints.maxWidth;
+        final full = widthAt(base);
+        if (full > max) {
+          factor = (max / full).clamp(minScale, 1.0);
+          while (factor > minScale && widthAt(base * factor) > max) {
+            factor = (factor - 0.02).clamp(minScale, 1.0);
+          }
+        }
+      }
+      return Text(
+        text,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.ellipsis,
+        textAlign: textAlign,
+        style: style,
+        textScaler: TextScaler.linear(base * factor),
+      );
+    },
+  );
 }

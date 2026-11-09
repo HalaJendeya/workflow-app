@@ -761,7 +761,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get attachmentsPending =>
-      'Attachments will be available when the backend supports uploads.';
+      'Attachments aren’t available in the app yet — it needs a file picker. The WorkFlow API already accepts images, PDF and text files.';
 
   @override
   String get delivered => 'Delivered';
@@ -1837,4 +1837,46 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get taskCreateUnavailable =>
       'Tasks can’t be created here yet — the WorkFlow API accepts new tasks only from a project leader, and this form isn’t connected to it.';
+
+  @override
+  String get emojiUseKeyboard =>
+      'Use your keyboard’s emoji button — the app has no emoji picker yet.';
+
+  @override
+  String get voiceNotSupported =>
+      'Voice messages aren’t supported — the WorkFlow API accepts images, PDF and text files only.';
+
+  @override
+  String get imagePickerPending =>
+      'Changing your photo isn’t available in the app yet — it needs an image picker. The WorkFlow API already accepts the upload.';
+
+  @override
+  String get conversationCreateUnavailable =>
+      'Starting a conversation isn’t connected to the WorkFlow API yet — this form only works in demo mode.';
+
+  @override
+  String get meetingTimeInPast => 'Choose a date and time that haven’t passed';
+
+  @override
+  String get deleteAccountTitle => 'Delete your account?';
+
+  @override
+  String get deleteAccountConfirmBody =>
+      'Your WorkFlow account and its data will be permanently deleted. This can’t be undone.';
+
+  @override
+  String get employeeDeleteUnavailable =>
+      'Employee accounts are closed by your company admin — the WorkFlow API doesn’t let employees delete their own account.';
+
+  @override
+  String get tipEmoji => 'Emoji';
+
+  @override
+  String get tipAttachFile => 'Attach a file';
+
+  @override
+  String get tipAttachImage => 'Attach an image';
+
+  @override
+  String get tipVoice => 'Voice message';
 }

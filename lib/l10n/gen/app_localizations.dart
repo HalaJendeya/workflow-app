@@ -1469,7 +1469,7 @@ abstract class AppLocalizations {
   /// No description provided for @attachmentsPending.
   ///
   /// In en, this message translates to:
-  /// **'Attachments will be available when the backend supports uploads.'**
+  /// **'Attachments aren’t available in the app yet — it needs a file picker. The WorkFlow API already accepts images, PDF and text files.'**
   String get attachmentsPending;
 
   /// No description provided for @delivered.
@@ -3391,6 +3391,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tasks can’t be created here yet — the WorkFlow API accepts new tasks only from a project leader, and this form isn’t connected to it.'**
   String get taskCreateUnavailable;
+
+  /// No description provided for @emojiUseKeyboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Use your keyboard’s emoji button — the app has no emoji picker yet.'**
+  String get emojiUseKeyboard;
+
+  /// No description provided for @voiceNotSupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice messages aren’t supported — the WorkFlow API accepts images, PDF and text files only.'**
+  String get voiceNotSupported;
+
+  /// No description provided for @imagePickerPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing your photo isn’t available in the app yet — it needs an image picker. The WorkFlow API already accepts the upload.'**
+  String get imagePickerPending;
+
+  /// No description provided for @conversationCreateUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting a conversation isn’t connected to the WorkFlow API yet — this form only works in demo mode.'**
+  String get conversationCreateUnavailable;
+
+  /// No description provided for @meetingTimeInPast.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a date and time that haven’t passed'**
+  String get meetingTimeInPast;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account?'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your WorkFlow account and its data will be permanently deleted. This can’t be undone.'**
+  String get deleteAccountConfirmBody;
+
+  /// No description provided for @employeeDeleteUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Employee accounts are closed by your company admin — the WorkFlow API doesn’t let employees delete their own account.'**
+  String get employeeDeleteUnavailable;
+
+  /// No description provided for @tipEmoji.
+  ///
+  /// In en, this message translates to:
+  /// **'Emoji'**
+  String get tipEmoji;
+
+  /// No description provided for @tipAttachFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach a file'**
+  String get tipAttachFile;
+
+  /// No description provided for @tipAttachImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach an image'**
+  String get tipAttachImage;
+
+  /// No description provided for @tipVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice message'**
+  String get tipVoice;
 }
 
 class _AppLocalizationsDelegate

@@ -11,13 +11,17 @@ import 'package:workflow_app/features/meetings/domain/meeting.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_details_screen.dart'
     show featureLabel;
 import 'package:workflow_app/features/meetings/presentation/meeting_room_screen.dart';
+import 'package:workflow_app/features/meetings/presentation/meetings_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
+/// Schedule/edit a meeting. Demo only: neither role has a meeting create
+/// or update route, so in API mode this explains that instead of opening a
+/// form that cannot be saved (also when reached from the More menu).
 Future<void> openScheduleMeeting(BuildContext context, {Meeting? existing}) =>
-    Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ScheduleMeetingScreen(existing: existing),
-      ),
+    openDemoForm(
+      context,
+      page: (_) => ScheduleMeetingScreen(existing: existing),
+      unavailable: AppLocalizations.of(context).meetingCreateUnavailable,
     );
 
 Future<void> openJoinByCode(BuildContext context, {String? code}) =>
@@ -64,10 +68,24 @@ class _ScheduleMeetingScreenState extends ConsumerState<ScheduleMeetingScreen> {
     text: widget.existing?.description,
   );
   final _external = TextEditingController();
-  late DateTime _date = widget.existing?.start ?? DateTime.now();
+  late DateTime _date = widget.existing?.start ?? _firstFreeSlot().$1;
   late String _slot = widget.existing == null
-      ? '10:00'
+      ? _firstFreeSlot().$2
       : DateFormat('HH:mm', 'en').format(widget.existing!.start);
+
+  /// Today's first slot that has not started yet, else tomorrow's first, so
+  /// a new form never opens on a time in the past.
+  static (DateTime, String) _firstFreeSlot() {
+    final now = DateTime.now();
+    for (final s in _slots) {
+      final p = s.split(':').map(int.parse).toList();
+      if (DateTime(now.year, now.month, now.day, p[0], p[1]).isAfter(now)) {
+        return (now, s);
+      }
+    }
+    return (now.add(const Duration(days: 1)), _slots.first);
+  }
+
   late String? _company = widget.existing?.company;
   late MeetingStatus _status =
       widget.existing?.status ?? MeetingStatus.scheduled;
@@ -90,17 +108,37 @@ class _ScheduleMeetingScreenState extends ConsumerState<ScheduleMeetingScreen> {
     super.dispose();
   }
 
-  void _save() {
-    if (!_form.currentState!.validate()) return;
+  final GlobalKey _whenKey = GlobalKey();
+  String? _whenError;
+
+  DateTime get _start {
     final parts = _slot.split(':').map(int.parse).toList();
-    final start = DateTime(
-      _date.year,
-      _date.month,
-      _date.day,
-      parts[0],
-      parts[1],
-    );
+    return DateTime(_date.year, _date.month, _date.day, parts[0], parts[1]);
+  }
+
+  void _save() {
     final e = widget.existing;
+    final start = _start;
+    // A new time must be in the future; an existing meeting may keep its
+    // own (possibly past) time.
+    final past = start.isBefore(DateTime.now()) && start != e?.start;
+    setState(
+      () => _whenError = past
+          ? AppLocalizations.of(context).meetingTimeInPast
+          : null,
+    );
+    if (!validateAndReveal(_form)) return;
+    if (past) {
+      final ctx = _whenKey.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          alignment: 0.2,
+          duration: const Duration(milliseconds: 250),
+        );
+      }
+      return;
+    }
     final meeting = Meeting(
       id: e?.id ?? localId('mtg'),
       title: _title.text.trim(),
@@ -149,236 +187,273 @@ class _ScheduleMeetingScreenState extends ConsumerState<ScheduleMeetingScreen> {
                 description: l10n.scheduleMeetingBody,
               ),
             ),
+            // One box, not a lazy list: the title keeps its error while the
+            // user is at the Save button below the calendar.
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-              sliver: SliverList.list(
-                children: [
-                  ModuleCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(l10n.stepDateTime, style: h16),
-                        const SizedBox(height: 4),
-                        Text(l10n.stepDateTimeBody, style: sub),
-                        const SizedBox(height: 16),
-                        CalendarDatePicker(
-                          initialDate: _date,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2035),
-                          onDateChanged: (d) => setState(() => _date = d),
-                        ),
-                        Text(l10n.availableTimes, style: sub),
-                        const SizedBox(height: 8),
-                        const StatusBadge(
-                          label: 'GMT+3 (Riyadh / Gaza)',
-                          tone: BadgeTone.info,
-                        ),
-                        const SizedBox(height: 12),
-                        ChipRow(
-                          children: [
-                            for (final s in _slots)
-                              FilterChipBox(
-                                label: s,
-                                selected: _slot == s,
-                                onTap: () => setState(() => _slot = s),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ModuleCard(
+                      key: _whenKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(l10n.stepDateTime, style: h16),
+                          const SizedBox(height: 4),
+                          Text(l10n.stepDateTimeBody, style: sub),
+                          const SizedBox(height: 16),
+                          CalendarDatePicker(
+                            // A stored date outside the range would trip
+                            // the picker.
+                            initialDate: _date.isBefore(DateField.first)
+                                ? DateField.first
+                                : _date.isAfter(DateField.last)
+                                ? DateField.last
+                                : _date,
+                            firstDate: DateField.first,
+                            lastDate: DateField.last,
+                            onDateChanged: (d) => setState(() {
+                              _date = d;
+                              _whenError = null;
+                            }),
+                          ),
+                          Text(l10n.availableTimes, style: sub),
+                          const SizedBox(height: 8),
+                          // Times are saved in the device's time zone
+                          // (this was a fixed GMT+3).
+                          StatusBadge(
+                            label: l10n.timezoneLabel(utcOffsetLabel()),
+                            tone: BadgeTone.info,
+                          ),
+                          const SizedBox(height: 12),
+                          ChipRow(
+                            children: [
+                              for (final s in _slots)
+                                FilterChipBox(
+                                  label: s,
+                                  selected: _slot == s,
+                                  onTap: () => setState(() {
+                                    _slot = s;
+
+                                    _whenError = null;
+                                  }),
+                                ),
+                            ],
+                          ),
+                          if (_whenError != null) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              _whenError!,
+                              key: const Key('meeting-when-error'),
+                              style: AppTextStyles.mobileXsRegular.copyWith(
+                                color: ModuleColors.dangerFg,
                               ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          l10n.inviteDispatchNote,
-                          style: AppTextStyles.mobileXsRegular.copyWith(
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  ModuleCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(l10n.stepDetails, style: h16),
-                        const SizedBox(height: 4),
-                        Text(l10n.stepDetailsBody, style: sub),
-                        const SizedBox(height: 16),
-                        TextInputField(
-                          fieldKey: const Key('meeting-title'),
-                          label: '${l10n.meetingTitle} *',
-                          controller: _title,
-                        ),
-                        const SizedBox(height: 16),
-                        TextInputField(
-                          label: l10n.agenda,
-                          controller: _agenda,
-                          maxLines: 4,
-                          required: false,
-                        ),
-                        const SizedBox(height: 16),
-                        SelectField<String>(
-                          label: l10n.meetingType,
-                          value: l10n.onlineVideoMeeting,
-                          options: [l10n.onlineVideoMeeting],
-                          labelOf: (s) => s,
-                          onChanged: (_) {},
-                        ),
-                        const SizedBox(height: 16),
-                        SelectField<MeetingStatus>(
-                          label: l10n.meetingStatus,
-                          value: _status,
-                          options: const [
-                            MeetingStatus.scheduled,
-                            MeetingStatus.waiting,
-                          ],
-                          labelOf: (s) => s == MeetingStatus.scheduled
-                              ? l10n.meetingScheduled
-                              : l10n.meetingWaiting,
-                          onChanged: (s) =>
-                              setState(() => _status = s ?? _status),
-                        ),
-                        const SizedBox(height: 16),
-                        SelectField<String>(
-                          label: l10n.companyClient,
-                          value: _company,
-                          options: {
-                            ...FinanceOptions.companies,
-                            ?_company,
-                          }.toList(),
-                          labelOf: (s) => s,
-                          required: false,
-                          onChanged: (v) => setState(() => _company = v),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  ModuleCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(l10n.stepParticipants, style: h16),
-                        const SizedBox(height: 4),
-                        Text(l10n.stepParticipantsBody, style: sub),
-                        const SizedBox(height: 16),
-                        WfSearchBox(
-                          hint: l10n.searchEmployeesHint,
-                          onChanged: (v) => setState(() => _query = v),
-                        ),
-                        for (final p in suggestions.take(3))
-                          ListTile(
-                            dense: true,
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(p),
-                            trailing: const Icon(
-                              Icons.add,
-                              color: AppColors.primary,
                             ),
-                            onTap: () => setState(() => _participants.add(p)),
+                          ],
+                          const SizedBox(height: 16),
+                          Text(
+                            l10n.inviteDispatchNote,
+                            style: AppTextStyles.mobileXsRegular.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
                           ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _external,
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  hintText: 'email@example.com',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ModuleCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(l10n.stepDetails, style: h16),
+                          const SizedBox(height: 4),
+                          Text(l10n.stepDetailsBody, style: sub),
+                          const SizedBox(height: 16),
+                          TextInputField(
+                            fieldKey: const Key('meeting-title'),
+                            label: '${l10n.meetingTitle} *',
+                            controller: _title,
+                          ),
+                          const SizedBox(height: 16),
+                          TextInputField(
+                            label: l10n.agenda,
+                            controller: _agenda,
+                            maxLines: 4,
+                            required: false,
+                          ),
+                          const SizedBox(height: 16),
+                          SelectField<String>(
+                            label: l10n.meetingType,
+                            value: l10n.onlineVideoMeeting,
+                            options: [l10n.onlineVideoMeeting],
+                            labelOf: (s) => s,
+                            onChanged: (_) {},
+                          ),
+                          const SizedBox(height: 16),
+                          SelectField<MeetingStatus>(
+                            label: l10n.meetingStatus,
+                            value: _status,
+                            options: const [
+                              MeetingStatus.scheduled,
+                              MeetingStatus.waiting,
+                            ],
+                            labelOf: (s) => s == MeetingStatus.scheduled
+                                ? l10n.meetingScheduled
+                                : l10n.meetingWaiting,
+                            onChanged: (s) =>
+                                setState(() => _status = s ?? _status),
+                          ),
+                          const SizedBox(height: 16),
+                          SelectField<String>(
+                            label: l10n.companyClient,
+                            value: _company,
+                            options: {
+                              ...FinanceOptions.companies,
+                              ?_company,
+                            }.toList(),
+                            labelOf: (s) => s,
+                            required: false,
+                            onChanged: (v) => setState(() => _company = v),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ModuleCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(l10n.stepParticipants, style: h16),
+                          const SizedBox(height: 4),
+                          Text(l10n.stepParticipantsBody, style: sub),
+                          const SizedBox(height: 16),
+                          WfSearchBox(
+                            hint: l10n.searchEmployeesHint,
+                            onChanged: (v) => setState(() => _query = v),
+                          ),
+                          for (final p in suggestions.take(3))
+                            ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(p),
+                              trailing: const Icon(
+                                Icons.add,
+                                color: AppColors.primary,
+                              ),
+                              onTap: () => setState(() => _participants.add(p)),
+                            ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _external,
+                                  decoration: InputDecoration(
+                                    isDense: true,
+                                    hintText: 'email@example.com',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            FilterChipBox(
-                              label: '+ ${l10n.addExternal}',
-                              selected: true,
-                              onTap: () {
-                                final v = _external.text.trim();
-                                if (v.contains('@')) {
-                                  setState(() => _participants.add(v));
-                                  _external.clear();
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                        for (final p in _participants)
-                          ListTile(
-                            dense: true,
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(
-                              p,
-                              style: AppTextStyles.mobileBaseSemiBold.copyWith(
-                                color: AppColors.textPrimary,
+                              const SizedBox(width: 8),
+                              FilterChipBox(
+                                label: '+ ${l10n.addExternal}',
+                                selected: true,
+                                onTap: () {
+                                  final v = _external.text.trim();
+                                  if (v.contains('@')) {
+                                    setState(() => _participants.add(v));
+                                    _external.clear();
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                          for (final p in _participants)
+                            ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                p,
+                                style: AppTextStyles.mobileBaseSemiBold
+                                    .copyWith(color: AppColors.textPrimary),
+                              ),
+                              trailing: IconButton(
+                                tooltip: l10n.delete,
+                                icon: const Icon(Icons.close, size: 18),
+                                onPressed: () =>
+                                    setState(() => _participants.remove(p)),
                               ),
                             ),
-                            trailing: IconButton(
-                              tooltip: l10n.delete,
-                              icon: const Icon(Icons.close, size: 18),
-                              onPressed: () =>
-                                  setState(() => _participants.remove(p)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ModuleCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(l10n.collaborationFeatures, style: h16),
+                          for (final f in MeetingFeature.values)
+                            CheckboxListTile(
+                              contentPadding: EdgeInsets.zero,
+                              controlAffinity: ListTileControlAffinity.leading,
+                              value: _features.contains(f),
+                              title: Text(featureLabel(l10n, f)),
+                              onChanged: (v) => setState(
+                                () =>
+                                    v! ? _features.add(f) : _features.remove(f),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text('● ${l10n.encryptedRoom}', style: sub),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      height: 48,
+                      child: FilledButton(
+                        key: const Key('meeting-save'),
+                        onPressed: _save,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppRadii.button,
                             ),
                           ),
-                      ],
+                          textStyle: AppTextStyles.mobileBaseSemiBold,
+                        ),
+                        child: Text(l10n.save),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  ModuleCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(l10n.collaborationFeatures, style: h16),
-                        for (final f in MeetingFeature.values)
-                          CheckboxListTile(
-                            contentPadding: EdgeInsets.zero,
-                            controlAffinity: ListTileControlAffinity.leading,
-                            value: _features.contains(f),
-                            title: Text(featureLabel(l10n, f)),
-                            onChanged: (v) => setState(
-                              () => v! ? _features.add(f) : _features.remove(f),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 44,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textPrimary,
+                          backgroundColor: AppColors.white,
+                          side: const BorderSide(
+                            color: ModuleColors.chipBorder,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppRadii.button,
                             ),
                           ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text('● ${l10n.encryptedRoom}', style: sub),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    height: 48,
-                    child: FilledButton(
-                      key: const Key('meeting-save'),
-                      onPressed: _save,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadii.button),
                         ),
-                        textStyle: AppTextStyles.mobileBaseSemiBold,
+                        child: Text(l10n.cancel),
                       ),
-                      child: Text(l10n.save),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 44,
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).maybePop(),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textPrimary,
-                        backgroundColor: AppColors.white,
-                        side: const BorderSide(color: ModuleColors.chipBorder),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadii.button),
-                        ),
-                      ),
-                      child: Text(l10n.cancel),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -411,7 +486,7 @@ class _JoinByCodeScreenState extends ConsumerState<JoinByCodeScreen> {
   }
 
   Future<void> _join() async {
-    if (!_form.currentState!.validate()) return;
+    if (!validateAndReveal(_form)) return;
     final l10n = AppLocalizations.of(context);
     if (!ref.read(demoModeProvider)) {
       // The API has no lookup by code and the app has no LiveKit client.

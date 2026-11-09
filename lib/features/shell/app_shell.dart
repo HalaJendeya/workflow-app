@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:workflow_app/core/design_system/app_icons.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/widgets/module_widgets.dart';
 
 class NavDestination {
   const new({required this.icon, required this.label});
@@ -123,11 +124,11 @@ class _Destination extends StatelessWidget {
               child: Center(child: SvgIcon(destination.icon, color: color)),
             ),
             const SizedBox(height: 2),
-            Text(
+            // "Companies" was clipped to "Compan" at 320 px with 130 % text.
+            FitText(
               destination.label,
-              maxLines: 1,
-              overflow: TextOverflow.fade,
-              softWrap: false,
+              minScale: 0.75,
+              textAlign: TextAlign.center,
               style: AppTextStyles.mobileXsRegular.copyWith(color: color),
             ),
           ],

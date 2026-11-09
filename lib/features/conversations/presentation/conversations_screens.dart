@@ -245,8 +245,12 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       title: l10n.catConversations,
       description: '',
       onSearch: (v) => setState(() => _query = v),
-      onCreate: () => Navigator.of(context, rootNavigator: true).push(
-        MaterialPageRoute<void>(builder: (_) => const NewConversationScreen()),
+      // Demo only: the form lists demo people and the API's create and
+      // available-users routes are not wired in yet.
+      onCreate: () => openDemoForm(
+        context,
+        page: (_) => const NewConversationScreen(),
+        unavailable: l10n.conversationCreateUnavailable,
       ),
       createLabel: l10n.newConversation,
       children: [
@@ -503,10 +507,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: Text(
+                          // Shrinks before it truncates: at 320 px with
+                          // large text the name was cut to its first letter.
+                          child: FitText(
                             c.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            minScale: 0.55,
                             style: AppTextStyles.mobile5xlBold.copyWith(
                               color: AppColors.white,
                             ),
@@ -615,20 +620,46 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      for (final i in const [
-                        'chat_smile',
-                        'chat_attach',
-                        'chat_image',
-                        'chat_mic',
-                      ]) ...[
-                        InkResponse(
-                          radius: 18,
-                          onTap: () =>
-                              showSnack(context, l10n.attachmentsPending),
-                          child: WfSvg(i, size: 20),
+                      // 40 px targets (a 20 px icon and the Figma 20 px
+                      // gap), each saying why it is not available yet.
+                      for (final (key, icon, tip, why) in [
+                        (
+                          'chat-emoji',
+                          'chat_smile',
+                          l10n.tipEmoji,
+                          l10n.emojiUseKeyboard,
                         ),
-                        const SizedBox(width: 20),
-                      ],
+                        (
+                          'chat-attach',
+                          'chat_attach',
+                          l10n.tipAttachFile,
+                          l10n.attachmentsPending,
+                        ),
+                        (
+                          'chat-image',
+                          'chat_image',
+                          l10n.tipAttachImage,
+                          l10n.attachmentsPending,
+                        ),
+                        (
+                          'chat-mic',
+                          'chat_mic',
+                          l10n.tipVoice,
+                          l10n.voiceNotSupported,
+                        ),
+                      ])
+                        Tooltip(
+                          message: tip,
+                          child: InkResponse(
+                            key: Key(key),
+                            radius: 20,
+                            onTap: () => showSnack(context, why),
+                            child: SizedBox.square(
+                              dimension: 40,
+                              child: Center(child: WfSvg(icon, size: 20)),
+                            ),
+                          ),
+                        ),
                       const Spacer(),
                       Material(
                         color: AppColors.primary,
@@ -636,10 +667,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         child: InkWell(
                           key: const Key('chat-send'),
                           borderRadius: BorderRadius.circular(12),
-                          onTap: _send,
-                          child: const SizedBox.square(
+                          onTap: _sending ? null : _send,
+                          child: SizedBox.square(
                             dimension: 40,
-                            child: Center(child: WfSvg('chat_send', size: 20)),
+                            child: Center(
+                              // A spinner while the server has the message.
+                              child: _sending
+                                  ? const SizedBox.square(
+                                      key: Key('chat-sending'),
+                                      dimension: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.white,
+                                      ),
+                                    )
+                                  : const WfSvg('chat_send', size: 20),
+                            ),
                           ),
                         ),
                       ),
@@ -805,7 +848,7 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
 
   void _create() {
     final l10n = AppLocalizations.of(context);
-    if (!_form.currentState!.validate()) return;
+    if (!validateAndReveal(_form)) return;
     if (_selected.isEmpty ||
         (_type == ConversationType.direct && _selected.length != 1)) {
       showSnack(
@@ -853,181 +896,200 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
       body: SafeArea(
         child: Form(
           key: _form,
-          child: ListView(
+          // Built all at once so the group name keeps its error while the
+          // user is down at the participant list.
+          child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
-            children: [
-              Text(
-                l10n.newConversationTitle,
-                style: AppTextStyles.mobile2xlSemiBold.copyWith(
-                  fontSize: 22,
-                  height: 31 / 22,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.neutral900,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                l10n.newConversationBody,
-                style: AppTextStyles.mobileBaseRegular.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 20),
-              ModuleCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SelectField<ConversationType>(
-                      label: l10n.conversationType,
-                      value: _type,
-                      options: ConversationType.values,
-                      labelOf: (t) => t == ConversationType.group
-                          ? l10n.typeGroup
-                          : l10n.typeDirect,
-                      onChanged: (t) => setState(() => _type = t ?? _type),
-                    ),
-                    if (_type == ConversationType.group) ...[
-                      const SizedBox(height: 16),
-                      TextInputField(
-                        fieldKey: const Key('group-name'),
-                        label: l10n.groupName,
-                        hint: l10n.groupName,
-                        controller: _name,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(l10n.groupPicture, style: label),
-                      const SizedBox(height: 8),
-                      InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () =>
-                            showSnack(context, l10n.attachmentsPending),
-                        child: Container(
-                          height: 48,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          alignment: AlignmentDirectional.centerStart,
-                          decoration: BoxDecoration(
-                            color: AppColors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: ModuleColors.chipBorder),
-                          ),
-                          child: Text(
-                            '${l10n.chooseFile}   ·   ${l10n.noFileChosen}',
-                            style: AppTextStyles.mobileBaseRegular.copyWith(
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                l10n.participants,
-                style: AppTextStyles.mobileLgSemiBold.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 20),
-              ModuleCard(
-                child: Text(
-                  _type == ConversationType.group
-                      ? l10n.selectParticipants
-                      : l10n.selectOnePerson,
-                  style: AppTextStyles.mobileBaseRegular.copyWith(
-                    color: AppColors.textPrimary,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.newConversationTitle,
+                  style: AppTextStyles.mobile2xlSemiBold.copyWith(
+                    fontSize: 22,
+                    height: 31 / 22,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.neutral900,
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              WfSearchBox(
-                hint: l10n.searchConversationsHint,
-                onChanged: (v) => setState(() => _query = v),
-              ),
-              for (final entry in groups.entries) ...[
+                const SizedBox(height: 6),
+                Text(
+                  l10n.newConversationBody,
+                  style: AppTextStyles.mobileBaseRegular.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 20),
-                Text(entry.key, style: label),
-                for (final p in entry.value) ...[
-                  const SizedBox(height: 20),
-                  InkWell(
-                    key: Key('participant-${p.email}'),
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: () => setState(() {
-                      if (_type == ConversationType.direct) _selected.clear();
-                      _selected.contains(p.name)
-                          ? _selected.remove(p.name)
-                          : _selected.add(p.name);
-                    }),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: ModuleColors.chipBorder),
+                ModuleCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SelectField<ConversationType>(
+                        label: l10n.conversationType,
+                        value: _type,
+                        options: ConversationType.values,
+                        labelOf: (t) => t == ConversationType.group
+                            ? l10n.typeGroup
+                            : l10n.typeDirect,
+                        onChanged: (t) => setState(() {
+                          _type = t ?? _type;
+                          // A direct chat has one other person: keep only the
+                          // first pick instead of a selection that can't be
+                          // submitted.
+                          if (_type == ConversationType.direct &&
+                              _selected.length > 1) {
+                            final keep = _selected.first;
+                            _selected
+                              ..clear()
+                              ..add(keep);
+                          }
+                        }),
                       ),
-                      child: Row(
-                        children: [
-                          WfSvg(
-                            _selected.contains(p.name)
-                                ? 'checkbox_checked'
-                                : 'checkbox_empty',
-                            size: 24,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
+                      if (_type == ConversationType.group) ...[
+                        const SizedBox(height: 16),
+                        TextInputField(
+                          fieldKey: const Key('group-name'),
+                          label: l10n.groupName,
+                          hint: l10n.groupName,
+                          controller: _name,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(l10n.groupPicture, style: label),
+                        const SizedBox(height: 8),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () =>
+                              showSnack(context, l10n.attachmentsPending),
+                          child: Container(
+                            height: 48,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            alignment: AlignmentDirectional.centerStart,
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: ModuleColors.chipBorder,
+                              ),
+                            ),
                             child: Text(
-                              '${p.name}\n${p.email}\n${p.role}',
-                              style: AppTextStyles.mobileXsRegular.copyWith(
+                              '${l10n.chooseFile}   ·   ${l10n.noFileChosen}',
+                              style: AppTextStyles.mobileBaseRegular.copyWith(
                                 color: AppColors.textPrimary,
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ],
-              const SizedBox(height: 20),
-              SizedBox(
-                height: 48,
-                child: FilledButton(
-                  key: const Key('create-conversation'),
-                  onPressed: _create,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadii.button),
-                      side: const BorderSide(color: AppColors.borderDefault),
-                    ),
-                    textStyle: AppTextStyles.mobileBaseSemiBold,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  l10n.participants,
+                  style: AppTextStyles.mobileLgSemiBold.copyWith(
+                    color: AppColors.textPrimary,
                   ),
+                ),
+                const SizedBox(height: 20),
+                ModuleCard(
                   child: Text(
                     _type == ConversationType.group
-                        ? l10n.createGroup
-                        : l10n.startChat,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 44,
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: AppColors.white,
-                    foregroundColor: AppColors.textPrimary,
-                    side: const BorderSide(color: ModuleColors.chipBorder),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadii.button),
+                        ? l10n.selectParticipants
+                        : l10n.selectOnePerson,
+                    style: AppTextStyles.mobileBaseRegular.copyWith(
+                      color: AppColors.textPrimary,
                     ),
-                    textStyle: AppTextStyles.mobileBaseSemiBold,
                   ),
-                  child: Text(l10n.cancel),
                 ),
-              ),
-            ],
+                const SizedBox(height: 20),
+                WfSearchBox(
+                  hint: l10n.searchConversationsHint,
+                  onChanged: (v) => setState(() => _query = v),
+                ),
+                for (final entry in groups.entries) ...[
+                  const SizedBox(height: 20),
+                  Text(entry.key, style: label),
+                  for (final p in entry.value) ...[
+                    const SizedBox(height: 20),
+                    InkWell(
+                      key: Key('participant-${p.email}'),
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => setState(() {
+                        if (_type == ConversationType.direct) _selected.clear();
+                        _selected.contains(p.name)
+                            ? _selected.remove(p.name)
+                            : _selected.add(p.name);
+                      }),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: ModuleColors.chipBorder),
+                        ),
+                        child: Row(
+                          children: [
+                            WfSvg(
+                              _selected.contains(p.name)
+                                  ? 'checkbox_checked'
+                                  : 'checkbox_empty',
+                              size: 24,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${p.name}\n${p.email}\n${p.role}',
+                                style: AppTextStyles.mobileXsRegular.copyWith(
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 48,
+                  child: FilledButton(
+                    key: const Key('create-conversation'),
+                    onPressed: _create,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadii.button),
+                        side: const BorderSide(color: AppColors.borderDefault),
+                      ),
+                      textStyle: AppTextStyles.mobileBaseSemiBold,
+                    ),
+                    child: Text(
+                      _type == ConversationType.group
+                          ? l10n.createGroup
+                          : l10n.startChat,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 44,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: AppColors.white,
+                      foregroundColor: AppColors.textPrimary,
+                      side: const BorderSide(color: ModuleColors.chipBorder),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadii.button),
+                      ),
+                      textStyle: AppTextStyles.mobileBaseSemiBold,
+                    ),
+                    child: Text(l10n.cancel),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

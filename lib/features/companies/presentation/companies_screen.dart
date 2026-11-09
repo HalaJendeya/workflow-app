@@ -183,9 +183,10 @@ class _CompanyCard extends ConsumerWidget {
             child: WfSvg(company.icon, size: 24),
           ),
           const SizedBox(height: 12),
+          // Two lines on narrow cards ("Tech Company" was cut at 320 px).
           Text(
             company.name,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: const TextStyle(
@@ -232,10 +233,9 @@ class _CompanyCard extends ConsumerWidget {
                   ),
                   const SizedBox(width: 6),
                   Flexible(
-                    child: Text(
+                    child: FitText(
                       l10n.joinPending,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      minScale: 0.6,
                       style: const TextStyle(
                         fontFamily: _jakarta,
                         fontSize: 12,
@@ -269,10 +269,15 @@ class _CompanyCard extends ConsumerWidget {
                     key: Key('join-${company.id}'),
                     borderRadius: BorderRadius.circular(12),
                     onTap: () {
-                      ref
+                      final applied = ref
                           .read(companiesProvider.notifier)
                           .replace(company.withStatus(JoinStatus.pending));
-                      showSnack(context, l10n.joinRequestSent(company.name));
+                      // Only report "sent" when the demo list took it.
+                      if (applied) {
+                        showSnack(context, l10n.joinRequestSent(company.name));
+                      } else {
+                        showLocalOutcome(context, applied: false);
+                      }
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(

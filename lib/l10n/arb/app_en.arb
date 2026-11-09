@@ -322,7 +322,7 @@
   "membersCount": "{count} members",
   "activeNow": "Active now",
   "messageHint": "Type a message or press '/' for commands...",
-  "attachmentsPending": "Attachments will be available when the backend supports uploads.",
+  "attachmentsPending": "Attachments aren’t available in the app yet — it needs a file picker. The WorkFlow API already accepts images, PDF and text files.",
   "delivered": "Delivered",
   "newConversationTitle": "Create a new conversation",
   "newConversationBody": "Choose type and participants",
@@ -995,5 +995,17 @@
   "invoiceCreateUnavailable": "Invoices can’t be created from this account — the WorkFlow API has no invoice create route for clients.",
   "paymentCreateUnavailable": "Payments can’t be recorded from this account — the WorkFlow API has no payment create route for clients.",
   "projectCreateUnavailable": "Projects can’t be created from this account — the WorkFlow API has no project create route for your role.",
-  "taskCreateUnavailable": "Tasks can’t be created here yet — the WorkFlow API accepts new tasks only from a project leader, and this form isn’t connected to it."
+  "taskCreateUnavailable": "Tasks can’t be created here yet — the WorkFlow API accepts new tasks only from a project leader, and this form isn’t connected to it.",
+  "emojiUseKeyboard": "Use your keyboard’s emoji button — the app has no emoji picker yet.",
+  "voiceNotSupported": "Voice messages aren’t supported — the WorkFlow API accepts images, PDF and text files only.",
+  "imagePickerPending": "Changing your photo isn’t available in the app yet — it needs an image picker. The WorkFlow API already accepts the upload.",
+  "conversationCreateUnavailable": "Starting a conversation isn’t connected to the WorkFlow API yet — this form only works in demo mode.",
+  "meetingTimeInPast": "Choose a date and time that haven’t passed",
+  "deleteAccountTitle": "Delete your account?",
+  "deleteAccountConfirmBody": "Your WorkFlow account and its data will be permanently deleted. This can’t be undone.",
+  "employeeDeleteUnavailable": "Employee accounts are closed by your company admin — the WorkFlow API doesn’t let employees delete their own account.",
+  "tipEmoji": "Emoji",
+  "tipAttachFile": "Attach a file",
+  "tipAttachImage": "Attach an image",
+  "tipVoice": "Voice message"
 }

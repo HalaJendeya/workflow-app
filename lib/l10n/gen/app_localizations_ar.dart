@@ -761,7 +761,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get messageHint => 'اكتب رسالة أو اضغط \'/\' للأوامر...';
 
   @override
-  String get attachmentsPending => 'ستتوفر المرفقات عندما يدعم الخادم الرفع.';
+  String get attachmentsPending =>
+      'المرفقات غير متاحة في التطبيق بعد — تحتاج أداة لاختيار الملفات. واجهة WorkFlow تقبل الصور وملفات PDF والنصوص.';
 
   @override
   String get delivered => 'تم التسليم';
@@ -1831,4 +1832,46 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get taskCreateUnavailable =>
       'لا يمكن إنشاء مهام من هنا بعد — تقبل واجهة WorkFlow المهام الجديدة من قائد المشروع فقط، وهذا النموذج غير مربوط بها.';
+
+  @override
+  String get emojiUseKeyboard =>
+      'استخدم زر الرموز التعبيرية في لوحة المفاتيح — لا يوجد في التطبيق منتقٍ للرموز بعد.';
+
+  @override
+  String get voiceNotSupported =>
+      'الرسائل الصوتية غير مدعومة — تقبل واجهة WorkFlow الصور وملفات PDF والنصوص فقط.';
+
+  @override
+  String get imagePickerPending =>
+      'تغيير الصورة غير متاح في التطبيق بعد — يحتاج أداة لاختيار الصور. واجهة WorkFlow تقبل الرفع.';
+
+  @override
+  String get conversationCreateUnavailable =>
+      'بدء محادثة غير مربوط بواجهة WorkFlow بعد — هذا النموذج يعمل في الوضع التجريبي فقط.';
+
+  @override
+  String get meetingTimeInPast => 'اختر تاريخاً ووقتاً لم يمضيا';
+
+  @override
+  String get deleteAccountTitle => 'حذف حسابك؟';
+
+  @override
+  String get deleteAccountConfirmBody =>
+      'سيُحذف حسابك في WorkFlow وبياناته نهائياً. لا يمكن التراجع عن ذلك.';
+
+  @override
+  String get employeeDeleteUnavailable =>
+      'حسابات الموظفين يغلقها مسؤول الشركة — لا تسمح واجهة WorkFlow للموظف بحذف حسابه بنفسه.';
+
+  @override
+  String get tipEmoji => 'رموز تعبيرية';
+
+  @override
+  String get tipAttachFile => 'إرفاق ملف';
+
+  @override
+  String get tipAttachImage => 'إرفاق صورة';
+
+  @override
+  String get tipVoice => 'رسالة صوتية';
 }

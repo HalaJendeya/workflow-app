@@ -264,27 +264,10 @@ class _MeetingRoomScreenState extends ConsumerState<MeetingRoomScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Material(
-                      color: RoomColors.leave,
-                      shape: const StadiumBorder(),
-                      child: InkWell(
-                        key: const Key('room-leave'),
-                        customBorder: const StadiumBorder(),
-                        onTap: () => Navigator.of(context).maybePop(),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 10,
-                          ),
-                          child: Row(
-                            children: [
-                              const WfSvg('room_leave', size: 16),
-                              const SizedBox(width: 6),
-                              Text(l10n.leave, style: _t(13, AppColors.white)),
-                            ],
-                          ),
-                        ),
-                      ),
+                    _LeaveButton(
+                      label: l10n.leave,
+                      style: _t(13, AppColors.white),
+                      onTap: () => Navigator.of(context).maybePop(),
                     ),
                   ],
                 ),
@@ -751,3 +734,66 @@ Future<void> openRoom(BuildContext context, Meeting m) => Navigator.of(
   context,
   rootNavigator: true,
 ).push(MaterialPageRoute<void>(builder: (_) => MeetingRoomScreen(id: m.id)));
+
+/// "Leave" from the room toolbar. Five 40 px controls plus the labelled
+/// pill need 308 px; on narrower phones (320 px wide, or large text) the
+/// pill becomes a 40 px round button with the same tooltip and semantics
+/// label, so the toolbar never overflows.
+class _LeaveButton extends StatelessWidget {
+  const new({required this.label, required this.style, required this.onTap});
+
+  final String label;
+  final TextStyle style;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final screen = MediaQuery.sizeOf(context).width;
+    final text = TextPainter(
+      text: TextSpan(text: label, style: style),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    // 32 px page padding, five 40 px controls, a 12 px gap, and the pill's
+    // own 36 px padding + 16 px icon + 6 px gap.
+    final needed = 32 + 5 * 40 + 12 + 36 + 16 + 6 + text.width;
+    text.dispose();
+    final compact = needed > screen;
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        label: label,
+        excludeSemantics: true,
+        child: Material(
+          color: RoomColors.leave,
+          shape: const StadiumBorder(),
+          child: InkWell(
+            key: const Key('room-leave'),
+            customBorder: const StadiumBorder(),
+            onTap: onTap,
+            child: compact
+                ? const SizedBox.square(
+                    dimension: 40,
+                    child: Center(child: WfSvg('room_leave', size: 16)),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      children: [
+                        const WfSvg('room_leave', size: 16),
+                        const SizedBox(width: 6),
+                        Text(label, style: style),
+                      ],
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}

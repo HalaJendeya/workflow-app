@@ -220,7 +220,7 @@ class _PaymentFormScreenState extends ConsumerState<PaymentFormScreen> {
   }
 
   void _save() {
-    if (!_form.currentState!.validate()) return;
+    if (!validateAndReveal(_form)) return;
     final existing = widget.existing;
     final payment = Payment(
       id: existing?.id ?? localId('pay'),

@@ -152,9 +152,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('form-save')),
       300,
+      // The form page (on top of the shell) is the first scrollable.
       scrollable: find
           .descendant(
-            of: find.byType(ListView).last,
+            of: find.byType(SingleChildScrollView).last,
             matching: find.byType(Scrollable),
           )
           .first,

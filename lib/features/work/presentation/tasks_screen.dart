@@ -287,7 +287,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
   }
 
   void _save() {
-    if (!_form.currentState!.validate()) return;
+    if (!validateAndReveal(_form)) return;
     final e = widget.existing;
     final start = DateTime(_date.year, _date.month, _date.day, 9);
     final notifier = ref.read(workTasksProvider.notifier);

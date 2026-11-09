@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/core/design_system/app_icons.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/async_view.dart';
 import 'package:workflow_app/core/widgets/relative_time.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
@@ -209,6 +210,9 @@ class _SearchField extends ConsumerWidget {
 Future<void> _showNotificationOptions(BuildContext context, WidgetRef ref) =>
     showModalBottomSheet<void>(
       context: context,
+      // Above the floating navigation surface, which covered the
+      // "Mark all as read" button on the Home tab.
+      useRootNavigator: true,
       builder: (sheetContext) => Consumer(
         builder: (context, ref, _) {
           final l10n = AppLocalizations.of(context);
@@ -268,9 +272,11 @@ Future<void> _showNotificationOptions(BuildContext context, WidgetRef ref) =>
       ),
     );
 
+/// Shows the server's reason (expired session, no access, rate limit…),
+/// not a generic "something went wrong".
 void _snack(BuildContext context, Object e) {
   ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(AppLocalizations.of(context).errorUnknown)),
+    SnackBar(content: Text(localizedError(AppLocalizations.of(context), e))),
   );
 }
 

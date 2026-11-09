@@ -587,7 +587,7 @@ class _ProjectFormScreenState extends ConsumerState<ProjectFormScreen> {
   }
 
   void _save() {
-    if (!_form.currentState!.validate()) return;
+    if (!validateAndReveal(_form)) return;
     final e = widget.existing;
     final project = Project(
       id: e?.id ?? localId('prj'),
