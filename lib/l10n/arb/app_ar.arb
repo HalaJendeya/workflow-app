@@ -560,5 +560,7 @@
   "tipEmoji": "رموز تعبيرية",
   "tipAttachFile": "إرفاق ملف",
   "tipAttachImage": "إرفاق صورة",
-  "tipVoice": "رسالة صوتية"
+  "tipVoice": "رسالة صوتية",
+  "noConversationsYet": "لا توجد محادثات بعد.",
+  "noMeetingsYet": "لا توجد اجتماعات بعد."
 }

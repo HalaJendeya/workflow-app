@@ -361,9 +361,21 @@ class WfAvatar extends StatelessWidget {
       color: AppColors.surfaceSubtle,
       shape: BoxShape.circle,
     ),
-    child: Text(
-      initials,
-      style: AppTextStyles.desktopXsSemiBold.copyWith(color: AppColors.primary),
+    // Group initials ("#gen") wrapped inside the circle at 320 px with large
+    // text; they now shrink to stay on one line within it.
+    child: Padding(
+      padding: EdgeInsets.all(size * 0.12),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          initials,
+          maxLines: 1,
+          softWrap: false,
+          style: AppTextStyles.desktopXsSemiBold.copyWith(
+            color: AppColors.primary,
+          ),
+        ),
+      ),
     ),
   );
 }

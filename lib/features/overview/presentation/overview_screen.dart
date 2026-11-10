@@ -489,10 +489,12 @@ class _RecordCard extends StatelessWidget {
       children: [
         Row(
           children: [
+            // Two lines: a long notification title ("Invoice #INV-… is
+            // overdue") lost its meaning when cut to one.
             Expanded(
               child: Text(
                 title,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.mobileLgSemiBold.copyWith(
                   color: AppColors.neutral900,

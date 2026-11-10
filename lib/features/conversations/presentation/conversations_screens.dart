@@ -276,7 +276,13 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
             builder: (_) => const SizedBox.shrink(),
           )
         else if (visible.isEmpty)
-          EmptyNotice(text: l10n.noRecords),
+          // "No records match these filters" only when a filter or search
+          // hid them; an empty inbox says so.
+          EmptyNotice(
+            text: _filter == _Filter.all && _query.trim().isEmpty
+                ? l10n.noConversationsYet
+                : l10n.noRecords,
+          ),
         for (final c in visible)
           ModuleCard(
             key: Key('conversation-${c.id}'),

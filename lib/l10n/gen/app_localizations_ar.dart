@@ -1874,4 +1874,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tipVoice => 'رسالة صوتية';
+
+  @override
+  String get noConversationsYet => 'لا توجد محادثات بعد.';
+
+  @override
+  String get noMeetingsYet => 'لا توجد اجتماعات بعد.';
 }

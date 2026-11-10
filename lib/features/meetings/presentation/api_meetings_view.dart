@@ -142,7 +142,12 @@ class _ApiMeetingsViewState extends ConsumerState<ApiMeetingsView> {
               if (counts case AsyncError(:final error))
                 ApiErrorCard(
                   error: error,
-                  onRetry: () => ref.invalidate(apiMeetingCountsProvider),
+                  // The counts are derived from the calendar page, whose
+                  // error stays cached: retrying the counts alone failed
+                  // again every time.
+                  onRetry: () => ref
+                    ..invalidate(apiMeetingCalendarProvider)
+                    ..invalidate(apiMeetingCountsProvider),
                 )
               else ...[
                 Row(
@@ -286,7 +291,12 @@ class _ApiMeetingsViewState extends ConsumerState<ApiMeetingsView> {
           builder: (page) => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (page.items.isEmpty) EmptyNotice(text: l10n.noRecords),
+              if (page.items.isEmpty)
+                EmptyNotice(
+                  text: _search.trim().isEmpty && _status == null
+                      ? l10n.noMeetingsYet
+                      : l10n.noRecords,
+                ),
               for (final m in page.items) ...[
                 _MeetingRecord(meeting: m, now: now, onOpen: () => _open(m)),
                 const SizedBox(height: 16),

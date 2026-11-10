@@ -1007,5 +1007,7 @@
   "tipEmoji": "Emoji",
   "tipAttachFile": "Attach a file",
   "tipAttachImage": "Attach an image",
-  "tipVoice": "Voice message"
+  "tipVoice": "Voice message",
+  "noConversationsYet": "No conversations yet.",
+  "noMeetingsYet": "No meetings yet."
 }

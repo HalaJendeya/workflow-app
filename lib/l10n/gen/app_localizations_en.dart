@@ -1879,4 +1879,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tipVoice => 'Voice message';
+
+  @override
+  String get noConversationsYet => 'No conversations yet.';
+
+  @override
+  String get noMeetingsYet => 'No meetings yet.';
 }

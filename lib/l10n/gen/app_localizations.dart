@@ -3463,6 +3463,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Voice message'**
   String get tipVoice;
+
+  /// No description provided for @noConversationsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No conversations yet.'**
+  String get noConversationsYet;
+
+  /// No description provided for @noMeetingsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No meetings yet.'**
+  String get noMeetingsYet;
 }
 
 class _AppLocalizationsDelegate

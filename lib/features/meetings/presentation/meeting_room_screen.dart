@@ -279,15 +279,34 @@ class _MeetingRoomScreenState extends ConsumerState<MeetingRoomScreen> {
     );
   }
 
-  Widget _square(IconData icon, String tip, VoidCallback onTap) => Material(
-    color: const Color(0xB31E293B),
-    borderRadius: BorderRadius.circular(8),
-    child: InkWell(
-      borderRadius: BorderRadius.circular(8),
+  /// The 32 px Figma square, with a tooltip like the other room controls
+  /// and a 44 px touch area (32 px was easy to miss on a phone).
+  Widget _square(IconData icon, String tip, VoidCallback onTap) => Tooltip(
+    message: tip,
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: SizedBox.square(
-        dimension: 32,
-        child: Icon(icon, size: 18, color: AppColors.white, semanticLabel: tip),
+        dimension: 44,
+        child: Center(
+          child: Material(
+            color: const Color(0xB31E293B),
+            borderRadius: BorderRadius.circular(8),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: onTap,
+              child: SizedBox.square(
+                dimension: 32,
+                child: Icon(
+                  icon,
+                  size: 18,
+                  color: AppColors.white,
+                  semanticLabel: tip,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     ),
   );

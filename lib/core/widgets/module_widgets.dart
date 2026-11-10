@@ -110,13 +110,20 @@ class ModulePage extends StatelessWidget {
             20,
             47 + MediaQuery.paddingOf(context).bottom,
           ),
-          sliver: SliverList.list(
-            children: [
-              for (var i = 0; i < children.length; i++) ...[
-                if (i > 0) SizedBox(height: gap),
-                children[i],
+          // Built all at once, not lazily: a lazily built section only
+          // loaded its API data when scrolled to (the page then jumped back
+          // to the top while it loaded) and dropped it again when scrolled
+          // away, refetching every time it came back into view.
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var i = 0; i < children.length; i++) ...[
+                  if (i > 0) SizedBox(height: gap),
+                  children[i],
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ],
@@ -194,11 +201,15 @@ class ModuleMasthead extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                description,
-                style: AppTextStyles.mobileBaseRegular.copyWith(color: white),
-              ),
+              // Screens without a description (Conversations) went to the
+              // search box with an empty line and gap that Figma lacks.
+              if (description.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  description,
+                  style: AppTextStyles.mobileBaseRegular.copyWith(color: white),
+                ),
+              ],
               if (onSearch != null) ...[
                 const SizedBox(height: 20),
                 WfSearchBox(
