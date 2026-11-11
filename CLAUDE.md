@@ -16,6 +16,16 @@ flutter build web --no-web-resources-cdn --dart-define=APP_MODE=mock
 
 The cloud sessions have no Android SDK or emulator. Use widget tests, plus the web build in headless Chromium for render checks. The `gstatic` CDN is blocked, so web builds need `--no-web-resources-cdn`.
 
+## Skills (`.claude/skills/`)
+
+| Invoke | Purpose |
+|---|---|
+| `/workflow-m01 <3\|4\|5> [scope]` | Runs one M01 batch end to end, makes a local commit, and stops for acceptance. Manual-only. |
+| `/figma-ui-verify <node\|screen>` | Compares a screen with its Figma frame. Holds the frame map. |
+| `/flutter-responsive-qa <screen>` | Widget tests across 4 viewports × text scale 1.0/1.3, with the keyboard up. |
+| `/flutter-regression-qa [files]` | Bounded gate: format → analyze → targeted → full suite. |
+| `/android-emulator-qa <flows>` | Drives the app through adb. Without a device, falls back to the web render and says so. |
+
 ## Architecture
 
 ```
