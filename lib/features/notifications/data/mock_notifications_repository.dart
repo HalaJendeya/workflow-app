@@ -30,8 +30,11 @@ class MockNotificationsRepository implements NotificationsRepository {
     int perPage = 20,
     NotificationFilter filter = NotificationFilter.all,
   }) async {
+    // A copy: handing out _items itself let markRead change the caller's
+    // list in place, so the controller never saw the item as unread and the
+    // unread count did not drop.
     final filtered = switch (filter) {
-      NotificationFilter.all => _items,
+      NotificationFilter.all => List.of(_items),
       NotificationFilter.unread => _items.where((n) => !n.isRead).toList(),
       NotificationFilter.read => _items.where((n) => n.isRead).toList(),
     };

@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/meetings/domain/meeting.dart';
+import 'package:workflow_app/features/profile/data/profile_repository.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 /// Dark in-call palette from the meeting room frames (671:4034, 670:2505…).
@@ -124,157 +126,182 @@ class _MeetingRoomScreenState extends ConsumerState<MeetingRoomScreen> {
     if (m == null) return const Scaffold(backgroundColor: RoomColors.bg);
     final people = ['Rania El-Masri', l10n.you, ...m.participants.skip(1)];
 
-    return Scaffold(
-      backgroundColor: RoomColors.bg,
-      body: Column(
-        children: [
-          ColoredBox(
-            color: RoomColors.top,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                child: Row(
-                  children: [
-                    _square(
-                      Icons.chevron_left,
-                      l10n.minimize,
-                      () => Navigator.of(context).maybePop(),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                m.code,
-                                style: _t(12, AppColors.white, FontWeight.w700),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: RoomColors.liveBg,
-                                  borderRadius: BorderRadius.circular(99),
-                                ),
-                                child: Text(
-                                  '● ${l10n.meetingLive.toUpperCase()}',
+    // Light status-bar icons on the dark call chrome, as in 671:4034.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: RoomColors.bg,
+        body: Column(
+          children: [
+            ColoredBox(
+              color: RoomColors.top,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: Row(
+                    children: [
+                      _square(
+                        Icons.chevron_left,
+                        l10n.minimize,
+                        () => Navigator.of(context).maybePop(),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  m.code,
                                   style: _t(
-                                    10,
-                                    RoomColors.live,
+                                    12,
+                                    AppColors.white,
                                     FontWeight.w700,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '$_elapsed  •  ${l10n.peopleCount(people.length)}',
-                            style: _t(11, RoomColors.sub),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _square(
-                      Icons.grid_view_rounded,
-                      l10n.participants,
-                      () => setState(() => _panel = _Panel.participants),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 48,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              children: [
-                _tab(l10n.featureChat, _Panel.chat, badge: _messages.length),
-                _tab(l10n.polls, _Panel.polls),
-                _tab(l10n.notes, _Panel.notes),
-                _tab(
-                  '${l10n.participants} (${people.length})',
-                  _Panel.participants,
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: switch (_panel) {
-              _Panel.stage => _stage(l10n),
-              _Panel.chat => _chat(l10n),
-              _Panel.polls => _polls(l10n),
-              _Panel.notes => _notesPanel(l10n),
-              _Panel.participants => _participants(l10n, people),
-            },
-          ),
-          ColoredBox(
-            color: RoomColors.bg,
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _round(
-                            'room_ctl_0',
-                            _micOn ? l10n.mute : l10n.unmute,
-                            () => setState(() => _micOn = !_micOn),
-                            bg: _micOn ? RoomColors.button : RoomColors.mutedBg,
-                          ),
-                          _round(
-                            'room_ctl_1',
-                            l10n.camera,
-                            () => setState(() => _camOn = !_camOn),
-                            bg: _camOn ? RoomColors.blue : RoomColors.button,
-                          ),
-                          _round(
-                            'room_ctl_2',
-                            l10n.raiseHand,
-                            () => setState(() => _hand = !_hand),
-                            bg: _hand ? RoomColors.host : RoomColors.button,
-                          ),
-                          _round(
-                            'room_ctl_3',
-                            l10n.reactions,
-                            () => showSnack(context, '👏'),
-                          ),
-                          _round(
-                            'room_ctl_4',
-                            l10n.moreOptions,
-                            () => setState(
-                              () => _panel = _panel == _Panel.stage
-                                  ? _Panel.chat
-                                  : _Panel.stage,
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: RoomColors.liveBg,
+                                    borderRadius: BorderRadius.circular(99),
+                                  ),
+                                  child: Text(
+                                    '● ${l10n.meetingLive.toUpperCase()}',
+                                    style: _t(
+                                      10,
+                                      RoomColors.live,
+                                      FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 2),
+                            Text(
+                              '$_elapsed  •  '
+                              '${l10n.peopleCount(people.length)}',
+                              style: _t(11, RoomColors.sub),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    _LeaveButton(
-                      label: l10n.leave,
-                      style: _t(13, AppColors.white),
-                      onTap: () => Navigator.of(context).maybePop(),
-                    ),
-                  ],
+                      _square(
+                        Icons.grid_view_rounded,
+                        l10n.participants,
+                        () => setState(() => _panel = _Panel.participants),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+            SizedBox(
+              height: 48,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                children: [
+                  _tab(l10n.featureChat, _Panel.chat, badge: _messages.length),
+                  _tab(l10n.polls, _Panel.polls),
+                  _tab(l10n.notes, _Panel.notes),
+                  _tab(
+                    '${l10n.participants} (${people.length})',
+                    _Panel.participants,
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: switch (_panel) {
+                _Panel.stage => _stage(l10n),
+                _Panel.chat => _chat(l10n),
+                _Panel.polls => _polls(l10n),
+                _Panel.notes => _notesPanel(l10n),
+                _Panel.participants => _participants(l10n, people),
+              },
+            ),
+            ColoredBox(
+              color: RoomColors.bg,
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _round(
+                              'room_ctl_0',
+                              _micOn ? l10n.mute : l10n.unmute,
+                              () => setState(() => _micOn = !_micOn),
+                              bg: _micOn
+                                  ? RoomColors.button
+                                  : RoomColors.mutedBg,
+                              // The Figma SVG is the muted (crossed) mic;
+                              // unmuted showed it too, contradicting the
+                              // "Mute" label and the blue badge on the tile.
+                              glyph: _micOn
+                                  ? const Icon(
+                                      Icons.mic,
+                                      key: Key('room-mic-on'),
+                                      size: 20,
+                                      color: AppColors.white,
+                                    )
+                                  : null,
+                            ),
+                            _round(
+                              'room_ctl_1',
+                              l10n.camera,
+                              () => setState(() => _camOn = !_camOn),
+                              bg: _camOn ? RoomColors.blue : RoomColors.button,
+                            ),
+                            _round(
+                              'room_ctl_2',
+                              l10n.raiseHand,
+                              () => setState(() => _hand = !_hand),
+                              bg: _hand ? RoomColors.host : RoomColors.button,
+                            ),
+                            _round(
+                              'room_ctl_3',
+                              l10n.reactions,
+                              () => showSnack(context, '👏'),
+                            ),
+                            _round(
+                              'room_ctl_4',
+                              l10n.moreOptions,
+                              () => setState(
+                                () => _panel = _panel == _Panel.stage
+                                    ? _Panel.chat
+                                    : _Panel.stage,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _LeaveButton(
+                        label: l10n.leave,
+                        style: _t(13, AppColors.white),
+                        onTap: () => Navigator.of(context).maybePop(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -316,6 +343,7 @@ class _MeetingRoomScreenState extends ConsumerState<MeetingRoomScreen> {
     String tip,
     VoidCallback onTap, {
     Color bg = RoomColors.button,
+    Widget? glyph,
   }) => Padding(
     padding: EdgeInsets.zero,
     child: Tooltip(
@@ -328,7 +356,7 @@ class _MeetingRoomScreenState extends ConsumerState<MeetingRoomScreen> {
           onTap: onTap,
           child: SizedBox.square(
             dimension: 40,
-            child: Center(child: WfSvg(icon, size: 20)),
+            child: Center(child: glyph ?? WfSvg(icon, size: 20)),
           ),
         ),
       ),
@@ -372,106 +400,133 @@ class _MeetingRoomScreenState extends ConsumerState<MeetingRoomScreen> {
     );
   }
 
-  Widget _stage(AppLocalizations l10n) => Stack(
-    alignment: Alignment.center,
-    children: [
-      Container(
-        width: 192,
-        height: 238,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: RoomColors.blue.withValues(alpha: 0.2),
-              blurRadius: 80,
-              spreadRadius: 10,
-            ),
-          ],
-        ),
-      ),
-      Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Stack(
-            children: [
-              Container(
-                width: 144,
-                height: 144,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5FF),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF475569), width: 4),
-                ),
-                child: Text(
-                  'SA',
-                  style: _t(36, RoomColors.blue, FontWeight.w800),
-                ),
-              ),
-              Positioned(
-                right: 4,
-                bottom: 8,
-                child: CircleAvatar(
-                  radius: 14,
-                  backgroundColor: _micOn ? RoomColors.blue : RoomColors.leave,
-                  child: Icon(
-                    _micOn ? Icons.mic : Icons.mic_off,
-                    size: 14,
-                    color: AppColors.white,
-                  ),
-                ),
+  Widget _stage(AppLocalizations l10n) {
+    // My own tile shows my initials, and my name beside the "You" badge
+    // (671:4034 shows the signed-in user there, not a fixed sample).
+    final me = ref.watch(profileProvider).value;
+    final fullName = me?.name?.trim() ?? '';
+    final myName = fullName.isNotEmpty ? fullName : me?.displayName ?? l10n.you;
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: 192,
+          height: 238,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: RoomColors.blue.withValues(alpha: 0.2),
+                blurRadius: 80,
+                spreadRadius: 10,
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: RoomColors.chip,
-              borderRadius: BorderRadius.circular(99),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  width: 144,
+                  height: 144,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: RoomColors.blue,
-                    borderRadius: BorderRadius.circular(4),
+                    color: const Color(0xFFF1F5FF),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF475569),
+                      width: 4,
+                    ),
                   ),
                   child: Text(
-                    l10n.you,
-                    style: _t(10, AppColors.white, FontWeight.w700),
+                    me?.initials ?? '',
+                    key: const Key('room-self-initials'),
+                    style: _t(36, RoomColors.blue, FontWeight.w800),
                   ),
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  _hand ? '✋ ${l10n.you}' : l10n.you,
-                  style: _t(12, RoomColors.text, FontWeight.w600),
+                Positioned(
+                  right: 4,
+                  bottom: 8,
+                  child: CircleAvatar(
+                    radius: 14,
+                    backgroundColor: _micOn
+                        ? RoomColors.blue
+                        : RoomColors.leave,
+                    child: Icon(
+                      _micOn ? Icons.mic : Icons.mic_off,
+                      size: 14,
+                      color: AppColors.white,
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-          if (!_micOn) ...[
             const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: RoomColors.mutedBg,
+                color: RoomColors.chip,
                 borderRadius: BorderRadius.circular(99),
               ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    decoration: BoxDecoration(
+                      color: RoomColors.blue,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      l10n.you,
+                      style: _t(10, AppColors.white, FontWeight.w700),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _hand ? '✋ $myName' : myName,
+                    key: const Key('room-self-name'),
+                    style: _t(12, RoomColors.text, FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+            if (!_micOn) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: RoomColors.mutedBg,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  l10n.micMuted,
+                  style: _t(11, RoomColors.mutedFg, FontWeight.w500),
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            // Wrapped against both screen edges, left-aligned, at 130 %
+            // text on a 427 dp phone.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
               child: Text(
-                l10n.micMuted,
-                style: _t(11, RoomColors.mutedFg, FontWeight.w500),
+                l10n.mediaPending,
+                key: const Key('room-media-pending'),
+                textAlign: TextAlign.center,
+                style: _t(11, RoomColors.sub),
               ),
             ),
           ],
-          const SizedBox(height: 16),
-          Text(l10n.mediaPending, style: _t(11, RoomColors.sub)),
-        ],
-      ),
-    ],
-  );
+        ),
+      ],
+    );
+  }
 
   Widget _chat(AppLocalizations l10n) => Column(
     children: [
@@ -535,6 +590,7 @@ class _MeetingRoomScreenState extends ConsumerState<MeetingRoomScreen> {
                 key: const Key('room-chat-input'),
                 controller: _input,
                 style: _t(13, AppColors.white),
+                textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _sendChat(),
                 decoration: InputDecoration(
                   border: InputBorder.none,
@@ -543,16 +599,20 @@ class _MeetingRoomScreenState extends ConsumerState<MeetingRoomScreen> {
                 ),
               ),
             ),
-            Material(
-              color: RoomColors.blue,
-              shape: const CircleBorder(),
-              child: InkWell(
-                key: const Key('room-chat-send'),
-                customBorder: const CircleBorder(),
-                onTap: _sendChat,
-                child: const SizedBox.square(
-                  dimension: 32,
-                  child: Icon(Icons.send, size: 16, color: AppColors.white),
+            // Icon-only: the tooltip is also its TalkBack label.
+            Tooltip(
+              message: l10n.tipSend,
+              child: Material(
+                color: RoomColors.blue,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  key: const Key('room-chat-send'),
+                  customBorder: const CircleBorder(),
+                  onTap: _sendChat,
+                  child: const SizedBox.square(
+                    dimension: 32,
+                    child: Icon(Icons.send, size: 16, color: AppColors.white),
+                  ),
                 ),
               ),
             ),

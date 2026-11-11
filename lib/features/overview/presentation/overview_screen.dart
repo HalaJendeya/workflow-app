@@ -7,6 +7,7 @@ import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/async_view.dart';
 import 'package:workflow_app/core/widgets/relative_time.dart';
+import 'package:workflow_app/core/widgets/status_bar_scrim.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
@@ -66,32 +67,37 @@ class OverviewScreen extends ConsumerWidget {
         ref.watch(sessionControllerProvider).value?.portal ?? Portal.client;
     return ColoredBox(
       color: AppColors.appBackground,
-      child: RefreshIndicator(
-        onRefresh: () async {
-          ref
-            ..invalidate(profileProvider)
-            ..invalidate(notificationsControllerProvider);
-          await ref.read(notificationsControllerProvider.future);
-        },
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _Masthead(portal: portal)),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.page,
-                AppSpacing.lg,
-                AppSpacing.page,
-                140,
+      // The sky masthead sits behind the status bar at rest; scrolled cards
+      // passed under the clock and icons without the scrim.
+      child: StatusBarScrim(
+        color: AppColors.appBackground,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref
+              ..invalidate(profileProvider)
+              ..invalidate(notificationsControllerProvider);
+            await ref.read(notificationsControllerProvider.future);
+          },
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(child: _Masthead(portal: portal)),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.page,
+                  AppSpacing.lg,
+                  AppSpacing.page,
+                  140,
+                ),
+                sliver: SliverList.list(
+                  children: const [
+                    _TasksCard(),
+                    SizedBox(height: AppSpacing.lg),
+                    _NotificationsCard(),
+                  ],
+                ),
               ),
-              sliver: SliverList.list(
-                children: const [
-                  _TasksCard(),
-                  SizedBox(height: AppSpacing.lg),
-                  _NotificationsCard(),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

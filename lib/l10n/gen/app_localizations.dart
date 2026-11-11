@@ -3464,6 +3464,12 @@ abstract class AppLocalizations {
   /// **'Voice message'**
   String get tipVoice;
 
+  /// No description provided for @tipSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send message'**
+  String get tipSend;
+
   /// No description provided for @noConversationsYet.
   ///
   /// In en, this message translates to:

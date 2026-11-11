@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/app/providers.dart';
@@ -28,16 +29,22 @@ class WorkFlowApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       routerConfig: ref.watch(routerProvider),
-      builder: (context, child) => isMock
-          ? Banner(
-              message: 'DEMO',
-              location: BannerLocation.topEnd,
-              child: Semantics(
-                label: AppLocalizations.of(context).demoModeBanner,
-                child: child,
-              ),
-            )
-          : child!,
+      // Dark status-bar icons by default. The dark meeting room declares
+      // light ones for itself; without this default its light style stayed
+      // after leaving, leaving white icons on the light screens.
+      builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.dark,
+        child: isMock
+            ? Banner(
+                message: 'DEMO',
+                location: BannerLocation.topEnd,
+                child: Semantics(
+                  label: AppLocalizations.of(context).demoModeBanner,
+                  child: child,
+                ),
+              )
+            : child!,
+      ),
     );
   }
 }

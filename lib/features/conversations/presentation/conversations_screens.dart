@@ -14,6 +14,7 @@ import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/conversations/data/conversations_repository.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
+import 'package:workflow_app/features/profile/data/profile_repository.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 enum ConversationType { direct, group }
@@ -667,27 +668,31 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           ),
                         ),
                       const Spacer(),
-                      Material(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(12),
-                        child: InkWell(
-                          key: const Key('chat-send'),
+                      // Icon-only: the tooltip is also its TalkBack label.
+                      Tooltip(
+                        message: l10n.tipSend,
+                        child: Material(
+                          color: AppColors.primary,
                           borderRadius: BorderRadius.circular(12),
-                          onTap: _sending ? null : _send,
-                          child: SizedBox.square(
-                            dimension: 40,
-                            child: Center(
-                              // A spinner while the server has the message.
-                              child: _sending
-                                  ? const SizedBox.square(
-                                      key: Key('chat-sending'),
-                                      dimension: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: AppColors.white,
-                                      ),
-                                    )
-                                  : const WfSvg('chat_send', size: 20),
+                          child: InkWell(
+                            key: const Key('chat-send'),
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: _sending ? null : _send,
+                            child: SizedBox.square(
+                              dimension: 40,
+                              child: Center(
+                                // A spinner while the server has the message.
+                                child: _sending
+                                    ? const SizedBox.square(
+                                        key: Key('chat-sending'),
+                                        dimension: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.white,
+                                        ),
+                                      )
+                                    : const WfSvg('chat_send', size: 20),
+                              ),
                             ),
                           ),
                         ),
@@ -718,14 +723,22 @@ class _HeaderIcon extends StatelessWidget {
   );
 }
 
-class _Bubble extends StatelessWidget {
+class _Bubble extends ConsumerWidget {
   const new({required this.message});
   final ChatMessage message;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final m = message;
+    // My own bubbles carry my initials. The author of a mine message is the
+    // localized "You", whose first letter would mimic the other person's.
+    final mineInitials = m.mine
+        ? ref.watch(profileProvider).value?.initials ?? ''
+        : '';
+    final initials = mineInitials.isNotEmpty
+        ? mineInitials
+        : m.author.characters.first.toUpperCase();
     final avatar = Container(
       width: 40,
       height: 40,
@@ -735,7 +748,8 @@ class _Bubble extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: Text(
-        m.author.characters.first.toUpperCase(),
+        initials,
+        key: m.mine ? const Key('chat-mine-avatar') : null,
         style: AppTextStyles.desktopXsSemiBold.copyWith(
           color: AppColors.primary,
         ),

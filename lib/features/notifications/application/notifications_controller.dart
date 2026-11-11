@@ -69,7 +69,7 @@ class NotificationsController extends AsyncNotifier<NotificationInbox> {
     final current = state.value;
     if (current == null) return;
     final wasUnread = current.items.any((n) => n.id == id && !n.isRead);
-    state = AsyncData(
+    _settle(
       NotificationInbox(
         items: current.items.map((n) => n.id == id ? updated : n).toList(),
         currentPage: current.currentPage,
@@ -82,13 +82,40 @@ class NotificationsController extends AsyncNotifier<NotificationInbox> {
     );
   }
 
+  /// Keeps the list true to the server-side read filter after a mark: read
+  /// items stayed listed under "Unread" (with its count) until a reload.
+  void _settle(NotificationInbox next) {
+    switch (ref.read(notificationFilterProvider)) {
+      case NotificationFilter.all:
+        state = AsyncData(next);
+      case NotificationFilter.unread:
+        final kept = next.items.where((n) => !n.isRead).toList();
+        state = AsyncData(
+          NotificationInbox(
+            items: kept,
+            currentPage: next.currentPage,
+            lastPage: next.lastPage,
+            total: (next.total - (next.items.length - kept.length)).clamp(
+              0,
+              next.total,
+            ),
+            unreadCount: next.unreadCount,
+          ),
+        );
+      case NotificationFilter.read:
+        // Newly read items belong here but are not loaded: ask again.
+        state = AsyncData(next);
+        ref.invalidateSelf();
+    }
+  }
+
   Future<void> markAllRead() async {
     final unread = await ref
         .read(notificationsRepositoryProvider)
         .markAllRead();
     final current = state.value;
     if (current == null) return;
-    state = AsyncData(
+    _settle(
       NotificationInbox(
         items: [for (final n in current.items) n.markedRead(null)],
         currentPage: current.currentPage,

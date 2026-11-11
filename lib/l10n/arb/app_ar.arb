@@ -561,6 +561,7 @@
   "tipAttachFile": "إرفاق ملف",
   "tipAttachImage": "إرفاق صورة",
   "tipVoice": "رسالة صوتية",
+  "tipSend": "إرسال الرسالة",
   "noConversationsYet": "لا توجد محادثات بعد.",
   "noMeetingsYet": "لا توجد اجتماعات بعد."
 }

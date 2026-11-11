@@ -1881,6 +1881,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tipVoice => 'Voice message';
 
   @override
+  String get tipSend => 'Send message';
+
+  @override
   String get noConversationsYet => 'No conversations yet.';
 
   @override

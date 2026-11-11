@@ -90,44 +90,65 @@ class ModulePage extends StatelessWidget {
             ),
             child: CreateFab(onPressed: onCreate!, label: createLabel),
           ),
-    body: CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: ModuleMasthead(
-            title: title,
-            description: description,
-            searchHint: searchHint,
-            onSearch: onSearch,
-          ),
-        ),
-        SliverPadding(
-          // Clears the floating navigation surface the shell reports in
-          // `padding.bottom` (103 px, plus any system navigation bar), with
-          // the same 47 px breathing room as before.
-          padding: EdgeInsets.fromLTRB(
-            20,
-            24,
-            20,
-            47 + MediaQuery.paddingOf(context).bottom,
-          ),
-          // Built all at once, not lazily: a lazily built section only
-          // loaded its API data when scrolled to (the page then jumped back
-          // to the top while it loaded) and dropped it again when scrolled
-          // away, refetching every time it came back into view.
-          sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (var i = 0; i < children.length; i++) ...[
-                  if (i > 0) SizedBox(height: gap),
-                  children[i],
-                ],
-              ],
+    body: Stack(
+      children: [
+        _scrollView(context),
+        // The status bar is transparent: without this strip scrolled cards
+        // and the search field slid under the clock and system icons. At
+        // the top it sits on the masthead's own blue, so nothing changes.
+        PositionedDirectional(
+          top: 0,
+          start: 0,
+          end: 0,
+          height: MediaQuery.paddingOf(context).top,
+          child: const IgnorePointer(
+            child: ColoredBox(
+              key: Key('status-bar-backdrop'),
+              color: AppColors.primary,
             ),
           ),
         ),
       ],
     ),
+  );
+
+  Widget _scrollView(BuildContext context) => CustomScrollView(
+    slivers: [
+      SliverToBoxAdapter(
+        child: ModuleMasthead(
+          title: title,
+          description: description,
+          searchHint: searchHint,
+          onSearch: onSearch,
+        ),
+      ),
+      SliverPadding(
+        // Clears the floating navigation surface the shell reports in
+        // `padding.bottom` (103 px, plus any system navigation bar), with
+        // the same 47 px breathing room as before.
+        padding: EdgeInsets.fromLTRB(
+          20,
+          24,
+          20,
+          47 + MediaQuery.paddingOf(context).bottom,
+        ),
+        // Built all at once, not lazily: a lazily built section only
+        // loaded its API data when scrolled to (the page then jumped back
+        // to the top while it loaded) and dropped it again when scrolled
+        // away, refetching every time it came back into view.
+        sliver: SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < children.length; i++) ...[
+                if (i > 0) SizedBox(height: gap),
+                children[i],
+              ],
+            ],
+          ),
+        ),
+      ),
+    ],
   );
 }
 

@@ -1008,6 +1008,7 @@
   "tipAttachFile": "Attach a file",
   "tipAttachImage": "Attach an image",
   "tipVoice": "Voice message",
+  "tipSend": "Send message",
   "noConversationsYet": "No conversations yet.",
   "noMeetingsYet": "No meetings yet."
 }
