@@ -1902,4 +1902,17 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get wrongPortalEmployee =>
       'هذا الحساب ليس حساب موظف. ارجع واختر عميل.';
+
+  @override
+  String get myCompaniesNote =>
+      'الشركات المرتبطة بحسابك. لا يوفّر الخادم بعد حالة عضويتك أو قائمة بالشركات التي يمكنك الانضمام إليها.';
+
+  @override
+  String get noCompaniesYet => 'حسابك غير مرتبط بأي شركة بعد.';
+
+  @override
+  String get runningLabel => 'قيد التنفيذ';
+
+  @override
+  String get viewAllLabel => 'عرض الكل';
 }

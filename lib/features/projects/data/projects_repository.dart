@@ -111,9 +111,11 @@ class ProjectsRepository {
         },
       ),
     );
+    // `stats {total, pending, in_progress, completed}` is documented; a
+    // missing count is an invalid response, never a silent 0.
     final s = body['stats'];
-    final stats = s is Json ? s : const <String, dynamic>{};
-    int n(String k) => asInt(stats[k]) ?? 0;
+    if (s is! Json) missingField('stats');
+    int n(String k) => asInt(s[k]) ?? missingField('stats.$k');
     return ProjectList(
       page: ApiPage.parse(body['data'] as Json, ProjectRecord.fromJson),
       stats: (
@@ -124,6 +126,14 @@ class ProjectsRepository {
       ),
     );
   }
+
+  /// `GET /api/v1/{client|employee}/projects/{id}`. The collection's test
+  /// requires `data.id`; the project is `data` itself (live, 2026-11-14).
+  /// The same row fields as the list are read. A project the caller may
+  /// not see answers 403 or 404.
+  Future<ProjectRecord> show(int id) async => ProjectRecord.fromJson(
+    ApiEnvelope.unwrapObject(await _client.get('$_path/$id')),
+  );
 }
 
 final projectsRepositoryProvider = Provider<ProjectsRepository>((ref) {
@@ -133,6 +143,16 @@ final projectsRepositoryProvider = Provider<ProjectsRepository>((ref) {
 });
 
 final FutureProviderFamily<ProjectList, ProjectQuery> apiProjectsProvider =
-    FutureProvider.autoDispose.family<ProjectList, ProjectQuery>(
-      (ref, q) => ref.watch(projectsRepositoryProvider).list(q),
-    );
+    FutureProvider.autoDispose.family<ProjectList, ProjectQuery>((ref, q) {
+      // Keyed to the signed-in user: another account never sees this page.
+      ref.watch(sessionControllerProvider.select((s) => s.value?.userId));
+      return ref.watch(projectsRepositoryProvider).list(q);
+    });
+
+/// One project, fetched fresh when its details open; keyed to the
+/// signed-in user like the list.
+final FutureProviderFamily<ProjectRecord, int> apiProjectProvider =
+    FutureProvider.autoDispose.family<ProjectRecord, int>((ref, id) {
+      ref.watch(sessionControllerProvider.select((s) => s.value?.userId));
+      return ref.watch(projectsRepositoryProvider).show(id);
+    });

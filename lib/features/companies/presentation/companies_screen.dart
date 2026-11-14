@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
+import 'package:workflow_app/features/companies/data/client_companies_repository.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -108,42 +110,82 @@ class _CompaniesScreenState extends ConsumerState<CompaniesScreen> {
     final l10n = AppLocalizations.of(context);
     final demo = ref.watch(demoModeProvider);
     final q = _query.trim().toLowerCase();
-    final items = ref
-        .watch(companiesProvider)
-        .where((c) => '${c.name} ${c.domain}'.toLowerCase().contains(q))
-        .toList();
+    bool matches(CompanyCardData c) =>
+        '${c.name} ${c.domain}'.toLowerCase().contains(q);
     return ModulePage(
       title: l10n.companiesTitle,
       description: l10n.companiesDescription,
-      // No company data in API mode yet, so nothing to search.
-      onSearch: demo ? (v) => setState(() => _query = v) : null,
-      children: [
-        if (!demo) const BackendPendingNotice(),
-        if (items.isEmpty)
-          EmptyNotice(text: l10n.noRecords)
-        else
-          LayoutBuilder(
-            builder: (context, c) {
-              final w = (c.maxWidth - 14) / 2;
-              return Wrap(
-                spacing: 14,
-                runSpacing: 14,
-                children: [
-                  for (final company in items)
-                    SizedBox(width: w, child: _CompanyCard(company)),
-                ],
-              );
-            },
-          ),
-      ],
+      onSearch: (v) => setState(() => _query = v),
+      children: demo
+          ? [_grid(l10n, ref.watch(companiesProvider).where(matches).toList())]
+          : [
+              // "List My Companies": the account's own companies. There is
+              // no directory of companies to join, and the membership
+              // status is not part of this route's documented response.
+              InfoNotice(
+                key: const Key('my-companies-note'),
+                text: l10n.myCompaniesNote,
+              ),
+              AsyncSection(
+                value: ref.watch(clientCompaniesProvider),
+                onRetry: () => ref.invalidate(clientCompaniesProvider),
+                builder: (companies) => companies.isEmpty
+                    ? EmptyNotice(
+                        key: const Key('no-companies'),
+                        text: l10n.noCompaniesYet,
+                      )
+                    : _grid(
+                        l10n,
+                        [
+                          for (final c in companies)
+                            CompanyCardData(
+                              id: 'api-${c.id}',
+                              name: c.name,
+                              domain: c.subtitle ?? '',
+                              icon: 'company_building',
+                              tint: _info50,
+                            ),
+                        ].where(matches).toList(),
+                        actions: false,
+                      ),
+              ),
+            ],
+    );
+  }
+
+  Widget _grid(
+    AppLocalizations l10n,
+    List<CompanyCardData> items, {
+    bool actions = true,
+  }) {
+    if (items.isEmpty) return EmptyNotice(text: l10n.noRecords);
+    return LayoutBuilder(
+      builder: (context, c) {
+        final w = (c.maxWidth - 14) / 2;
+        return Wrap(
+          spacing: 14,
+          runSpacing: 14,
+          children: [
+            for (final company in items)
+              SizedBox(
+                width: w,
+                child: _CompanyCard(company, actions: actions),
+              ),
+          ],
+        );
+      },
     );
   }
 }
 
 class _CompanyCard extends ConsumerWidget {
-  const new(this.company);
+  const new(this.company, {this.actions = true});
 
   final CompanyCardData company;
+
+  /// Join / pending area. Off for API rows: the route offers no status
+  /// and there is nothing they could join.
+  final bool actions;
 
   static const _jakarta = 'PlusJakartaSans';
 
@@ -212,8 +254,10 @@ class _CompanyCard extends ConsumerWidget {
               color: Color(0xFFB1B1B1),
             ),
           ),
-          const SizedBox(height: 16),
-          if (pending)
+          if (actions) const SizedBox(height: 16),
+          if (!actions)
+            const SizedBox.shrink()
+          else if (pending)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),

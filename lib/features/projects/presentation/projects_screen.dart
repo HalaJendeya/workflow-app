@@ -9,6 +9,7 @@ import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/finance/domain/finance_models.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
+import 'package:workflow_app/features/projects/data/projects_repository.dart';
 import 'package:workflow_app/features/projects/presentation/api_projects_view.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -103,10 +104,13 @@ BadgeTone projectTone(ProjectStatus s) => switch (s) {
 
 /// Figma "Projects Management" (client 643:34237, employee 729:21226).
 class ProjectsScreen extends ConsumerStatefulWidget {
-  const new({this.canManage = true, super.key});
+  const new({this.canManage = true, this.initialStatus, super.key});
 
   /// Shows create/edit/delete affordances (present in both Figma frames).
   final bool canManage;
+
+  /// API mode: the status filter to open with (from a dashboard figure).
+  final ApiProjectStatus? initialStatus;
 
   @override
   ConsumerState<ProjectsScreen> createState() => _ProjectsScreenState();
@@ -124,6 +128,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     if (!demo) {
       return ApiProjectsView(
         onCreate: widget.canManage ? () => openProjectForm(context) : null,
+        initialStatus: widget.initialStatus,
       );
     }
     final l10n = AppLocalizations.of(context);

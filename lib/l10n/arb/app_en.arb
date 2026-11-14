@@ -1016,5 +1016,9 @@
   "fieldHours": "Hours",
   "fieldRate": "Rate",
   "wrongPortalClient": "This account isn't a client account. Go back and choose Employee.",
-  "wrongPortalEmployee": "This account isn't an employee account. Go back and choose Client."
+  "wrongPortalEmployee": "This account isn't an employee account. Go back and choose Client.",
+  "myCompaniesNote": "Companies linked to your account. The server doesn't report your membership status or list companies you could join yet.",
+  "noCompaniesYet": "Your account isn't linked to any company yet.",
+  "runningLabel": "Running",
+  "viewAllLabel": "View All"
 }

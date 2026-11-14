@@ -210,10 +210,9 @@ void main() {
   ) async {
     await pumpClient(tester, mode: AppMode.api);
     await tab(tester, 'Companies');
-    expect(
-      find.textContaining('ready for the new WorkFlow API'),
-      findsOneWidget,
-    );
+    // The account's own companies come from the server ("List My
+    // Companies"); demo companies never appear.
+    expect(find.byKey(const Key('my-companies-note')), findsOneWidget);
     expect(find.text('Gaza'), findsNothing);
   });
 

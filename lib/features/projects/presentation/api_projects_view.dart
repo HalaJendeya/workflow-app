@@ -28,11 +28,14 @@ BadgeTone apiProjectTone(ApiProjectStatus s) => switch (s) {
 /// "Projects Management" (643:34237 / 729:21226) backed by
 /// `GET /api/v1/{client|employee}/projects`. Read-only for both roles.
 class ApiProjectsView extends ConsumerStatefulWidget {
-  const new({required this.onCreate, super.key});
+  const new({required this.onCreate, this.initialStatus, super.key});
 
   /// Kept so the Figma "Add Project" action stays; it reports that nothing
   /// can be saved because neither role has a project create route.
   final VoidCallback? onCreate;
+
+  /// Status filter to start with.
+  final ApiProjectStatus? initialStatus;
 
   @override
   ConsumerState<ApiProjectsView> createState() => _ApiProjectsViewState();
@@ -40,7 +43,7 @@ class ApiProjectsView extends ConsumerStatefulWidget {
 
 class _ApiProjectsViewState extends ConsumerState<ApiProjectsView> {
   String _search = '';
-  ApiProjectStatus? _status;
+  late ApiProjectStatus? _status = widget.initialStatus;
   int _page = 1;
   Timer? _debounce;
 
@@ -154,22 +157,7 @@ class ApiProjectCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final p = project;
-    final budget = p.budget == null
-        ? null
-        : money(
-            p.budget!,
-            currency: p.currencyCode ?? '',
-            symbol: p.currencySymbol ?? '',
-          );
-    final fields = [
-      if (p.companyName != null) DetailField(l10n.fieldCompany, p.companyName!),
-      if (p.leaderName != null) DetailField(l10n.projectLeader, p.leaderName!),
-      if (p.memberCount != null)
-        DetailField(l10n.fieldTeam, '${p.memberCount}'),
-      if (budget != null) DetailField(l10n.fieldBudget, budget),
-      if (p.completion != null)
-        DetailField(l10n.fieldProgress, '${p.completion}%'),
-    ];
+    final fields = projectFields(l10n, p);
     final status = apiProjectStatusLabel(l10n, p.status);
     final tone = apiProjectTone(p.status);
     return Column(
@@ -182,13 +170,7 @@ class ApiProjectCard extends StatelessWidget {
           status: status,
           tone: tone,
           fields: fields,
-          onView: () => showRecordDetails(
-            context,
-            title: p.title,
-            status: status,
-            tone: tone,
-            fields: fields,
-          ),
+          onView: () => showApiProjectDetails(context, p),
         ),
         if (p.completion != null)
           Padding(
@@ -204,6 +186,68 @@ class ApiProjectCard extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// The label/value rows a project shows, from documented fields only.
+List<DetailField> projectFields(AppLocalizations l10n, ProjectRecord p) {
+  final budget = p.budget == null
+      ? null
+      : money(
+          p.budget!,
+          currency: p.currencyCode ?? '',
+          symbol: p.currencySymbol ?? '',
+        );
+  return [
+    if (p.companyName != null) DetailField(l10n.fieldCompany, p.companyName!),
+    if (p.leaderName != null) DetailField(l10n.projectLeader, p.leaderName!),
+    if (p.memberCount != null) DetailField(l10n.fieldTeam, '${p.memberCount}'),
+    if (budget != null) DetailField(l10n.fieldBudget, budget),
+    if (p.completion != null)
+      DetailField(l10n.fieldProgress, '${p.completion}%'),
+  ];
+}
+
+/// Project details from `GET /{role}/projects/{id}`. The list row is shown
+/// at once with a loading bar, then replaced by the server's current
+/// record; a failure (403/404 for a project the account may not see, or
+/// a network error) is shown with Retry instead of stale data.
+Future<void> showApiProjectDetails(BuildContext context, ProjectRecord row) =>
+    showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      builder: (_) => _ProjectDetailsSheet(row: row),
+    );
+
+class _ProjectDetailsSheet extends ConsumerWidget {
+  const new({required this.row});
+
+  final ProjectRecord row;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final value = ref.watch(apiProjectProvider(row.id));
+    final shown = value.value ?? row;
+    return RecordDetailsBody(
+      key: const Key('project-details'),
+      title: shown.title,
+      status: apiProjectStatusLabel(l10n, shown.status),
+      tone: apiProjectTone(shown.status),
+      fields: value.hasError ? const [] : projectFields(l10n, shown),
+      footer: switch (value) {
+        AsyncError(:final error) => ApiErrorCard(
+          error: error,
+          onRetry: () => ref.invalidate(apiProjectProvider(row.id)),
+        ),
+        AsyncData() => null,
+        _ => const Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: LinearProgressIndicator(key: Key('project-details-loading')),
+        ),
+      },
     );
   }
 }

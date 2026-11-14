@@ -783,6 +783,17 @@ class BackendPendingNotice extends StatelessWidget {
   const new({super.key});
 
   @override
+  Widget build(BuildContext context) =>
+      InfoNotice(text: AppLocalizations.of(context).backendPending);
+}
+
+/// Blue information panel explaining what the server does (not) provide.
+class InfoNotice extends StatelessWidget {
+  const new({required this.text, super.key});
+
+  final String text;
+
+  @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(AppSpacing.md),
     decoration: BoxDecoration(
@@ -790,7 +801,7 @@ class BackendPendingNotice extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadii.card),
     ),
     child: Text(
-      AppLocalizations.of(context).backendPending,
+      text,
       style: AppTextStyles.mobileBaseRegular.copyWith(
         color: AppColors.statusInfo,
       ),

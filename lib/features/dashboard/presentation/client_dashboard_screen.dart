@@ -508,6 +508,26 @@ class _ApiClientDashboard extends ConsumerWidget {
       page: 1,
     );
     final invoices = ref.watch(clientInvoicesProvider(invoicesQuery));
+    void openProjects([ApiProjectStatus? status]) => Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ProjectsScreen(initialStatus: status),
+      ),
+    );
+    // Each figure opens Projects filtered to what it counts.
+    Widget figure(Key key, String title, int value, ApiProjectStatus? s) =>
+        Semantics(
+          button: true,
+          child: GestureDetector(
+            key: key,
+            behavior: HitTestBehavior.opaque,
+            onTap: () => openProjects(s),
+            child: MetricCard(title: title, value: count(value), delta: '—'),
+          ),
+        );
+    // Counts appear only once the server has sent them; a loading or failed
+    // list never reads "0".
+    final running = projects.value?.stats.inProgress;
+    final invoiceTotal = invoices.value?.page.total;
     return ModulePage(
       title: l10n.catDashboard,
       description: l10n.dashboardBody,
@@ -518,23 +538,25 @@ class _ApiClientDashboard extends ConsumerWidget {
           builder: (s) => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              MetricCard(
-                key: const Key('dash-projects-count'),
-                title: l10n.dashProjects,
-                value: count(s.projects),
-                delta: '—',
+              figure(
+                const Key('dash-projects-count'),
+                l10n.dashProjects,
+                s.projects,
+                null,
               ),
               const SizedBox(height: 16),
-              MetricCard(
-                title: l10n.dashInProgress,
-                value: count(s.inProgress),
-                delta: '—',
+              figure(
+                const Key('dash-in-progress'),
+                l10n.dashInProgress,
+                s.inProgress,
+                ApiProjectStatus.inProgress,
               ),
               const SizedBox(height: 16),
-              MetricCard(
-                title: l10n.dashCompleted,
-                value: count(s.completed),
-                delta: '—',
+              figure(
+                const Key('dash-completed'),
+                l10n.dashCompleted,
+                s.completed,
+                ApiProjectStatus.completed,
               ),
               const SizedBox(height: 12),
               Text(l10n.dashLiveOnly, style: dashCaption),
@@ -545,11 +567,12 @@ class _ApiClientDashboard extends ConsumerWidget {
           title: l10n.activeClientProjects,
           chips: [
             FilterChipBox(
-              label: l10n.runningCount(projects.value?.stats.inProgress ?? 0),
+              key: const Key('dash-running'),
+              label: running == null
+                  ? l10n.runningLabel
+                  : l10n.runningCount(running),
               selected: true,
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const ProjectsScreen()),
-              ),
+              onTap: () => openProjects(ApiProjectStatus.inProgress),
             ),
           ],
         ),
@@ -572,7 +595,9 @@ class _ApiClientDashboard extends ConsumerWidget {
           chips: [
             FilterChipBox(
               key: const Key('view-all-invoices'),
-              label: l10n.viewAllCount(invoices.value?.page.total ?? 0),
+              label: invoiceTotal == null
+                  ? l10n.viewAllLabel
+                  : l10n.viewAllCount(invoiceTotal),
               onTap: () => context.go(Routes.clientInvoices),
             ),
           ],

@@ -3,12 +3,12 @@ import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/core/network/api_client.dart';
 import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/network/api_response.dart';
+import 'package:workflow_app/features/auth/application/session_controller.dart';
 
 /// `GET /api/v1/client/dashboard` → `data {projectsCount, projectsCompleted,
 /// projectsInProgress}`. The collection documents no fields for this route;
-/// these three keys were read from the previous live server
-/// (work.isradev.shop); a client token for api.workflownets.com is needed
-/// to re-check them (docs/api-contract-gaps.md).
+/// these three integer keys are what the live server returns
+/// (api.workflownets.com, client QA account, 2026-11-14).
 class ClientDashboardSummary {
   const new({
     required this.projects,
@@ -45,6 +45,8 @@ final clientDashboardRepositoryProvider = Provider<ClientDashboardRepository>(
 );
 
 final FutureProvider<ClientDashboardSummary> clientDashboardSummaryProvider =
-    FutureProvider.autoDispose(
-      (ref) => ref.watch(clientDashboardRepositoryProvider).summary(),
-    );
+    FutureProvider.autoDispose((ref) {
+      // Keyed to the signed-in user: another account never sees these.
+      ref.watch(sessionControllerProvider.select((s) => s.value?.userId));
+      return ref.watch(clientDashboardRepositoryProvider).summary();
+    });

@@ -1908,4 +1908,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get wrongPortalEmployee =>
       'This account isn\'t an employee account. Go back and choose Client.';
+
+  @override
+  String get myCompaniesNote =>
+      'Companies linked to your account. The server doesn\'t report your membership status or list companies you could join yet.';
+
+  @override
+  String get noCompaniesYet => 'Your account isn\'t linked to any company yet.';
+
+  @override
+  String get runningLabel => 'Running';
+
+  @override
+  String get viewAllLabel => 'View All';
 }

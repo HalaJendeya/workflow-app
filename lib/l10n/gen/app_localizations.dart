@@ -3517,6 +3517,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This account isn\'t an employee account. Go back and choose Client.'**
   String get wrongPortalEmployee;
+
+  /// No description provided for @myCompaniesNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Companies linked to your account. The server doesn\'t report your membership status or list companies you could join yet.'**
+  String get myCompaniesNote;
+
+  /// No description provided for @noCompaniesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account isn\'t linked to any company yet.'**
+  String get noCompaniesYet;
+
+  /// No description provided for @runningLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get runningLabel;
+
+  /// No description provided for @viewAllLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'View All'**
+  String get viewAllLabel;
 }
 
 class _AppLocalizationsDelegate

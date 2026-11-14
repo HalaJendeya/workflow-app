@@ -97,6 +97,22 @@ class _Server implements HttpClientAdapter {
           '/api/v1/client/projects' => (200, _projects(full)),
           '/api/v1/client/invoices' => (200, _invoices(full)),
           '/api/v1/client/payments' => (200, _payments(full)),
+          // "List My Companies": `data` is a plain list (live shape).
+          '/api/v1/client/companies' => (
+            200,
+            ok([
+              if (full) ...[
+                {
+                  'id': 31,
+                  'name': 'Regional Office for Customer Success and Billing',
+                  'email': 'billing@regional-office.test',
+                  'domain': 'regional-office-customer-success.test',
+                  'logo': null,
+                },
+                {'id': 32, 'name': 'Tech Company', 'email': 'hi@tech.test'},
+              ],
+            ]),
+          ),
           _ => (404, failure('Not found')),
         };
     }
@@ -430,7 +446,13 @@ void main() {
 
   group('API states at 320x640, text x1.3', () {
     const size = Size(320, 640);
-    for (final screen in ['Dashboard', 'Projects', 'Invoices', 'Payments']) {
+    for (final screen in [
+      'Dashboard',
+      'Projects',
+      'Invoices',
+      'Payments',
+      'Companies',
+    ]) {
       testWidgets('$screen empty', (tester) async {
         await _pump(tester, size, 1.3, state: _State.empty);
         await _open(tester, screen);
@@ -512,13 +534,20 @@ void main() {
       expect(find.text('No records match these filters'), findsNothing);
     });
 
-    testWidgets('Companies explains it has no API data yet', (tester) async {
+    testWidgets('Companies lists the account companies, read-only', (
+      tester,
+    ) async {
       await _pump(tester, size, 1.3);
       await _open(tester, 'Companies');
-      expect(find.textContaining('ready for the new WorkFlow API'), findsOne);
+      // What the server leaves out is said, not guessed.
+      expect(find.byKey(const Key('my-companies-note')), findsOneWidget);
+      expect(find.text('Tech Company'), findsOneWidget);
+      expect(find.text('hi@tech.test'), findsOneWidget);
+      // No demo rows, no join button and no invented membership status.
       expect(find.text('Gaza'), findsNothing);
-      expect(find.text('Searching....'), findsNothing);
-      await _checkEnd(tester, 'client_Companies_api_pending');
+      expect(find.text('Join Request'), findsNothing);
+      expect(find.text('Pending'), findsNothing);
+      await _checkEnd(tester, 'client_Companies_api');
     });
   });
 

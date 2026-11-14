@@ -103,7 +103,34 @@ Future<void> showRecordDetails(
   context: context,
   useRootNavigator: true,
   isScrollControlled: true,
-  builder: (context) => SafeArea(
+  builder: (context) => RecordDetailsBody(
+    title: title,
+    status: status,
+    tone: tone,
+    fields: fields,
+  ),
+);
+
+/// Content of a record's details sheet: title, status and label/value
+/// rows. [footer] goes under the rows (a loading bar or an error card).
+class RecordDetailsBody extends StatelessWidget {
+  const new({
+    required this.title,
+    required this.status,
+    required this.tone,
+    required this.fields,
+    this.footer,
+    super.key,
+  });
+
+  final String title;
+  final String status;
+  final BadgeTone tone;
+  final List<DetailField> fields;
+  final Widget? footer;
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
     // Scrolls when the details are taller than the screen (long values at
     // a large text size overflowed a 640 px phone).
     child: SingleChildScrollView(
@@ -152,11 +179,12 @@ Future<void> showRecordDetails(
                 ],
               ),
             ),
+          ?footer,
         ],
       ),
     ),
-  ),
-);
+  );
+}
 
 /// Opens a form that can only save in demo mode. In API mode the form is
 /// not opened, so nobody fills it in for nothing: [unavailable] says which
