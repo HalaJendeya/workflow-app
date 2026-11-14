@@ -242,7 +242,9 @@ void main() {
       await tester.enterText(find.byKey(const Key('chat-input')), 'hi');
       await tester.tap(find.byKey(const Key('chat-send')));
       await tester.pumpAndSettle();
-      expect(find.text('hi'), findsOneWidget, reason: 'still in the input');
+      // Kept as a "Not sent" message with Retry, never lost.
+      expect(find.text('hi'), findsOneWidget);
+      expect(find.byKey(const Key('chat-message-failed')), findsOneWidget);
       expect(find.byType(SnackBar), findsOneWidget);
     });
   });

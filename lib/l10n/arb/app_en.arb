@@ -1034,5 +1034,18 @@
   "noAvailableUsers": "There is no one you can start a conversation with yet.",
   "joinedNoMedia": "You joined this meeting. Audio and video aren't available in the app yet.",
   "joinRequestPending": "Join request sent. The host must admit you before you can join.",
-  "leftMeeting": "You left the meeting."
+  "leftMeeting": "You left the meeting.",
+  "chatReconnecting": "Can't reach the server. Retrying…",
+  "messageSending": "Sending…",
+  "messageNotSent": "Not sent",
+  "discard": "Discard",
+  "renameConversation": "Rename conversation",
+  "conversationName": "Conversation name",
+  "deleteConversationForMe": "Delete for me",
+  "deleteConversationForMeBody": "This conversation will be removed from your list. The other participants keep it.",
+  "conversationRenamed": "Conversation renamed.",
+  "conversationDeletedForMe": "Conversation deleted for you.",
+  "joinRequestCheckHint": "The app can't check the request on its own. Once the host admits you, try joining again.",
+  "tryJoiningAgain": "Try joining again",
+  "validationMax255": "Use 255 characters or fewer."
 }

@@ -1968,4 +1968,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get leftMeeting => 'You left the meeting.';
+
+  @override
+  String get chatReconnecting => 'Can\'t reach the server. Retrying…';
+
+  @override
+  String get messageSending => 'Sending…';
+
+  @override
+  String get messageNotSent => 'Not sent';
+
+  @override
+  String get discard => 'Discard';
+
+  @override
+  String get renameConversation => 'Rename conversation';
+
+  @override
+  String get conversationName => 'Conversation name';
+
+  @override
+  String get deleteConversationForMe => 'Delete for me';
+
+  @override
+  String get deleteConversationForMeBody =>
+      'This conversation will be removed from your list. The other participants keep it.';
+
+  @override
+  String get conversationRenamed => 'Conversation renamed.';
+
+  @override
+  String get conversationDeletedForMe => 'Conversation deleted for you.';
+
+  @override
+  String get joinRequestCheckHint =>
+      'The app can\'t check the request on its own. Once the host admits you, try joining again.';
+
+  @override
+  String get tryJoiningAgain => 'Try joining again';
+
+  @override
+  String get validationMax255 => 'Use 255 characters or fewer.';
 }

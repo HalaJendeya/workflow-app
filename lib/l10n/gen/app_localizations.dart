@@ -3625,6 +3625,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You left the meeting.'**
   String get leftMeeting;
+
+  /// No description provided for @chatReconnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t reach the server. Retrying…'**
+  String get chatReconnecting;
+
+  /// No description provided for @messageSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending…'**
+  String get messageSending;
+
+  /// No description provided for @messageNotSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent'**
+  String get messageNotSent;
+
+  /// No description provided for @discard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discard;
+
+  /// No description provided for @renameConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename conversation'**
+  String get renameConversation;
+
+  /// No description provided for @conversationName.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation name'**
+  String get conversationName;
+
+  /// No description provided for @deleteConversationForMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete for me'**
+  String get deleteConversationForMe;
+
+  /// No description provided for @deleteConversationForMeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This conversation will be removed from your list. The other participants keep it.'**
+  String get deleteConversationForMeBody;
+
+  /// No description provided for @conversationRenamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation renamed.'**
+  String get conversationRenamed;
+
+  /// No description provided for @conversationDeletedForMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation deleted for you.'**
+  String get conversationDeletedForMe;
+
+  /// No description provided for @joinRequestCheckHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The app can\'t check the request on its own. Once the host admits you, try joining again.'**
+  String get joinRequestCheckHint;
+
+  /// No description provided for @tryJoiningAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try joining again'**
+  String get tryJoiningAgain;
+
+  /// No description provided for @validationMax255.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 255 characters or fewer.'**
+  String get validationMax255;
 }
 
 class _AppLocalizationsDelegate

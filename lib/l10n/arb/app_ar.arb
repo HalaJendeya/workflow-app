@@ -587,5 +587,18 @@
   "noAvailableUsers": "لا يوجد بعد من يمكنك بدء محادثة معه.",
   "joinedNoMedia": "انضممت إلى هذا الاجتماع. الصوت والفيديو غير متاحين في التطبيق بعد.",
   "joinRequestPending": "تم إرسال طلب الانضمام. يجب أن يقبلك المضيف قبل أن تنضم.",
-  "leftMeeting": "غادرت الاجتماع."
+  "leftMeeting": "غادرت الاجتماع.",
+  "chatReconnecting": "تعذّر الوصول إلى الخادم. جارٍ إعادة المحاولة…",
+  "messageSending": "جارٍ الإرسال…",
+  "messageNotSent": "لم تُرسل",
+  "discard": "تجاهل",
+  "renameConversation": "إعادة تسمية المحادثة",
+  "conversationName": "اسم المحادثة",
+  "deleteConversationForMe": "حذف لدي",
+  "deleteConversationForMeBody": "ستُزال هذه المحادثة من قائمتك. يحتفظ بها المشاركون الآخرون.",
+  "conversationRenamed": "تمت إعادة تسمية المحادثة.",
+  "conversationDeletedForMe": "حُذفت المحادثة لديك.",
+  "joinRequestCheckHint": "لا يستطيع التطبيق التحقق من الطلب تلقائيًا. بعد أن يقبلك المضيف، حاول الانضمام مجددًا.",
+  "tryJoiningAgain": "حاول الانضمام مجددًا",
+  "validationMax255": "استخدم 255 حرفًا أو أقل."
 }

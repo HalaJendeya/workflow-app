@@ -1961,4 +1961,46 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get leftMeeting => 'غادرت الاجتماع.';
+
+  @override
+  String get chatReconnecting =>
+      'تعذّر الوصول إلى الخادم. جارٍ إعادة المحاولة…';
+
+  @override
+  String get messageSending => 'جارٍ الإرسال…';
+
+  @override
+  String get messageNotSent => 'لم تُرسل';
+
+  @override
+  String get discard => 'تجاهل';
+
+  @override
+  String get renameConversation => 'إعادة تسمية المحادثة';
+
+  @override
+  String get conversationName => 'اسم المحادثة';
+
+  @override
+  String get deleteConversationForMe => 'حذف لدي';
+
+  @override
+  String get deleteConversationForMeBody =>
+      'ستُزال هذه المحادثة من قائمتك. يحتفظ بها المشاركون الآخرون.';
+
+  @override
+  String get conversationRenamed => 'تمت إعادة تسمية المحادثة.';
+
+  @override
+  String get conversationDeletedForMe => 'حُذفت المحادثة لديك.';
+
+  @override
+  String get joinRequestCheckHint =>
+      'لا يستطيع التطبيق التحقق من الطلب تلقائيًا. بعد أن يقبلك المضيف، حاول الانضمام مجددًا.';
+
+  @override
+  String get tryJoiningAgain => 'حاول الانضمام مجددًا';
+
+  @override
+  String get validationMax255 => 'استخدم 255 حرفًا أو أقل.';
 }

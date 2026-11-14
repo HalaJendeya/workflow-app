@@ -134,13 +134,40 @@ class ConversationsRepository {
 
   /// `POST …/{id}/messages`, multipart: `message` (≤ 5000 chars), `type`.
   /// Files would go under `files[]` (BE-28); the app sends text only.
-  Future<void> send(int id, String text) async {
-    ApiEnvelope.unwrapData(
+  ///
+  /// The collection asserts `data.message.id` and
+  /// `data.message.conversation_id` only. When `data.message` also carries
+  /// the fields of a message row it is returned so the chat can show it at
+  /// once; otherwise `null`, and the next poll brings it.
+  Future<ApiMessage?> send(int id, String text) async {
+    final data = ApiEnvelope.unwrapData(
       await _client.post(
         '$_base/$id/messages',
         body: FormData.fromMap({'message': text, 'type': 'text'}),
       ),
     );
+    final row = data is Json ? data['message'] : null;
+    if (row is! Json) return null;
+    try {
+      return ApiMessage.fromJson(row);
+    } on ApiException {
+      return null;
+    }
+  }
+
+  /// `PUT …/{id}` body `{title}` (≤ 255). 200 with `data.id`. Partial
+  /// update since BE-16; the app sends the title only.
+  Future<void> rename(int id, String title) async {
+    final data = ApiEnvelope.unwrapObject(
+      await _client.put('$_base/$id', body: {'title': title}),
+    );
+    asInt(data['id']) ?? missingField('id');
+  }
+
+  /// `DELETE …/{id}` — "Delete Conversation For Me": hides the conversation
+  /// for the caller only. 200 with `message`.
+  Future<void> deleteForMe(int id) async {
+    ApiEnvelope.unwrapData(await _client.delete('$_base/$id'));
   }
 
   /// `POST …/{id}/read` (no body).
@@ -254,32 +281,55 @@ class ConversationOptions {
 /// The messages of one open conversation: the latest page first, older
 /// pages on demand ([ConversationThread.loadEarlier]) and newer messages by
 /// polling ([ConversationThread.poll]). Merged by id, so a poll that
-/// overlaps a send never duplicates a message.
+/// overlaps a send never duplicates a message, and ordered by id (the
+/// server's order), so clock skew never reorders them.
 class MessageThread {
-  const new({required this.messages, required this.hasEarlier});
+  const new({
+    required this.messages,
+    required this.hasEarlier,
+    required this.cursor,
+  });
 
   final List<ApiMessage> messages;
   final bool hasEarlier;
 
-  int? get oldestId => messages.isEmpty ? null : messages.first.id;
-  int? get newestId => messages.isEmpty ? null : messages.last.id;
+  /// The newest id a page from the server has confirmed: polls ask for
+  /// `after_id` = this. A message added from a send response does not move
+  /// it, so a message that arrived between the last poll and the send is
+  /// still fetched.
+  final int? cursor;
 
-  MessageThread merge(Iterable<ApiMessage> more, {bool? hasEarlier}) {
+  int? get oldestId => messages.isEmpty ? null : messages.first.id;
+
+  MessageThread merge(
+    Iterable<ApiMessage> more, {
+    bool? hasEarlier,
+    int? cursor,
+  }) {
     final byId = {for (final m in messages) m.id: m};
     for (final m in more) {
       byId[m.id] = m;
     }
+    final next = cursor == null || (this.cursor ?? 0) >= cursor
+        ? this.cursor
+        : cursor;
     return MessageThread(
       messages: byId.values.toList()..sort((a, b) => a.id.compareTo(b.id)),
       hasEarlier: hasEarlier ?? this.hasEarlier,
+      cursor: next,
     );
   }
 }
+
+int? _newest(List<ApiMessage> page) => page.isEmpty ? null : page.last.id;
 
 class ConversationThread extends AsyncNotifier<MessageThread> {
   new(this.conversationId);
 
   final int conversationId;
+
+  /// Pages a single poll may follow when `has_more` says more are waiting.
+  static const maxPollPages = 3;
 
   ConversationsRepository get _repo =>
       ref.read(conversationsRepositoryProvider);
@@ -288,42 +338,110 @@ class ConversationThread extends AsyncNotifier<MessageThread> {
   Future<MessageThread> build() async {
     _scope(ref);
     ref.watch(conversationsRepositoryProvider);
+    _poll = null;
+    _earlier = null;
     final page = await _repo.messages(conversationId);
-    return MessageThread(messages: page.messages, hasEarlier: page.hasMore);
+    return MessageThread(
+      messages: page.messages,
+      hasEarlier: page.hasMore,
+      cursor: _newest(page.messages),
+    );
   }
 
-  bool _busy = false;
+  Future<void>? _earlier;
+  Future<int>? _poll;
 
-  /// One older page (`before_id` = the oldest loaded id).
-  Future<void> loadEarlier() async {
+  bool get loadingEarlier => _earlier != null;
+
+  /// One older page (`before_id` = the oldest loaded id). Calls while a page
+  /// is loading share it.
+  Future<void> loadEarlier() {
     final current = state.value;
-    if (current == null || !current.hasEarlier || _busy) return;
-    _busy = true;
+    if (current == null || !current.hasEarlier) return Future.value();
+    return _earlier ??= _loadEarlier(current)
+        .whenComplete(() => _earlier = null);
+  }
+
+  Future<void> _loadEarlier(MessageThread current) async {
+    final page = await _repo.messages(
+      conversationId,
+      beforeId: current.oldestId,
+    );
+    if (!ref.mounted) return;
+    final now = state.value;
+    if (now == null) return;
+    state = AsyncData(now.merge(page.messages, hasEarlier: page.hasMore));
+  }
+
+  /// Newer messages (`after_id` = [MessageThread.cursor]). Returns how many
+  /// arrived from other people. A failed poll throws and leaves the thread
+  /// as it was.
+  ///
+  /// Calls while a poll runs share it (the timer never stacks requests);
+  /// [fresh] waits for it and then asks again, for a caller that needs a
+  /// state newer than its own action (a send).
+  Future<int> poll({bool fresh = false}) async {
+    final running = _poll;
+    if (running != null) {
+      if (!fresh) return await running;
+      try {
+        await running;
+      } on Object {
+        // The earlier poll's failure is its caller's; ask again.
+      }
+      if (!ref.mounted) return 0;
+      final again = _poll;
+      if (again != null) return await again;
+    }
+    final next = _pollOnce();
+    _poll = next;
     try {
-      final page = await _repo.messages(
-        conversationId,
-        beforeId: current.oldestId,
-      );
-      state = AsyncData(
-        state.value!.merge(page.messages, hasEarlier: page.hasMore),
-      );
+      return await next;
     } finally {
-      _busy = false;
+      if (identical(_poll, next)) _poll = null;
     }
   }
 
-  /// Newer messages (`after_id` = the newest loaded id). Returns how many
-  /// arrived. A failed poll leaves the thread as it was.
-  Future<int> poll() async {
-    final current = state.value;
-    if (current == null) return 0;
-    final page = await _repo.messages(
-      conversationId,
-      afterId: current.newestId,
-    );
-    if (page.messages.isEmpty) return 0;
-    state = AsyncData(state.value!.merge(page.messages));
-    return page.messages.length;
+  Future<int> _pollOnce() async {
+    final me = ref.read(sessionControllerProvider).value?.userId;
+    var others = 0;
+    for (var i = 0; i < maxPollPages; i++) {
+      final current = state.value;
+      if (current == null) return others;
+      final page = await _repo.messages(
+        conversationId,
+        afterId: current.cursor,
+      );
+      // The chat may have closed while the page was on its way.
+      if (!ref.mounted) return others;
+      final now = state.value;
+      if (now == null) return others;
+      final known = {for (final m in now.messages) m.id};
+      others += page.messages
+          .where((m) => !known.contains(m.id) && m.senderId != me)
+          .length;
+      state = AsyncData(
+        now.merge(
+          page.messages,
+          cursor: _newest(page.messages),
+          // The first load of an empty conversation has no cursor: its
+          // answer is the latest page, whose `has_more` is about history.
+          hasEarlier: current.cursor == null ? page.hasMore : null,
+        ),
+      );
+      if (!page.hasMore || current.cursor == null || page.messages.isEmpty) {
+        break;
+      }
+    }
+    return others;
+  }
+
+  /// A message the server confirmed in a send response.
+  void addSent(ApiMessage message) {
+    if (!ref.mounted) return;
+    final now = state.value;
+    if (now == null) return;
+    state = AsyncData(now.merge([message]));
   }
 }
 

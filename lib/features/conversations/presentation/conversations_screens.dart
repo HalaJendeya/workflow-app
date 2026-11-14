@@ -13,6 +13,7 @@ import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/conversations/data/conversations_repository.dart';
+import 'package:workflow_app/features/conversations/presentation/api_conversation_actions.dart';
 import 'package:workflow_app/features/conversations/presentation/api_new_conversation_screen.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/profile/data/profile_repository.dart';
@@ -20,18 +21,28 @@ import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 enum ConversationType { direct, group }
 
+/// Where a message I wrote is: on the server ([sent]), on its way
+/// ([sending]) or refused ([failed], with Retry).
+enum ChatSendState { sent, sending, failed }
+
 class ChatMessage {
   const new({
     required this.author,
     required this.text,
     required this.at,
     this.mine = false,
+    this.key,
+    this.sendState = ChatSendState.sent,
   });
 
   final String author;
   final String text;
   final DateTime at;
   final bool mine;
+
+  /// Stable identity in the list: `server-<id>` or `local-<n>`.
+  final String? key;
+  final ChatSendState sendState;
 }
 
 /// Presentation model for conversation cards and the chat screen.
@@ -92,6 +103,7 @@ Conversation conversationFromApi(ApiConversation c, int? me, String you) =>
       messages: [
         for (final m in c.messages)
           ChatMessage(
+            key: 'server-${m.id}',
             author: m.senderId == me ? you : m.senderName,
             text: m.text.isEmpty && m.attachments > 0
                 ? '📎 ×${m.attachments}'
@@ -224,10 +236,18 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || ref.read(demoModeProvider)) return;
-      _refresher = Timer.periodic(
-        refreshEvery,
-        (_) => ref.invalidate(apiConversationsProvider),
-      );
+      _refresher = Timer.periodic(refreshEvery, (_) {
+        // Only while the list is what the person sees: not in the
+        // background, not under an open chat (which marks read and
+        // refreshes the list itself).
+        if (!mounted) return;
+        final lifecycle = WidgetsBinding.instance.lifecycleState;
+        if (lifecycle != null && lifecycle != AppLifecycleState.resumed) {
+          return;
+        }
+        if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
+        ref.invalidate(apiConversationsProvider);
+      });
     });
   }
 
@@ -393,7 +413,18 @@ class ChatScreen extends ConsumerStatefulWidget {
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends ConsumerState<ChatScreen> {
+/// A message typed in this chat that the server has not confirmed yet.
+class _Outgoing {
+  new(this.localId, this.text, this.at);
+
+  final int localId;
+  final String text;
+  final DateTime at;
+  bool failed = false;
+}
+
+class _ChatScreenState extends ConsumerState<ChatScreen>
+    with WidgetsBindingObserver {
   final _text = TextEditingController();
 
   /// How often an open chat asks for newer messages (`after_id`). There is
@@ -401,13 +432,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   static const pollEvery = Duration(seconds: 10);
   Timer? _poller;
 
+  /// Set while the latest poll failed; cleared by the next success. Shown
+  /// as a quiet "reconnecting" line, never a full-screen error.
+  bool _offline = false;
+
+  /// Typed messages waiting for (or refused by) the server, oldest first.
+  final _outgoing = <_Outgoing>[];
+  int _nextLocalId = 0;
+  bool _sending = false;
+  bool _disposed = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       if (!ref.read(demoModeProvider)) {
+        WidgetsBinding.instance.addObserver(this);
         unawaited(_markRead());
-        _poller = Timer.periodic(pollEvery, (_) => unawaited(_poll()));
+        _poller = Timer.periodic(pollEvery, (_) => _tick());
         return;
       }
       final n = ref.read(conversationsProvider.notifier);
@@ -418,71 +461,133 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   void dispose() {
+    _disposed = true;
     _poller?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     _text.dispose();
     super.dispose();
   }
 
+  /// Back in the foreground (or back online after the phone slept): catch
+  /// up at once instead of waiting for the next tick.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) unawaited(_poll());
+  }
+
+  bool get _alive => mounted && !_disposed;
+
+  /// The timer polls only while this chat is what the person sees: not in
+  /// the background, not under another page or sheet.
+  void _tick() {
+    if (!_alive) return;
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (lifecycle != null && lifecycle != AppLifecycleState.resumed) return;
+    if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
+    unawaited(_poll());
+  }
+
   int get _apiId => int.parse(widget.id);
 
-  /// Newer messages; arrivals are marked read since the chat is open. A
-  /// failed poll is silent and the next one retries.
-  Future<void> _poll() async {
+  /// Newer messages; other people's arrivals are marked read since the chat
+  /// is open. A failed poll keeps the thread and flags the connection; the
+  /// next tick retries.
+  Future<void> _poll({bool fresh = false}) async {
+    if (!_alive) return;
     try {
       final n = await ref
           .read(conversationThreadProvider(_apiId).notifier)
-          .poll();
-      if (n > 0 && mounted) await _markRead();
+          .poll(fresh: fresh);
+      if (!_alive) return;
+      if (_offline) setState(() => _offline = false);
+      if (n > 0) await _markRead();
     } on ApiException {
-      // Kept quiet: the thread stays as it was.
+      if (_alive && !_offline) setState(() => _offline = true);
     }
   }
 
-  bool _sending = false;
-
   /// Clears the unread badge on the server; a failure only leaves the badge.
   Future<void> _markRead() async {
+    if (!_alive) return;
     try {
       await ref.read(conversationsRepositoryProvider).markRead(_apiId);
-      ref.invalidate(apiConversationsProvider);
+      if (_alive) ref.invalidate(apiConversationsProvider);
     } on ApiException {
       // Not a user action: the conversation still opens and stays unread.
     }
   }
 
-  Future<void> _sendApi(String text) async {
-    setState(() => _sending = true);
+  /// Sends queued messages one at a time, in the order they were typed.
+  Future<void> _drain() async {
+    if (_sending) return;
+    _sending = true;
     try {
-      await ref.read(conversationsRepositoryProvider).send(_apiId, text);
-      _text.clear();
-      // The sent message comes back with the next page of newer messages;
-      // the conversation itself is not reloaded (no spinner).
-      await _poll();
-      ref.invalidate(apiConversationsProvider);
-    } on ApiException catch (e) {
-      if (mounted) {
-        showSnack(context, localizedError(AppLocalizations.of(context), e));
+      while (_alive) {
+        final next = _outgoing.where((o) => !o.failed).firstOrNull;
+        if (next == null) break;
+        if (!await _deliver(next)) break;
       }
     } finally {
-      if (mounted) setState(() => _sending = false);
+      _sending = false;
+      if (_alive) setState(() {});
     }
   }
+
+  /// One message. On success it leaves the outgoing list and joins the
+  /// thread (from the send response, or the next poll); on failure it stays
+  /// as "Not sent" with Retry, and later messages wait behind it.
+  Future<bool> _deliver(_Outgoing o) async {
+    final repo = ref.read(conversationsRepositoryProvider);
+    final thread = ref.read(conversationThreadProvider(_apiId).notifier);
+    try {
+      final sent = await repo.send(_apiId, o.text);
+      if (!_alive) return false;
+      if (sent != null) thread.addSent(sent);
+      setState(() => _outgoing.remove(o));
+      if (sent == null) await _poll(fresh: true);
+      if (_alive) ref.invalidate(apiConversationsProvider);
+      return true;
+    } on ApiException catch (e) {
+      if (!mounted || _disposed) return false;
+      setState(() => o.failed = true);
+      showSnack(context, localizedError(AppLocalizations.of(context), e));
+      return false;
+    }
+  }
+
+  void _retry(int localId) {
+    final o = _outgoing.where((x) => x.localId == localId).firstOrNull;
+    if (o == null) return;
+    setState(() => o.failed = false);
+    unawaited(_drain());
+  }
+
+  void _discard(int localId) =>
+      setState(() => _outgoing.removeWhere((x) => x.localId == localId));
 
   Future<void> _loadEarlier() async {
     try {
       await ref.read(conversationThreadProvider(_apiId).notifier).loadEarlier();
     } on ApiException catch (e) {
-      if (mounted) {
+      if (mounted && !_disposed) {
         showSnack(context, localizedError(AppLocalizations.of(context), e));
       }
+    } finally {
+      if (_alive) setState(() {});
     }
   }
 
   void _send() {
     final text = _text.text.trim();
-    if (text.isEmpty || _sending) return;
+    if (text.isEmpty) return;
     if (!ref.read(demoModeProvider)) {
-      unawaited(_sendApi(text));
+      // The input clears at once; the message shows as "Sending…" until the
+      // server confirms it, so typing the next one never races the send.
+      setState(() {
+        _outgoing.add(_Outgoing(_nextLocalId++, text, DateTime.now()));
+        _text.clear();
+      });
+      unawaited(_drain());
       return;
     }
     final n = ref.read(conversationsProvider.notifier);
@@ -544,6 +649,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (c == null) {
       return Scaffold(body: EmptyNotice(text: l10n.noRecords));
     }
+    // Server messages (by id), then what I typed that is still on its way.
+    final shown = [
+      ...c.messages,
+      for (final o in _outgoing)
+        ChatMessage(
+          key: 'local-${o.localId}',
+          author: l10n.you,
+          text: o.text,
+          at: o.at,
+          mine: true,
+          sendState: o.failed ? ChatSendState.failed : ChatSendState.sending,
+        ),
+    ];
+    final loadingEarlier =
+        thread != null &&
+        ref.read(conversationThreadProvider(_apiId).notifier).loadingEarlier;
     final rtl = Directionality.of(context) == TextDirection.rtl;
     void pending() => showSnack(context, l10n.callsPending);
     return Scaffold(
@@ -602,20 +723,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         _HeaderIcon(
                           'chat_info',
                           l10n.conversationInfo,
-                          () => showRecordDetails(
-                            context,
-                            title: c.name,
-                            status: c.type == ConversationType.group
-                                ? l10n.groupChat
-                                : l10n.privateChat,
-                            tone: BadgeTone.info,
-                            fields: [
-                              DetailField(
-                                l10n.participants,
-                                c.members.join(', '),
-                              ),
-                            ],
-                          ),
+                          () => thread != null
+                              ? showApiConversationInfo(
+                                  context,
+                                  id: _apiId,
+                                  name: c.name,
+                                  isGroup: c.type == ConversationType.group,
+                                  members: c.members,
+                                )
+                              : showRecordDetails(
+                                  context,
+                                  title: c.name,
+                                  status: c.type == ConversationType.group
+                                      ? l10n.groupChat
+                                      : l10n.privateChat,
+                                  tone: BadgeTone.info,
+                                  fields: [
+                                    DetailField(
+                                      l10n.participants,
+                                      c.members.join(', '),
+                                    ),
+                                  ],
+                                ),
                         ),
                       ],
                     ),
@@ -636,17 +765,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               reverse: true,
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
               children: [
-                for (final m in c.messages.reversed) ...[
-                  _Bubble(message: m),
+                for (final m in shown.reversed) ...[
+                  _Bubble(
+                    key: m.key == null ? null : ValueKey('message-${m.key}'),
+                    message: m,
+                    onRetry: m.key?.startsWith('local-') ?? false
+                        ? () => _retry(int.parse(m.key!.substring(6)))
+                        : null,
+                    onDiscard: m.key?.startsWith('local-') ?? false
+                        ? () => _discard(int.parse(m.key!.substring(6)))
+                        : null,
+                  ),
                   const SizedBox(height: 20),
                 ],
                 Text(
                   DateFormat(
                     'EEEE, MMMM d, y',
                     Localizations.localeOf(context).toLanguageTag(),
-                  ).format(
-                    c.messages.isEmpty ? DateTime.now() : c.messages.first.at,
-                  ),
+                  ).format(shown.isEmpty ? DateTime.now() : shown.first.at),
                   textAlign: TextAlign.center,
                   style: AppTextStyles.mobileXsRegular.copyWith(
                     color: AppColors.textSecondary,
@@ -674,15 +810,36 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                 if (earlier)
                   Center(
-                    child: TextButton(
-                      key: const Key('chat-load-earlier'),
-                      onPressed: () => unawaited(_loadEarlier()),
-                      child: Text(l10n.loadEarlierMessages),
-                    ),
+                    child: loadingEarlier
+                        ? const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: SizedBox.square(
+                              key: Key('chat-loading-earlier'),
+                              dimension: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : TextButton(
+                            key: const Key('chat-load-earlier'),
+                            onPressed: () => unawaited(_loadEarlier()),
+                            child: Text(l10n.loadEarlierMessages),
+                          ),
                   ),
               ],
             ),
           ),
+          if (_offline)
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 20, 8),
+              child: Text(
+                l10n.chatReconnecting,
+                key: const Key('chat-offline'),
+                textAlign: TextAlign.center,
+                style: AppTextStyles.mobileXsRegular.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
           Container(
             decoration: BoxDecoration(
               color: AppColors.white,
@@ -769,7 +926,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           child: InkWell(
                             key: const Key('chat-send'),
                             borderRadius: BorderRadius.circular(12),
-                            onTap: _sending ? null : _send,
+                            onTap: _send,
                             child: SizedBox.square(
                               dimension: 40,
                               child: Center(
@@ -816,8 +973,10 @@ class _HeaderIcon extends StatelessWidget {
 }
 
 class _Bubble extends ConsumerWidget {
-  const new({required this.message});
+  const new({required this.message, this.onRetry, this.onDiscard, super.key});
   final ChatMessage message;
+  final VoidCallback? onRetry;
+  final VoidCallback? onDiscard;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -874,12 +1033,44 @@ class _Bubble extends ConsumerWidget {
             ),
             if (m.mine) ...[
               const SizedBox(height: 10),
-              Text(
-                '${l10n.delivered} ✓',
-                style: AppTextStyles.mobileXsRegular.copyWith(
-                  color: AppColors.primary,
+              switch (m.sendState) {
+                ChatSendState.sent => Text(
+                  '${l10n.delivered} ✓',
+                  style: AppTextStyles.mobileXsRegular.copyWith(
+                    color: AppColors.primary,
+                  ),
                 ),
-              ),
+                ChatSendState.sending => Text(
+                  l10n.messageSending,
+                  key: const Key('chat-message-sending'),
+                  style: AppTextStyles.mobileXsRegular.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                ChatSendState.failed => Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 4,
+                  children: [
+                    Text(
+                      l10n.messageNotSent,
+                      key: const Key('chat-message-failed'),
+                      style: AppTextStyles.mobileXsRegular.copyWith(
+                        color: ModuleColors.dangerFg,
+                      ),
+                    ),
+                    TextButton(
+                      key: const Key('chat-message-retry'),
+                      onPressed: onRetry,
+                      child: Text(l10n.retry),
+                    ),
+                    TextButton(
+                      key: const Key('chat-message-discard'),
+                      onPressed: onDiscard,
+                      child: Text(l10n.discard),
+                    ),
+                  ],
+                ),
+              },
             ],
           ],
         ),
