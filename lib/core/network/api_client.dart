@@ -35,11 +35,31 @@ class ApiClient {
 
   final Dio _dio;
 
-  Future<Response<Object?>> get(String path, {Json? query}) =>
-      _send(() => _dio.get<Object?>(path, queryParameters: query));
+  /// [headers] are added to this request only. A request that carries its
+  /// own `Authorization` keeps it: the session token is not swapped in.
+  Future<Response<Object?>> get(
+    String path, {
+    Json? query,
+    Map<String, String>? headers,
+  }) => _send(
+    () => _dio.get<Object?>(
+      path,
+      queryParameters: query,
+      options: headers == null ? null : Options(headers: headers),
+    ),
+  );
 
-  Future<Response<Object?>> post(String path, {Object? body}) =>
-      _send(() => _dio.post<Object?>(path, data: body));
+  Future<Response<Object?>> post(
+    String path, {
+    Object? body,
+    Map<String, String>? headers,
+  }) => _send(
+    () => _dio.post<Object?>(
+      path,
+      data: body,
+      options: headers == null ? null : Options(headers: headers),
+    ),
+  );
 
   Future<Response<Object?>> put(String path, {Object? body}) =>
       _send(() => _dio.put<Object?>(path, data: body));
@@ -67,7 +87,8 @@ class ApiClient {
 /// (collection §4: "Sent on every role-folder request; never on 01 Auth").
 const _tenantPrefixes = ['/api/v1/client/', '/api/v1/employee/'];
 
-/// Public auth routes: no bearer token, no tenant header.
+/// Public auth routes: no bearer token, no tenant header. Of the `01 Auth`
+/// folder only `logout` and `account/setup/resend` are authenticated.
 const _publicPaths = {
   '/api/v1/login',
   '/api/v1/register',
@@ -79,7 +100,6 @@ const _publicPaths = {
   '/api/v1/reset-password-form',
   '/api/v1/reset-password',
   '/api/v1/account/setup',
-  '/api/v1/account/setup/resend',
 };
 
 class _AuthInterceptor extends Interceptor {
@@ -92,7 +112,9 @@ class _AuthInterceptor extends Interceptor {
     final path = options.uri.path;
     if (!_publicPaths.contains(path)) {
       final token = _credentials.token;
-      if (token != null) options.headers['Authorization'] = 'Bearer $token';
+      if (token != null && !options.headers.containsKey('Authorization')) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
       final companyId = _credentials.companyId;
       if (companyId != null && _tenantPrefixes.any(path.startsWith)) {
         options.headers['X-Company'] = companyId.toString();

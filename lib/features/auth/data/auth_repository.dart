@@ -70,13 +70,45 @@ class ApiAuthRepository implements AuthRepository {
         message: 'Login response is missing data.user.id.',
       );
     }
-    return Session(
+    final session = Session(
       token: token,
       tokenType: data['token_type'] as String? ?? 'Bearer',
       userId: userId,
       companyId: _asInt(user['company_id']),
       portal: portal,
     );
+    await _confirmPortal(session);
+    return session;
+  }
+
+  /// The login response names no role, so the chosen portal is checked
+  /// with that portal's profile route (read-only, `account.view`), which
+  /// its `role:` gate refuses with 403 for any other role. No `X-Company`
+  /// is sent: the tenant falls back to the account's own company.
+  ///
+  /// If the check fails for any reason the new token is revoked
+  /// (best effort) so no usable token is left behind, and nothing is
+  /// stored; a 403 becomes [PortalMismatch].
+  Future<void> _confirmPortal(Session session) async {
+    final auth = {'Authorization': 'Bearer ${session.token}'};
+    try {
+      ApiEnvelope.unwrapData(
+        await _client.get(
+          '/api/v1/${session.portal.name}/account',
+          headers: auth,
+        ),
+      );
+    } on ApiException catch (e) {
+      try {
+        await _client.post('/api/v1/logout', headers: auth);
+      } on ApiException {
+        // Revocation is best effort; the token is never stored either way.
+      }
+      if (e.kind == ApiFailureKind.forbidden) {
+        throw PortalMismatch(session.portal);
+      }
+      rethrow;
+    }
   }
 
   @override

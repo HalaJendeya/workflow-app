@@ -54,6 +54,30 @@ void main() {
       expect(http.last.headers.containsKey('X-Company'), isFalse);
     });
 
+    test(
+      'account setup resend is authenticated (bearer, no X-Company)',
+      () async {
+        // `01 Auth` documents it as Bearer-authenticated, unlike the public
+        // `account/setup`.
+        http.reply(200, ok(null));
+        await client.post('/api/v1/account/setup/resend', body: {'user_id': 1});
+        expect(http.last.headers['Authorization'], 'Bearer tkn');
+        expect(http.last.headers.containsKey('X-Company'), isFalse);
+        http.reply(200, ok(null));
+        await client.post('/api/v1/account/setup', body: {});
+        expect(http.last.headers.containsKey('Authorization'), isFalse);
+      },
+    );
+
+    test('a request-specific Authorization header is kept', () async {
+      http.reply(200, ok({}));
+      await client.get(
+        '/api/v1/client/account',
+        headers: {'Authorization': 'Bearer fresh'},
+      );
+      expect(http.last.headers['Authorization'], 'Bearer fresh');
+    });
+
     test('X-Company omitted when no company is known', () async {
       creds.companyId = null;
       http.reply(200, ok({}));

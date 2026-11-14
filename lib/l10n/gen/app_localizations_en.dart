@@ -1900,4 +1900,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fieldRate => 'Rate';
+
+  @override
+  String get wrongPortalClient =>
+      'This account isn\'t a client account. Go back and choose Employee.';
+
+  @override
+  String get wrongPortalEmployee =>
+      'This account isn\'t an employee account. Go back and choose Client.';
 }

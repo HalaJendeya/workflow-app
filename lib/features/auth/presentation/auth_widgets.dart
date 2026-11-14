@@ -3,6 +3,7 @@ import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
+import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 /// Layout shared by the mobile auth frames ("Mobile / Light / *", 390 wide):
@@ -172,6 +173,12 @@ class AuthValidators {
 void showAuthError(BuildContext context, Object error) {
   final l10n = AppLocalizations.of(context);
   var text = localizedError(l10n, error);
+  if (error is PortalMismatch) {
+    text = switch (error.chosen) {
+      Portal.client => l10n.wrongPortalClient,
+      Portal.employee => l10n.wrongPortalEmployee,
+    };
+  }
   if (error is ApiException &&
       (error.kind == ApiFailureKind.forbidden ||
           (error.kind == ApiFailureKind.validation &&

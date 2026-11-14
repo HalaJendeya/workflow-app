@@ -567,5 +567,7 @@
   "underReview": "قيد المراجعة",
   "fieldDate": "التاريخ",
   "fieldHours": "الساعات",
-  "fieldRate": "السعر"
+  "fieldRate": "السعر",
+  "wrongPortalClient": "هذا الحساب ليس حساب عميل. ارجع واختر موظف.",
+  "wrongPortalEmployee": "هذا الحساب ليس حساب موظف. ارجع واختر عميل."
 }

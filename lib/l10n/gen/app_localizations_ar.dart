@@ -1895,4 +1895,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get fieldRate => 'السعر';
+
+  @override
+  String get wrongPortalClient => 'هذا الحساب ليس حساب عميل. ارجع واختر موظف.';
+
+  @override
+  String get wrongPortalEmployee =>
+      'هذا الحساب ليس حساب موظف. ارجع واختر عميل.';
 }

@@ -1014,5 +1014,7 @@
   "underReview": "Under Review",
   "fieldDate": "Date",
   "fieldHours": "Hours",
-  "fieldRate": "Rate"
+  "fieldRate": "Rate",
+  "wrongPortalClient": "This account isn't a client account. Go back and choose Employee.",
+  "wrongPortalEmployee": "This account isn't an employee account. Go back and choose Client."
 }

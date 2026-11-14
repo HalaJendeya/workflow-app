@@ -32,22 +32,26 @@ void main() {
 
   group('login (POST /api/v1/login)', () {
     test('sends email/password and builds a session', () async {
-      http.reply(
-        200,
-        ok({
-          'token': '1|abc',
-          'token_type': 'Bearer',
-          'user': {'id': 7, 'company_id': 25},
-        }),
-      );
+      http
+        ..reply(
+          200,
+          ok({
+            'token': '1|abc',
+            'token_type': 'Bearer',
+            'user': {'id': 7, 'company_id': 25},
+          }),
+        )
+        ..reply(200, ok({'id': 7, 'email': 'a@b.co'}));
       final s = await repo.login(
         email: 'a@b.co',
         password: 'secret',
         portal: Portal.employee,
       );
-      expect(http.last.method, 'POST');
-      expect(http.last.path, '/api/v1/login');
-      expect(http.lastJsonBody, {'email': 'a@b.co', 'password': 'secret'});
+      final login = http.requests.first;
+      expect(login.method, 'POST');
+      expect(login.path, '/api/v1/login');
+      expect(login.data, {'email': 'a@b.co', 'password': 'secret'});
+      expect(login.headers.containsKey('Authorization'), isFalse);
       expect(s.token, '1|abc');
       expect(s.userId, 7);
       expect(s.companyId, 25);
@@ -55,20 +59,100 @@ void main() {
     });
 
     test('accepts a client without a company', () async {
-      http.reply(
-        200,
-        ok({
-          'token': 't',
-          'token_type': 'Bearer',
-          'user': {'id': 3, 'company_id': null},
-        }),
-      );
+      http
+        ..reply(
+          200,
+          ok({
+            'token': 't',
+            'token_type': 'Bearer',
+            'user': {'id': 3, 'company_id': null},
+          }),
+        )
+        ..reply(200, ok({'id': 3, 'email': 'a@b.co'}));
       final s = await repo.login(
         email: 'a@b.co',
         password: 'x',
         portal: Portal.client,
       );
       expect(s.companyId, isNull);
+    });
+
+    group('confirms the chosen portal (role:client / role:employee)', () {
+      Map<String, dynamic> session() => ok({
+        'token': '1|abc',
+        'token_type': 'Bearer',
+        'user': {'id': 7, 'company_id': 25},
+      });
+
+      test(
+        'reads the portal profile with the new token, no X-Company',
+        () async {
+          http
+            ..reply(200, session())
+            ..reply(200, ok({'id': 7, 'email': 'a@b.co'}));
+          await repo.login(
+            email: 'a@b.co',
+            password: 'x',
+            portal: Portal.client,
+          );
+          expect(http.requests, hasLength(2));
+          final probe = http.last;
+          expect(probe.method, 'GET');
+          expect(probe.path, '/api/v1/client/account');
+          expect(probe.headers['Authorization'], 'Bearer 1|abc');
+          expect(probe.headers.containsKey('X-Company'), isFalse);
+        },
+      );
+
+      test('403 is a portal mismatch and the token is revoked', () async {
+        http
+          ..reply(200, session())
+          ..reply(403, failure('User does not have the right roles.'))
+          ..reply(200, ok(null));
+        await expectLater(
+          repo.login(email: 'a@b.co', password: 'x', portal: Portal.client),
+          throwsA(
+            isA<PortalMismatch>().having(
+              (e) => e.chosen,
+              'chosen',
+              Portal.client,
+            ),
+          ),
+        );
+        final revoke = http.last;
+        expect(revoke.method, 'POST');
+        expect(revoke.path, '/api/v1/logout');
+        expect(revoke.headers['Authorization'], 'Bearer 1|abc');
+      });
+
+      test('a failed revoke still reports the mismatch', () async {
+        http
+          ..reply(200, session())
+          ..reply(403, failure('Forbidden'))
+          ..reply(500, failure('Server Error'));
+        await expectLater(
+          repo.login(email: 'a@b.co', password: 'x', portal: Portal.employee),
+          throwsA(isA<PortalMismatch>()),
+        );
+      });
+
+      test('any other failure is reported as is, after revoking', () async {
+        http
+          ..reply(200, session())
+          ..reply(500, failure('Server Error'))
+          ..reply(200, ok(null));
+        await expectLater(
+          repo.login(email: 'a@b.co', password: 'x', portal: Portal.employee),
+          throwsA(
+            isA<ApiException>().having(
+              (e) => e.kind,
+              'kind',
+              ApiFailureKind.server,
+            ),
+          ),
+        );
+        expect(http.last.path, '/api/v1/logout');
+      });
     });
 
     test('403 (unverified / deactivated) surfaces as forbidden', () async {

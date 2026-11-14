@@ -3505,6 +3505,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rate'**
   String get fieldRate;
+
+  /// No description provided for @wrongPortalClient.
+  ///
+  /// In en, this message translates to:
+  /// **'This account isn\'t a client account. Go back and choose Employee.'**
+  String get wrongPortalClient;
+
+  /// No description provided for @wrongPortalEmployee.
+  ///
+  /// In en, this message translates to:
+  /// **'This account isn\'t an employee account. Go back and choose Client.'**
+  String get wrongPortalEmployee;
 }
 
 class _AppLocalizationsDelegate

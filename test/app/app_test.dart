@@ -256,6 +256,45 @@ void main() {
       expect(find.text('Welcome back, Taher'), findsNothing);
     });
 
+    testWidgets('a portal mismatch explains the account type and stays', (
+      tester,
+    ) async {
+      when(
+        () => auth.login(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+          portal: any(named: 'portal'),
+        ),
+      ).thenThrow(const PortalMismatch(Portal.employee));
+      await pumpApp(tester);
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const Key('login-email')),
+          matching: find.byType(TextFormField),
+        ),
+        'client@b.co',
+      );
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const Key('login-password')),
+          matching: find.byType(TextFormField),
+        ),
+        'secret',
+      );
+      await tester.tap(find.byKey(const Key('login-submit')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          "This account isn't an employee account. Go back and choose Client.",
+        ),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('login-submit')), findsOneWidget);
+      expect(find.text('Welcome back, Taher'), findsNothing);
+    });
+
     testWidgets('successful client login opens the Overview', (tester) async {
       when(
         () => auth.login(
@@ -355,6 +394,24 @@ void main() {
       await tester.tap(find.text('New Task Assigned'));
       await tester.pumpAndSettle();
       verify(() => notifications.markRead('n1')).called(1);
+    });
+
+    testWidgets('a session the server ends (401) says so on sign-in', (
+      tester,
+    ) async {
+      await signedIn(tester);
+      expect(find.text('Welcome back, Taher'), findsOneWidget);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(WorkFlowApp)),
+      );
+      container.read(sessionCredentialsProvider).onUnauthorized();
+      await tester.pumpAndSettle();
+      expect(find.text('Account Type'), findsOneWidget);
+      expect(find.byKey(const Key('session-expired')), findsOneWidget);
+      expect(
+        find.text('Your session has ended. Please sign in again.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('bottom navigation switches tabs and logs out', (tester) async {

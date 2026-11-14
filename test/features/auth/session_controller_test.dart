@@ -69,6 +69,50 @@ void main() {
     expect((await storage.readAll())['portal'], 'employee');
   });
 
+  test('a 401 ends an open session and reports the expiry once', () async {
+    await storage.writeAll(_session.toStorage());
+    final c = makeContainer();
+    await c.read(sessionControllerProvider.future);
+    expect(c.read(sessionExpiryProvider), 0);
+
+    c.read(sessionCredentialsProvider).onUnauthorized();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(c.read(sessionControllerProvider).value, isNull);
+    expect(c.read(sessionCredentialsProvider).token, isNull);
+    expect(await storage.readAll(), isEmpty);
+    expect(c.read(sessionExpiryProvider), 1);
+  });
+
+  test('a 401 while signed out is not reported as an expiry', () async {
+    final c = makeContainer();
+    await c.read(sessionControllerProvider.future);
+    c.read(sessionCredentialsProvider).onUnauthorized();
+    await Future<void>.delayed(Duration.zero);
+    expect(c.read(sessionExpiryProvider), 0);
+  });
+
+  test('a portal mismatch stores nothing and opens no session', () async {
+    when(
+      () => auth.login(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+        portal: any(named: 'portal'),
+      ),
+    ).thenThrow(const PortalMismatch(Portal.client));
+    final c = makeContainer();
+    await c.read(sessionControllerProvider.future);
+    await expectLater(
+      c
+          .read(sessionControllerProvider.notifier)
+          .login(email: 'a@b.co', password: 'x', portal: Portal.client),
+      throwsA(isA<PortalMismatch>()),
+    );
+    expect(c.read(sessionControllerProvider).value, isNull);
+    expect(c.read(sessionCredentialsProvider).token, isNull);
+    expect(await storage.readAll(), isEmpty);
+  });
+
   test('restores a stored session on start', () async {
     await storage.writeAll(_session.toStorage());
     final c = makeContainer();

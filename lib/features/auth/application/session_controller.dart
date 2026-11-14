@@ -52,7 +52,13 @@ class SessionController extends AsyncNotifier<Session?> {
     await _clear();
   }
 
-  void _expire() => unawaited(_clear());
+  /// The server refused the token (401). Sanctum tokens have no refresh
+  /// route, so the session ends; if one was open the user is told why
+  /// ([sessionExpiryProvider]) instead of silently landing on sign-in.
+  void _expire() {
+    if (state.value != null) ref.read(sessionExpiryProvider.notifier).bump();
+    unawaited(_clear());
+  }
 
   Future<void> _clear() async {
     ref.read(sessionCredentialsProvider).session = null;
@@ -63,3 +69,16 @@ class SessionController extends AsyncNotifier<Session?> {
 
 final sessionControllerProvider =
     AsyncNotifierProvider<SessionController, Session?>(SessionController.new);
+
+/// Counts sessions ended by the server (401), so the app can say so once
+/// per expiry.
+final sessionExpiryProvider = NotifierProvider<SessionExpiry, int>(
+  SessionExpiry.new,
+);
+
+class SessionExpiry extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void bump() => state++;
+}

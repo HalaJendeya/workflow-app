@@ -5,22 +5,46 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/app/router.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
-class WorkFlowApp extends ConsumerWidget {
+class WorkFlowApp extends ConsumerStatefulWidget {
   const new({this.locale, super.key});
 
   /// Forces a locale (tests, previews); null follows the device.
   final Locale? locale;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WorkFlowApp> createState() => _WorkFlowAppState();
+}
+
+class _WorkFlowAppState extends ConsumerState<WorkFlowApp> {
+  final _messenger = GlobalKey<ScaffoldMessengerState>();
+
+  @override
+  Widget build(BuildContext context) {
     final isMock = ref.watch(appConfigProvider).isMock;
+    // A session the server ended (401) says so on the sign-in screens.
+    ref.listen(sessionExpiryProvider, (_, _) {
+      final messenger = _messenger.currentState;
+      if (messenger == null) return;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            key: const Key('session-expired'),
+            content: Text(
+              AppLocalizations.of(messenger.context).errorSessionExpired,
+            ),
+          ),
+        );
+    });
     return MaterialApp.router(
+      scaffoldMessengerKey: _messenger,
       debugShowCheckedModeBanner: !isMock,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       theme: AppTheme.light(),
-      locale: locale,
+      locale: widget.locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizations.delegate,

@@ -2,10 +2,24 @@
 ///
 /// The login response contract (`POST /api/v1/login`) documents only
 /// `data.token`, `data.token_type`, `data.user.id` and
-/// `data.user.company_id` — no role field. The portal is therefore chosen by
-/// the user at sign-in and enforced by the server, which answers 403 on
-/// role-prefixed routes the account cannot use. See the backend gap report.
+/// `data.user.company_id` — no role field. The user picks the portal at
+/// sign-in and the app confirms it before opening a session: each portal's
+/// prefix is gated by `role:client` / `role:employee`, so
+/// `GET /api/v1/{portal}/account` answers 403 for any other role. See
+/// docs/api-contract-gaps.md.
 enum Portal { client, employee }
+
+/// Sign-in succeeded but the account does not hold the role of the portal
+/// chosen on the Account Type screen ([chosen]). The new token has been
+/// revoked; nothing is stored.
+class PortalMismatch implements Exception {
+  const new(this.chosen);
+
+  final Portal chosen;
+
+  @override
+  String toString() => 'PortalMismatch(${chosen.name})';
+}
 
 class Session {
   const new({
