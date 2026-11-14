@@ -459,7 +459,9 @@ void main() {
         // Retry with the server back: data replaces the error.
         server!.state = _State.populated;
         final retry = find.byKey(const Key('api-retry'));
-        while (retry.evaluate().isNotEmpty) {
+        // Bounded: a Retry that never clears its error must fail the test,
+        // not hang it.
+        for (var i = 0; i < 5 && retry.evaluate().isNotEmpty; i++) {
           await _reveal(tester, retry.first);
           await tester.tap(retry.first);
           await tester.pumpAndSettle();
