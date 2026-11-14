@@ -113,16 +113,22 @@ void main() {
     expect(find.byKey(const Key('task-t3')), findsNothing);
   });
 
-  testWidgets('Timesheets: status chip filters records', (tester) async {
+  testWidgets('Timesheets: the status filter narrows the records', (
+    tester,
+  ) async {
     await pumpEmployee(tester);
     await openFromMore(tester, 'Timesheets');
     expect(find.text('Timesheets Dashboard'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Rejected (2)'),
-      200,
-      scrollable: page(),
+    final filter = find.byKey(const Key('timesheet-status-filter'));
+    await tester.scrollUntilVisible(filter, 200, scrollable: page());
+    await tester.tap(filter);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('option-sheet')),
+        matching: find.text('Rejected'),
+      ),
     );
-    await tester.tap(find.text('Rejected (2)'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('timesheet-ts2')),

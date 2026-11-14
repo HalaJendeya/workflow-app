@@ -247,52 +247,34 @@ void main() {
           );
         });
 
-        testWidgets('details sheet, delete dialog and status sheet', (
+        testWidgets('timesheet details sheet and view-only actions', (
           tester,
         ) async {
           await _pumpMock(tester, Portal.employee, size, scale);
           await _openCategory(tester, 'Timesheets');
+          final card = find.byKey(const Key('timesheet-ts0'));
           final view = find.descendant(
-            of: find.byKey(const Key('timesheet-ts0')),
+            of: card,
             matching: find.byKey(const Key('action-view')),
           );
           await _reveal(tester, view);
+          // Employees may not approve, reject or delete timesheets (403 in
+          // the collection), so a card offers View only.
+          for (final action in ['action-edit', 'action-delete']) {
+            expect(
+              find.descendant(of: card, matching: find.byKey(Key(action))),
+              findsNothing,
+            );
+          }
           await tester.tap(view);
           await tester.pumpAndSettle();
           await screenshot(tester, 'timesheet_details_$tag');
           // Every detail row can be scrolled to and the sheet closes.
           await tester.ensureVisible(find.text('Amount').last);
           await tester.pumpAndSettle();
-          await tester.tapAt(const Offset(10, 10));
+          await tester.binding.handlePopRoute();
           await tester.pumpAndSettle();
-
-          final edit = find.descendant(
-            of: find.byKey(const Key('timesheet-ts0')),
-            matching: find.byKey(const Key('action-edit')),
-          );
-          await _reveal(tester, edit);
-          await tester.tap(edit);
-          await tester.pumpAndSettle();
-          await screenshot(tester, 'timesheet_status_$tag');
-          expect(find.text('Rejected').last.hitTestable(), findsOneWidget);
-          await tester.tap(find.text('Rejected').last);
-          await tester.pumpAndSettle();
-
-          final delete = find.descendant(
-            of: find.byKey(const Key('timesheet-ts0')),
-            matching: find.byKey(const Key('action-delete')),
-          );
-          await _reveal(tester, delete);
-          await tester.tap(delete);
-          await tester.pumpAndSettle();
-          await screenshot(tester, 'delete_dialog_$tag');
-          expect(
-            find.byKey(const Key('confirm-delete')).hitTestable(),
-            findsOneWidget,
-          );
-          await tester.tap(find.text('Cancel').last);
-          await tester.pumpAndSettle();
-          expect(find.byKey(const Key('confirm-delete')), findsNothing);
+          expect(find.byType(BottomSheet), findsNothing);
         });
       });
     }

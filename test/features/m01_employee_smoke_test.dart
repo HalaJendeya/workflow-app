@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:workflow_app/app/app.dart';
 import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/core/config/app_config.dart';
@@ -509,6 +510,8 @@ void main() {
       await tester.drag(find.byType(Scrollable).first, const Offset(0, 20000));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, 'billing');
+      // API searches are debounced (400 ms).
+      await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
       final last = server!.requests.lastWhere(
         (r) => r.uri.path == '/api/v1/employee/tasks',
@@ -563,5 +566,159 @@ void main() {
     await tester.tap(find.text('More').last);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('category-Dashboard')), findsOneWidget);
+  });
+
+  group('pre-M03 Tasks and Timesheets alignment', () {
+    Future<void> tab(WidgetTester tester, String name) =>
+        _tap(tester, find.byKey(Key('task-tab-$name')));
+
+    testWidgets('demo Tasks: status chips count, filter and reset paging', (
+      tester,
+    ) async {
+      await _pump(tester, const Size(320, 640), scale: 1.3);
+      await _open(tester, 'Tasks');
+      // Six demo tasks: three in progress, one completed, none in review
+      // (demo tasks have no review state).
+      for (final label in [
+        'All Tasks 6',
+        'In Progress 3',
+        'Under Review 0',
+        'Completed 1',
+      ]) {
+        expect(find.text(label), findsOneWidget);
+      }
+      // Page 2 of all tasks, then a filter: back to page 1 of the result.
+      await _tap(tester, find.widgetWithText(ChoiceChip, '2'));
+      expect(find.byKey(const Key('task-t5')), findsOneWidget);
+      await tab(tester, 'inProgress');
+      expect(find.textContaining('Showing 1–3 of 3'), findsOneWidget);
+      for (final id in ['t1', 't2', 't3']) {
+        await _reveal(tester, find.byKey(Key('task-$id')));
+      }
+      expect(find.byKey(const Key('task-t5')), findsNothing);
+      await tab(tester, 'inReview');
+      expect(find.text('No records match these filters'), findsOneWidget);
+      await tab(tester, 'completed');
+      await _reveal(tester, find.byKey(const Key('task-t5')));
+      expect(find.byKey(const Key('task-t1')), findsNothing);
+      // Search combines with the status filter.
+      await tab(tester, 'all');
+      final search = find.byKey(const Key('tasks-search'));
+      await _reveal(tester, search);
+      await tester.enterText(search, 'Redis');
+      await tester.pumpAndSettle();
+      await tab(tester, 'inProgress');
+      await _reveal(tester, find.byKey(const Key('task-t3')));
+      expect(find.byKey(const Key('task-t1')), findsNothing);
+    });
+
+    testWidgets('API Tasks: server counts and documented status filter', (
+      tester,
+    ) async {
+      final server = await _pump(
+        tester,
+        const Size(390, 844),
+        mode: AppMode.api,
+      );
+      await _open(tester, 'Tasks');
+      // Counts come from `stats` of GET /employee/tasks.
+      for (final label in [
+        'All Tasks 13',
+        'In Progress 13',
+        'Under Review 0',
+        'Completed 0',
+      ]) {
+        expect(find.text(label), findsOneWidget);
+      }
+      RequestOptions lastRows() => server!.requests.lastWhere(
+        (r) =>
+            r.uri.path == '/api/v1/employee/tasks' &&
+            r.queryParameters['per_page'] == 10,
+      );
+      expect(lastRows().queryParameters.containsKey('status'), isFalse);
+      await _tap(tester, find.widgetWithText(ChoiceChip, '2'));
+      expect(lastRows().queryParameters['page'], 2);
+      await tab(tester, 'inReview');
+      expect(lastRows().queryParameters['status'], 'in_review');
+      expect(lastRows().queryParameters['page'], 1);
+      await tab(tester, 'completed');
+      expect(lastRows().queryParameters['status'], 'completed');
+      await tab(tester, 'all');
+      expect(lastRows().queryParameters.containsKey('status'), isFalse);
+    });
+
+    testWidgets('API Tasks: typing a search sends one request, not one per '
+        'keystroke', (tester) async {
+      final server = await _pump(
+        tester,
+        const Size(390, 844),
+        mode: AppMode.api,
+      );
+      await _open(tester, 'Tasks');
+      int searches() => server!.requests
+          .where((r) => r.queryParameters.containsKey('search'))
+          .length;
+      final field = find.byKey(const Key('tasks-search'));
+      await _reveal(tester, field);
+      for (final text in ['b', 'bi', 'bil', 'bill']) {
+        await tester.enterText(field, text);
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(searches(), 0);
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+      expect(searches(), 1);
+      expect(
+        server!.requests
+            .lastWhere((r) => r.queryParameters.containsKey('search'))
+            .queryParameters['search'],
+        'bill',
+      );
+    });
+
+    testWidgets('demo Timesheets: Figma card, view only, month filter', (
+      tester,
+    ) async {
+      await _pump(tester, const Size(390, 844));
+      await _open(tester, 'Timesheets');
+      final card = find.byKey(const Key('timesheet-ts0'));
+      await _reveal(tester, card);
+      for (final label in ['Task', 'Date', 'Hours', 'Rate']) {
+        expect(
+          find.descendant(of: card, matching: find.text(label)),
+          findsOneWidget,
+        );
+      }
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.text('P04-T04 Implement search filters'),
+        ),
+        findsOneWidget,
+      );
+      // The employee role may not approve, reject or delete (403).
+      for (final key in ['action-edit', 'action-delete']) {
+        expect(find.byKey(Key(key)), findsNothing);
+      }
+      expect(find.text('Approve'), findsNothing);
+      expect(find.text('Reject'), findsNothing);
+
+      // Month: only that month's timesheets remain.
+      final now = DateTime.now();
+      final month = DateFormat('MMM yyyy', 'en').format(now);
+      await _tap(tester, find.byKey(const Key('timesheet-month-filter')));
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const Key('option-sheet')),
+          matching: find.text(month),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await _reveal(tester, card);
+      // ts5 started five days ago: in another month early in a month.
+      if (now.day <= 5) {
+        expect(find.byKey(const Key('timesheet-ts5')), findsNothing);
+      }
+    });
   });
 }

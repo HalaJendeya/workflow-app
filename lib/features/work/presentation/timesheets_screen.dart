@@ -37,6 +37,7 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
   static const _pageSize = 5;
   String _query = '';
   TimesheetStatus? _status;
+  DateTime? _month;
   int _page = 0;
 
   @override
@@ -47,6 +48,10 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
     final q = _query.trim().toLowerCase();
     final filtered = all.where((e) {
       if (_status != null && e.status != _status) return false;
+      if (_month case final m?
+          when e.start.year != m.year || e.start.month != m.month) {
+        return false;
+      }
       return q.isEmpty ||
           '${e.task} ${e.project} ${e.employee}'.toLowerCase().contains(q);
     }).toList();
@@ -60,7 +65,10 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
     final salaries = all
         .where((e) => e.status == TimesheetStatus.approved)
         .fold<double>(0, (s, e) => s + e.amount);
-    final dt = DateFormat('yyyy/MM/dd - HH:mm', 'en');
+    final months = {
+      for (final e in all) DateTime(e.start.year, e.start.month),
+    }.toList()..sort((a, b) => b.compareTo(a));
+    final monthLabel = DateFormat('MMM yyyy', 'en').format;
     // API mode: `stats` and per-currency `totals` of GET /employee/timesheets.
     final api = demo ? null : ref.watch(employeeTimesheetSummaryProvider);
     final sum = api?.value;
@@ -138,92 +146,35 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
               _page = 0;
             }),
           ),
+          // Figma 729:38117: "All Status" and "Month".
           ChipRow(
             children: [
-              FilterChipBox(
-                label: '${l10n.filterAll} (${all.length})',
-                selected: _status == null,
-                onTap: () => setState(() {
-                  _status = null;
+              DropdownChip<TimesheetStatus?>(
+                key: const Key('timesheet-status-filter'),
+                value: _status,
+                options: const [null, ...TimesheetStatus.values],
+                labelOf: (s) => s == null
+                    ? l10n.filterAllStatus
+                    : timesheetStatusLabel(l10n, s),
+                onChanged: (s) => setState(() {
+                  _status = s;
                   _page = 0;
                 }),
               ),
-              for (final s in TimesheetStatus.values)
-                FilterChipBox(
-                  label: '${timesheetStatusLabel(l10n, s)} (${n(s)})',
-                  selected: _status == s,
-                  onTap: () => setState(() {
-                    _status = s;
-                    _page = 0;
-                  }),
-                ),
+              DropdownChip<DateTime?>(
+                key: const Key('timesheet-month-filter'),
+                value: _month,
+                options: [null, ...months],
+                labelOf: (m) => m == null ? l10n.periodMonth : monthLabel(m),
+                onChanged: (m) => setState(() {
+                  _month = m;
+                  _page = 0;
+                }),
+              ),
             ],
           ),
           if (visible.isEmpty) EmptyNotice(text: l10n.noRecords),
-          for (final e in visible)
-            StackedRecordCard(
-              key: Key('timesheet-${e.id}'),
-              title: e.task,
-              subtitle: e.project,
-              badge: StatusBadge(
-                label: timesheetStatusLabel(l10n, e.status),
-                tone: timesheetTone(e.status),
-              ),
-              amount: money(e.amount),
-              rows: [
-                (l10n.fieldProject, e.project),
-                (l10n.fieldEmployee, e.employee),
-                (l10n.startDate, dt.format(e.start)),
-                (l10n.endDate, dt.format(e.end)),
-                (l10n.duration, durationLabel(e.duration)),
-              ],
-              actions: TintedActions(
-                onView: () => showRecordDetails(
-                  context,
-                  title: e.task,
-                  status: timesheetStatusLabel(l10n, e.status),
-                  tone: timesheetTone(e.status),
-                  fields: [
-                    DetailField(l10n.fieldProject, e.project),
-                    DetailField(l10n.fieldEmployee, e.employee),
-                    DetailField(l10n.startDate, dt.format(e.start)),
-                    DetailField(l10n.endDate, dt.format(e.end)),
-                    DetailField(l10n.duration, durationLabel(e.duration)),
-                    DetailField(l10n.fieldAmount, money(e.amount)),
-                  ],
-                ),
-                onEdit: () async {
-                  final s = await showOptionSheet<TimesheetStatus>(
-                    context,
-                    options: TimesheetStatus.values,
-                    labelOf: (st) => timesheetStatusLabel(l10n, st),
-                    selected: e.status,
-                  );
-                  if (s != null) {
-                    final applied = ref
-                        .read(timesheetsProvider.notifier)
-                        .replace(e.withStatus(s));
-                    if (context.mounted) {
-                      showLocalOutcome(context, applied: applied);
-                    }
-                  }
-                },
-                onDelete: () async {
-                  if (await confirmDelete(context, e.task)) {
-                    final removed = ref
-                        .read(timesheetsProvider.notifier)
-                        .remove(e.id);
-                    if (context.mounted) {
-                      showLocalOutcome(
-                        context,
-                        applied: removed,
-                        deleted: true,
-                      );
-                    }
-                  }
-                },
-              ),
-            ),
+          for (final e in visible) TimesheetCard(entry: e),
           Pager(
             page: page,
             pageSize: _pageSize,
@@ -232,6 +183,114 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Figma timesheet "Record card" (729:38123): who and where in a bordered
+/// identity block, the status, the amount, then Task, Date, Hours and Rate.
+///
+/// View only: the employee role may not approve, reject or delete
+/// timesheets (the collection lists those routes as 403 for employees),
+/// so the Figma Approve/Reject actions and the old Edit/Delete are not
+/// offered.
+class TimesheetCard extends StatelessWidget {
+  const new({required this.entry, super.key});
+
+  final TimesheetEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final e = entry;
+    final date = DateFormat('yyyy-MM-dd', 'en');
+    final time = DateFormat('HH:mm', 'en');
+    final label = AppTextStyles.mobileBaseRegular.copyWith(
+      color: AppColors.textPrimary,
+    );
+    return ModuleCard(
+      key: Key('timesheet-${e.id}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadii.button),
+              border: Border.all(color: ModuleColors.chipBorder),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  e.employee,
+                  style: AppTextStyles.mobileLgSemiBold.copyWith(
+                    color: AppColors.neutral900,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  e.project,
+                  style: AppTextStyles.mobileXsRegular.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: StatusBadge(
+              label: timesheetStatusLabel(l10n, e.status),
+              tone: timesheetTone(e.status),
+              dot: true,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            money(e.amount),
+            style: AppTextStyles.mobile2xlSemiBold.copyWith(
+              color: AppColors.neutral900,
+            ),
+          ),
+          const SizedBox(height: 14),
+          for (final (k, v) in [
+            (l10n.taskCode, e.task),
+            (l10n.fieldDate, date.format(e.start)),
+            (l10n.fieldHours, durationLabel(e.duration)),
+            (l10n.fieldRate, money(e.rate)),
+          ]) ...[
+            Text(k, style: label),
+            Text(v, style: label),
+            const SizedBox(height: 8),
+          ],
+          const SizedBox(height: 6),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TintedActions(
+              onView: () => showRecordDetails(
+                context,
+                title: e.employee,
+                status: timesheetStatusLabel(l10n, e.status),
+                tone: timesheetTone(e.status),
+                fields: [
+                  DetailField(l10n.taskCode, e.task),
+                  DetailField(l10n.fieldProject, e.project),
+                  DetailField(l10n.fieldDate, date.format(e.start)),
+                  DetailField(
+                    l10n.duration,
+                    '${time.format(e.start)} – ${time.format(e.end)}',
+                  ),
+                  DetailField(l10n.fieldHours, durationLabel(e.duration)),
+                  DetailField(l10n.fieldRate, money(e.rate)),
+                  DetailField(l10n.fieldAmount, money(e.amount)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

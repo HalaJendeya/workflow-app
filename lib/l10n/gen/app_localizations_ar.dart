@@ -1883,4 +1883,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noMeetingsYet => 'لا توجد اجتماعات بعد.';
+
+  @override
+  String get underReview => 'قيد المراجعة';
+
+  @override
+  String get fieldDate => 'التاريخ';
+
+  @override
+  String get fieldHours => 'الساعات';
+
+  @override
+  String get fieldRate => 'السعر';
 }

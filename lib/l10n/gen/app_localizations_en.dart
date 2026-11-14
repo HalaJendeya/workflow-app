@@ -1888,4 +1888,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noMeetingsYet => 'No meetings yet.';
+
+  @override
+  String get underReview => 'Under Review';
+
+  @override
+  String get fieldDate => 'Date';
+
+  @override
+  String get fieldHours => 'Hours';
+
+  @override
+  String get fieldRate => 'Rate';
 }

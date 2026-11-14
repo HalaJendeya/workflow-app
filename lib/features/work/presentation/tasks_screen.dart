@@ -66,6 +66,34 @@ void showTaskDetails(BuildContext context, WorkTask t) {
   );
 }
 
+/// Status chips of Figma "Tasks Management" (node 729:24295).
+enum TaskStatusTab { all, inProgress, inReview, completed }
+
+/// The documented `status` list filter for [tab] (`null`: no filter).
+ApiTaskStatus? apiStatusOf(TaskStatusTab tab) => switch (tab) {
+  TaskStatusTab.all => null,
+  TaskStatusTab.inProgress => ApiTaskStatus.inProgress,
+  TaskStatusTab.inReview => ApiTaskStatus.inReview,
+  TaskStatusTab.completed => ApiTaskStatus.completed,
+};
+
+/// Whether a demo task belongs under [tab]. Demo tasks have no review
+/// state, so "Under Review" matches none of them rather than borrowing
+/// another status.
+bool demoTaskInTab(WorkTask t, TaskStatusTab tab) => switch (tab) {
+  TaskStatusTab.all => true,
+  TaskStatusTab.inProgress => t.status == TaskStatus.inProgress,
+  TaskStatusTab.inReview => false,
+  TaskStatusTab.completed => t.status == TaskStatus.completed,
+};
+
+String taskTabLabel(AppLocalizations l10n, TaskStatusTab tab) => switch (tab) {
+  TaskStatusTab.all => l10n.allTasks,
+  TaskStatusTab.inProgress => l10n.statusInProgress,
+  TaskStatusTab.inReview => l10n.underReview,
+  TaskStatusTab.completed => l10n.statusCompleted,
+};
+
 /// Figma "Tasks Management" (729:24059).
 class TasksScreen extends ConsumerStatefulWidget {
   const new({super.key});
@@ -77,6 +105,32 @@ class TasksScreen extends ConsumerStatefulWidget {
 class _TasksScreenState extends ConsumerState<TasksScreen> {
   static const _pageSize = 4;
   String _query = '';
+  TaskStatusTab _tab = TaskStatusTab.all;
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  /// A new search starts on page 1. In API mode each search is a request,
+  /// so typing is debounced instead of sending one per keystroke.
+  void _onSearch(String v) {
+    void apply() => setState(() {
+      _query = v;
+      _page = 0;
+    });
+    _debounce?.cancel();
+    if (ref.read(demoModeProvider)) {
+      apply();
+    } else {
+      _debounce = Timer(const Duration(milliseconds: 400), () {
+        if (mounted) apply();
+      });
+    }
+  }
+
   String? _project;
   String? _assignee;
   TaskPriority? _priority;
@@ -89,6 +143,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     final all = ref.watch(workTasksProvider);
     final q = _query.trim().toLowerCase();
     final filtered = all.where((t) {
+      if (!demoTaskInTab(t, _tab)) return false;
       if (_project != null && t.project != _project) return false;
       if (_assignee != null && t.assignee != _assignee) return false;
       if (_priority != null && t.priority != _priority) return false;
@@ -109,16 +164,24 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     // role gets no cost/currency, so budget utilisation has no source.
     final api = demo ? null : ref.watch(employeeTaskStatsProvider);
     final stats = api?.value;
+    String tabCount(TaskStatusTab tab) {
+      if (demo) return '${all.where((t) => demoTaskInTab(t, tab)).length}';
+      if (stats == null) return '—';
+      final n = switch (tab) {
+        TaskStatusTab.all => stats.total,
+        TaskStatusTab.inProgress => stats.byStatus['in_progress'],
+        TaskStatusTab.inReview => stats.byStatus['in_review'],
+        TaskStatusTab.completed => stats.byStatus['completed'],
+      };
+      return '${n ?? '—'}';
+    }
 
     return ModulePage(
       title: l10n.tasksManagement,
       description: l10n.tasksManagementBody,
       // A new search starts on page 1: in API mode a kept page number past
       // the result's last page showed an empty list with no pager.
-      onSearch: (v) => setState(() {
-        _query = v;
-        _page = 0;
-      }),
+      onSearch: _onSearch,
       onCreate: () => openTaskForm(context),
       createLabel: l10n.addTask,
       children: [
@@ -152,13 +215,29 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               : (stats.loggedMinutes / 60).toStringAsFixed(1),
           caption: l10n.hoursThisPeriod,
         ),
+        ChipRow(
+          children: [
+            for (final tab in TaskStatusTab.values)
+              FilterChipBox(
+                key: Key('task-tab-${tab.name}'),
+                label: '${taskTabLabel(l10n, tab)} ${tabCount(tab)}',
+                selected: _tab == tab,
+                onTap: () => setState(() {
+                  _tab = tab;
+                  _page = 0;
+                }),
+              ),
+          ],
+        ),
         if (!demo)
           _ApiTaskRows(
-            query: (search: _query, priority: _priority, page: _page + 1),
-            onSearch: (v) => setState(() {
-              _query = v;
-              _page = 0;
-            }),
+            query: (
+              search: _query,
+              status: apiStatusOf(_tab),
+              priority: _priority,
+              page: _page + 1,
+            ),
+            onSearch: _onSearch,
             onPriority: (p) => setState(() {
               _priority = p;
               _page = 0;
@@ -169,10 +248,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           WfSearchBox(
             fieldKey: const Key('tasks-search'),
             hint: l10n.searchTasksHint,
-            onChanged: (v) => setState(() {
-              _query = v;
-              _page = 0;
-            }),
+            onChanged: _onSearch,
           ),
           ChipRow(
             children: [

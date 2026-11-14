@@ -1010,5 +1010,9 @@
   "tipVoice": "Voice message",
   "tipSend": "Send message",
   "noConversationsYet": "No conversations yet.",
-  "noMeetingsYet": "No meetings yet."
+  "noMeetingsYet": "No meetings yet.",
+  "underReview": "Under Review",
+  "fieldDate": "Date",
+  "fieldHours": "Hours",
+  "fieldRate": "Rate"
 }

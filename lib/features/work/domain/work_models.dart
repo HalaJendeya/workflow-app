@@ -246,12 +246,12 @@ final timesheetsProvider =
             TimesheetEntry(
               id: 'ts$i',
               task: const [
-                'Wanda Quinn',
-                'Maisy Duran',
-                'Kai Johnson',
-                'Penny Arvalo',
-                'Rhett Holland',
-                'Lourdes Duncan',
+                'P04-T04 Implement search filters',
+                'P02-T09 Integrate payment webhooks',
+                'P01-T12 Configure Redis cache invalidation',
+                'P03-T02 Design onboarding screens',
+                'P05-T07 Write REST endpoint tests',
+                'P02-T15 Fix invoice PDF layout',
               ][i],
               project: workProjects[1 + i % 4],
               employee: workPeople[i % workPeople.length],

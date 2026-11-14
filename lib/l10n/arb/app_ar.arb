@@ -563,5 +563,9 @@
   "tipVoice": "رسالة صوتية",
   "tipSend": "إرسال الرسالة",
   "noConversationsYet": "لا توجد محادثات بعد.",
-  "noMeetingsYet": "لا توجد اجتماعات بعد."
+  "noMeetingsYet": "لا توجد اجتماعات بعد.",
+  "underReview": "قيد المراجعة",
+  "fieldDate": "التاريخ",
+  "fieldHours": "الساعات",
+  "fieldRate": "السعر"
 }

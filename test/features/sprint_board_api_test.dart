@@ -252,15 +252,18 @@ void main() {
       );
       final p = await repo().tasks((
         search: ' login ',
+        status: ApiTaskStatus.inReview,
         priority: TaskPriority.high,
         page: 2,
       ));
       expect(http.last.path, '/api/v1/employee/tasks');
+      // `status` takes the collection's list filter values.
       expect(http.last.queryParameters, {
         'month': 'all',
         'page': 2,
         'per_page': 10,
         'search': 'login',
+        'status': 'in_review',
         'priority': 'high',
       });
       expect(p.items.single.title, 'Task 3');

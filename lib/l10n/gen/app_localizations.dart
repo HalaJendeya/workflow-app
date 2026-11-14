@@ -3481,6 +3481,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No meetings yet.'**
   String get noMeetingsYet;
+
+  /// No description provided for @underReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Under Review'**
+  String get underReview;
+
+  /// No description provided for @fieldDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get fieldDate;
+
+  /// No description provided for @fieldHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours'**
+  String get fieldHours;
+
+  /// No description provided for @fieldRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate'**
+  String get fieldRate;
 }
 
 class _AppLocalizationsDelegate

@@ -383,6 +383,7 @@ class StatusBadge extends StatelessWidget {
     required this.tone,
     this.radius = 100,
     this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    this.dot = false,
     super.key,
   });
 
@@ -390,6 +391,9 @@ class StatusBadge extends StatelessWidget {
   final BadgeTone tone;
   final double radius;
   final EdgeInsetsGeometry padding;
+
+  /// Leading 5 px status dot (Figma "Indicator").
+  final bool dot;
 
   @override
   Widget build(BuildContext context) {
@@ -406,10 +410,26 @@ class StatusBadge extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(radius),
       ),
-      child: Text(
-        label,
-        style: AppTextStyles.mobileXsSemiBold.copyWith(color: fg),
-      ),
+      child: dot
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 5,
+                  height: 5,
+                  decoration: BoxDecoration(color: fg, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  label,
+                  style: AppTextStyles.mobileXsSemiBold.copyWith(color: fg),
+                ),
+              ],
+            )
+          : Text(
+              label,
+              style: AppTextStyles.mobileXsSemiBold.copyWith(color: fg),
+            ),
     );
   }
 }

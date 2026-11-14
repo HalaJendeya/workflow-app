@@ -303,7 +303,25 @@ class SprintPlanning {
   final int? backlogPoints;
 }
 
-typedef TaskQuery = ({String search, TaskPriority? priority, int page});
+typedef TaskQuery = ({
+  String search,
+  ApiTaskStatus? status,
+  TaskPriority? priority,
+  int page,
+});
+
+/// `status` filter of `GET /employee/tasks`. The collection documents
+/// backlog, todo, pending, in_progress, in_review and completed (anything
+/// else answers 422); [ApiTaskStatus.other] has no filter value.
+String? taskListStatusParam(ApiTaskStatus s) => switch (s) {
+  ApiTaskStatus.backlog => 'backlog',
+  ApiTaskStatus.todo => 'todo',
+  ApiTaskStatus.pending => 'pending',
+  ApiTaskStatus.inProgress => 'in_progress',
+  ApiTaskStatus.inReview => 'in_review',
+  ApiTaskStatus.completed => 'completed',
+  ApiTaskStatus.other => null,
+};
 
 /// Employee sprint board and backlog. The only write is moving a task
 /// between kanban columns (`kanban.manage_status`); creating sprints has
@@ -346,6 +364,7 @@ class BoardRepository {
           'page': q.page,
           'per_page': 10,
           if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
+          if (q.status case final s?) 'status': ?taskListStatusParam(s),
           if (q.priority case final p?) 'priority': p.name,
         },
       ),
