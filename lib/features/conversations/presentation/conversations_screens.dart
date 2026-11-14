@@ -15,6 +15,7 @@ import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/conversations/data/conversations_repository.dart';
 import 'package:workflow_app/features/conversations/presentation/api_conversation_actions.dart';
 import 'package:workflow_app/features/conversations/presentation/api_new_conversation_screen.dart';
+import 'package:workflow_app/features/conversations/presentation/chat_attachment_widgets.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/profile/data/profile_repository.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -33,6 +34,8 @@ class ChatMessage {
     this.mine = false,
     this.key,
     this.sendState = ChatSendState.sent,
+    this.attachmentIds = const [],
+    this.uploadProgress,
   });
 
   final String author;
@@ -43,6 +46,13 @@ class ChatMessage {
   /// Stable identity in the list: `server-<id>` or `local-<n>`.
   final String? key;
   final ChatSendState sendState;
+
+  /// Server attachment ids (`null` for a row without one); for my queued
+  /// message, one `null` per file.
+  final List<int?> attachmentIds;
+
+  /// 0–1 while my message's files upload.
+  final double? uploadProgress;
 }
 
 /// Presentation model for conversation cards and the chat screen.
@@ -105,9 +115,8 @@ Conversation conversationFromApi(ApiConversation c, int? me, String you) =>
           ChatMessage(
             key: 'server-${m.id}',
             author: m.senderId == me ? you : m.senderName,
-            text: m.text.isEmpty && m.attachments > 0
-                ? '📎 ×${m.attachments}'
-                : m.text,
+            text: m.text,
+            attachmentIds: [for (final a in m.attachments) a.id],
             at: m.createdAt,
             mine: m.senderId == me,
           ),
@@ -387,8 +396,8 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                   c.last == null
                       ? ''
                       : c.type == ConversationType.group
-                      ? '${c.last!.author}: ${c.last!.text}'
-                      : c.last!.text,
+                      ? '${c.last!.author}: ${_preview(c.last!)}'
+                      : _preview(c.last!),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.mobileBaseRegular.copyWith(
@@ -403,6 +412,11 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
   }
 }
 
+/// A message as one line: its text, or a paperclip and the file count.
+String _preview(ChatMessage m) => m.text.isEmpty && m.attachmentIds.isNotEmpty
+    ? '📎 ×${m.attachmentIds.length}'
+    : m.text;
+
 /// Figma chat detail (643:37061).
 class ChatScreen extends ConsumerStatefulWidget {
   const new({required this.id, super.key});
@@ -415,12 +429,16 @@ class ChatScreen extends ConsumerStatefulWidget {
 
 /// A message typed in this chat that the server has not confirmed yet.
 class _Outgoing {
-  new(this.localId, this.text, this.at);
+  new(this.localId, this.text, this.at, [this.files = const []]);
 
   final int localId;
   final String text;
   final DateTime at;
+
+  /// Checked against the route's rules before it was queued.
+  final List<OutgoingFile> files;
   bool failed = false;
+  double? progress;
 }
 
 class _ChatScreenState extends ConsumerState<ChatScreen>
@@ -540,7 +558,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     final repo = ref.read(conversationsRepositoryProvider);
     final thread = ref.read(conversationThreadProvider(_apiId).notifier);
     try {
-      final sent = await repo.send(_apiId, o.text);
+      final sent = await repo.send(
+        _apiId,
+        o.text,
+        files: o.files,
+        onProgress: o.files.isEmpty
+            ? null
+            : (p) {
+                if (_alive) setState(() => o.progress = p);
+              },
+      );
       if (!_alive) return false;
       if (sent != null) thread.addSent(sent);
       setState(() => _outgoing.remove(o));
@@ -549,7 +576,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       return true;
     } on ApiException catch (e) {
       if (!mounted || _disposed) return false;
-      setState(() => o.failed = true);
+      setState(() {
+        o
+          ..failed = true
+          ..progress = null;
+      });
       showSnack(context, localizedError(AppLocalizations.of(context), e));
       return false;
     }
@@ -564,6 +595,62 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   void _discard(int localId) =>
       setState(() => _outgoing.removeWhere((x) => x.localId == localId));
+
+  /// Files from the platform picker (none without one), checked against
+  /// the route's limits before anything is queued or uploaded. The typed
+  /// text goes with them.
+  Future<void> _attach({required bool images}) async {
+    final l10n = AppLocalizations.of(context);
+    final pick = ref.read(attachmentPickerProvider);
+    if (pick == null) {
+      showSnack(context, l10n.attachmentsPending);
+      return;
+    }
+    final files = await pick(context, images: images);
+    if (!mounted || _disposed || files == null || files.isEmpty) return;
+    if (checkAttachments(files) case final problem?) {
+      showSnack(context, attachmentProblemText(l10n, problem));
+      return;
+    }
+    final text = _text.text.trim();
+    setState(() {
+      _outgoing.add(_Outgoing(_nextLocalId++, text, DateTime.now(), files));
+      _text.clear();
+    });
+    unawaited(_drain());
+  }
+
+  /// Attachments whose bytes are on the way: a second tap waits for them.
+  final _opening = <int>{};
+
+  Future<void> _openAttachment(int? attachmentId) async {
+    final l10n = AppLocalizations.of(context);
+    if (attachmentId == null) {
+      showSnack(context, l10n.attachmentUnavailable);
+      return;
+    }
+    if (!_opening.add(attachmentId)) return;
+    setState(() {});
+    try {
+      final file = await ref
+          .read(conversationsRepositoryProvider)
+          .downloadAttachment(
+            _apiId,
+            attachmentId,
+            companyId: ref.read(sessionControllerProvider).value?.companyId,
+          );
+      // The chip is ready again before the preview opens.
+      _opening.remove(attachmentId);
+      if (!mounted || _disposed) return;
+      setState(() {});
+      await showAttachmentPreview(context, file);
+    } on ApiException catch (e) {
+      _opening.remove(attachmentId);
+      if (!mounted || _disposed) return;
+      setState(() {});
+      showSnack(context, localizedError(l10n, e));
+    }
+  }
 
   Future<void> _loadEarlier() async {
     try {
@@ -660,6 +747,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           at: o.at,
           mine: true,
           sendState: o.failed ? ChatSendState.failed : ChatSendState.sending,
+          attachmentIds: [for (final _ in o.files) null],
+          uploadProgress: o.progress,
         ),
     ];
     final loadingEarlier =
@@ -769,6 +858,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   _Bubble(
                     key: m.key == null ? null : ValueKey('message-${m.key}'),
                     message: m,
+                    opening: _opening,
+                    onOpenAttachment: m.key?.startsWith('server-') ?? false
+                        ? _openAttachment
+                        : null,
                     onRetry: m.key?.startsWith('local-') ?? false
                         ? () => _retry(int.parse(m.key!.substring(6)))
                         : null,
@@ -909,7 +1002,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                           child: InkResponse(
                             key: Key(key),
                             radius: 20,
-                            onTap: () => showSnack(context, why),
+                            onTap:
+                                thread != null &&
+                                    (key == 'chat-attach' ||
+                                        key == 'chat-image')
+                                ? () => unawaited(
+                                    _attach(images: key == 'chat-image'),
+                                  )
+                                : () => showSnack(context, why),
                             child: SizedBox.square(
                               dimension: 40,
                               child: Center(child: WfSvg(icon, size: 20)),
@@ -973,10 +1073,19 @@ class _HeaderIcon extends StatelessWidget {
 }
 
 class _Bubble extends ConsumerWidget {
-  const new({required this.message, this.onRetry, this.onDiscard, super.key});
+  const new({
+    required this.message,
+    this.onRetry,
+    this.onDiscard,
+    this.onOpenAttachment,
+    this.opening = const {},
+    super.key,
+  });
   final ChatMessage message;
   final VoidCallback? onRetry;
   final VoidCallback? onDiscard;
+  final void Function(int? attachmentId)? onOpenAttachment;
+  final Set<int> opening;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1025,12 +1134,45 @@ class _Bubble extends ConsumerWidget {
               ),
             ),
             SizedBox(height: m.mine ? 10 : 16),
-            Text(
-              m.text,
-              style: AppTextStyles.mobileBaseRegular.copyWith(
-                color: AppColors.textPrimary,
+            if (m.text.isNotEmpty)
+              Text(
+                m.text,
+                style: AppTextStyles.mobileBaseRegular.copyWith(
+                  color: AppColors.textPrimary,
+                ),
               ),
-            ),
+            if (m.attachmentIds.isNotEmpty) ...[
+              if (m.text.isNotEmpty) const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (var i = 0; i < m.attachmentIds.length; i++)
+                    AttachmentChip(
+                      key: Key(
+                        m.attachmentIds[i] == null
+                            ? 'attachment-${m.key}-$i'
+                            : 'attachment-${m.attachmentIds[i]}',
+                      ),
+                      label: m.attachmentIds.length == 1
+                          ? l10n.attachment
+                          : '${l10n.attachment} ${i + 1}',
+                      busy: opening.contains(m.attachmentIds[i]),
+                      onOpen: onOpenAttachment == null
+                          ? null
+                          : () => onOpenAttachment!(m.attachmentIds[i]),
+                    ),
+                ],
+              ),
+            ],
+            if (m.uploadProgress case final p?
+                when m.sendState == ChatSendState.sending) ...[
+              const SizedBox(height: 10),
+              LinearProgressIndicator(
+                key: const Key('chat-upload-progress'),
+                value: p,
+              ),
+            ],
             if (m.mine) ...[
               const SizedBox(height: 10),
               switch (m.sendState) {

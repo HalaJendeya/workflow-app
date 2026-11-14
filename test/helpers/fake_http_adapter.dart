@@ -27,6 +27,8 @@ class FakeHttpAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     requests.add(options);
+    // Reading the body is what makes Dio report upload progress.
+    await requestStream?.drain<void>();
     if (_queue.isEmpty) {
       throw StateError('No reply queued for ${options.method} ${options.uri}');
     }
@@ -35,6 +37,16 @@ class FakeHttpAdapter implements HttpClientAdapter {
       throw DioException(requestOptions: options, type: next);
     }
     final reply = next as _Reply;
+    // A file route: raw bytes with the reply's own headers.
+    if (reply.body case final Uint8List bytes) {
+      return ResponseBody.fromBytes(
+        bytes,
+        reply.status,
+        headers: {
+          for (final e in reply.headers.entries) e.key: [e.value],
+        },
+      );
+    }
     return ResponseBody.fromString(
       jsonEncode(reply.body),
       reply.status,

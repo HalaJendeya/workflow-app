@@ -3703,6 +3703,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use 255 characters or fewer.'**
   String get validationMax255;
+
+  /// No description provided for @attachment.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachment'**
+  String get attachment;
+
+  /// No description provided for @attachmentTooMany.
+  ///
+  /// In en, this message translates to:
+  /// **'You can attach up to 5 files to a message.'**
+  String get attachmentTooMany;
+
+  /// No description provided for @attachmentEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is empty.'**
+  String get attachmentEmpty;
+
+  /// No description provided for @attachmentTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Each file must be 10 MB or smaller.'**
+  String get attachmentTooLarge;
+
+  /// No description provided for @attachmentTypeNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Only JPEG, PNG, GIF, WebP, PDF and plain-text files can be sent.'**
+  String get attachmentTypeNotAllowed;
+
+  /// No description provided for @attachmentNoPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'This file type can\'t be opened in the app yet.'**
+  String get attachmentNoPreview;
+
+  /// No description provided for @attachmentUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This attachment can\'t be opened.'**
+  String get attachmentUnavailable;
+
+  /// No description provided for @attachmentsSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file} other{{count} files}}'**
+  String attachmentsSelected(int count);
 }
 
 class _AppLocalizationsDelegate

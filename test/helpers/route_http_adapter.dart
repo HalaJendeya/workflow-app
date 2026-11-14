@@ -25,11 +25,21 @@ class RouteHttpAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     requests.add(options);
+    await requestStream?.drain<void>();
     final key = '${options.method} ${options.uri.path}';
     final (status, body) =
         handlers[key]?.call(options) ??
         routes[key] ??
         (404, {'success': false, 'message': 'Not found', 'errors': <Object>[]});
+    if (body case RawReply(:final bytes, :final headers)) {
+      return ResponseBody.fromBytes(
+        bytes,
+        status,
+        headers: {
+          for (final e in headers.entries) e.key: [e.value],
+        },
+      );
+    }
     return ResponseBody.fromString(
       jsonEncode(body),
       status,
@@ -41,4 +51,12 @@ class RouteHttpAdapter implements HttpClientAdapter {
 
   @override
   void close({bool force = false}) {}
+}
+
+/// A file reply: the bytes as they are, with these headers.
+class RawReply {
+  const new(this.bytes, [this.headers = const {}]);
+
+  final Uint8List bytes;
+  final Map<String, String> headers;
 }

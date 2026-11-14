@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/network/api_response.dart';
@@ -49,17 +51,56 @@ class ApiClient {
     ),
   );
 
+  /// [onSendProgress] reports bytes sent of the request body (uploads).
   Future<Response<Object?>> post(
     String path, {
     Object? body,
     Map<String, String>? headers,
+    void Function(int sent, int total)? onSendProgress,
   }) => _send(
     () => _dio.post<Object?>(
       path,
       data: body,
       options: headers == null ? null : Options(headers: headers),
+      onSendProgress: onSendProgress,
     ),
   );
+
+  /// A file route: the body is the file's bytes, not JSON. A refusal still
+  /// answers the JSON error envelope, which becomes an [ApiException] as
+  /// for any other route.
+  Future<Response<List<int>>> download(
+    String path, {
+    Map<String, String>? headers,
+    void Function(int received, int total)? onReceiveProgress,
+  }) async {
+    try {
+      return await _dio.get<List<int>>(
+        path,
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {'Accept': '*/*', ...?headers},
+        ),
+        onReceiveProgress: onReceiveProgress,
+      );
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      if (e.type == DioExceptionType.badResponse && data is List<int>) {
+        Object? body;
+        try {
+          body = jsonDecode(utf8.decode(data));
+        } on FormatException {
+          body = null;
+        }
+        throw ApiEnvelope.fromBody(
+          e.response!.statusCode,
+          body is Map<String, dynamic> ? body : const {},
+          retryAfterHeader: e.response!.headers.value('retry-after'),
+        );
+      }
+      throw ApiEnvelope.fromDio(e);
+    }
+  }
 
   Future<Response<Object?>> put(String path, {Object? body}) =>
       _send(() => _dio.put<Object?>(path, data: body));

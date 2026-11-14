@@ -2009,4 +2009,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get validationMax255 => 'Use 255 characters or fewer.';
+
+  @override
+  String get attachment => 'Attachment';
+
+  @override
+  String get attachmentTooMany => 'You can attach up to 5 files to a message.';
+
+  @override
+  String get attachmentEmpty => 'This file is empty.';
+
+  @override
+  String get attachmentTooLarge => 'Each file must be 10 MB or smaller.';
+
+  @override
+  String get attachmentTypeNotAllowed =>
+      'Only JPEG, PNG, GIF, WebP, PDF and plain-text files can be sent.';
+
+  @override
+  String get attachmentNoPreview =>
+      'This file type can\'t be opened in the app yet.';
+
+  @override
+  String get attachmentUnavailable => 'This attachment can\'t be opened.';
+
+  @override
+  String attachmentsSelected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$_temp0';
+  }
 }

@@ -1047,5 +1047,20 @@
   "conversationDeletedForMe": "Conversation deleted for you.",
   "joinRequestCheckHint": "The app can't check the request on its own. Once the host admits you, try joining again.",
   "tryJoiningAgain": "Try joining again",
-  "validationMax255": "Use 255 characters or fewer."
+  "validationMax255": "Use 255 characters or fewer.",
+  "attachment": "Attachment",
+  "attachmentTooMany": "You can attach up to 5 files to a message.",
+  "attachmentEmpty": "This file is empty.",
+  "attachmentTooLarge": "Each file must be 10 MB or smaller.",
+  "attachmentTypeNotAllowed": "Only JPEG, PNG, GIF, WebP, PDF and plain-text files can be sent.",
+  "attachmentNoPreview": "This file type can't be opened in the app yet.",
+  "attachmentUnavailable": "This attachment can't be opened.",
+  "attachmentsSelected": "{count, plural, =1{1 file} other{{count} files}}",
+  "@attachmentsSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

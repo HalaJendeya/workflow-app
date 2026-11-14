@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
@@ -8,6 +10,9 @@ import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/network/api_response.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
+import 'package:workflow_app/features/conversations/data/chat_attachments.dart';
+
+export 'package:workflow_app/features/conversations/data/chat_attachments.dart';
 
 /// One chat message (`last_message` / `messages[]` rows).
 class ApiMessage {
@@ -31,7 +36,11 @@ class ApiMessage {
       createdAt:
           asDate(j['created_at'])?.toLocal() ??
           missingField('message.created_at'),
-      attachments: attachments is List ? attachments.length : 0,
+      attachments: [
+        if (attachments is List)
+          for (final a in attachments)
+            ApiAttachment(id: a is Json ? asInt(a['id']) : null),
+      ],
     );
   }
 
@@ -40,7 +49,7 @@ class ApiMessage {
   final String senderName;
   final String text;
   final DateTime createdAt;
-  final int attachments;
+  final List<ApiAttachment> attachments;
 }
 
 /// A conversation as listed by `GET /{portal}/conversations` or opened by
@@ -132,18 +141,46 @@ class ConversationsRepository {
     return ApiConversation.fromJson(c);
   }
 
-  /// `POST …/{id}/messages`, multipart: `message` (≤ 5000 chars), `type`.
-  /// Files would go under `files[]` (BE-28); the app sends text only.
+  /// `POST …/{id}/messages`, multipart: `message` (≤ 5000 chars), `type`
+  /// (`text`/`image`/`file`) and up to 5 `files[]` (BE-28: no other key).
+  /// [files] must pass [checkAttachments] first; [onProgress] reports the
+  /// upload as a fraction.
   ///
   /// The collection asserts `data.message.id` and
   /// `data.message.conversation_id` only. When `data.message` also carries
   /// the fields of a message row it is returned so the chat can show it at
   /// once; otherwise `null`, and the next poll brings it.
-  Future<ApiMessage?> send(int id, String text) async {
+  Future<ApiMessage?> send(
+    int id,
+    String text, {
+    List<OutgoingFile> files = const [],
+    void Function(double progress)? onProgress,
+  }) async {
+    final form = FormData.fromMap({
+      if (text.isNotEmpty) 'message': text,
+      'type': messageTypeFor(files),
+    });
+    for (final f in files) {
+      form.files.add(
+        MapEntry(
+          'files[]',
+          MultipartFile.fromBytes(
+            f.bytes,
+            filename: f.name,
+            contentType: f.mime == null ? null : DioMediaType.parse(f.mime!),
+          ),
+        ),
+      );
+    }
     final data = ApiEnvelope.unwrapData(
       await _client.post(
         '$_base/$id/messages',
-        body: FormData.fromMap({'message': text, 'type': 'text'}),
+        body: form,
+        onSendProgress: onProgress == null
+            ? null
+            : (sent, total) {
+                if (total > 0) onProgress((sent / total).clamp(0, 1));
+              },
       ),
     );
     final row = data is Json ? data['message'] : null;
@@ -153,6 +190,34 @@ class ConversationsRepository {
     } on ApiException {
       return null;
     }
+  }
+
+  /// `GET /api/v1/conversations/{c}/attachments/{a}` — not role-prefixed;
+  /// conversation membership is the authorization. Streams the file; the
+  /// collection lists `X-Company` for it, which the client sends only on
+  /// role routes, so it is added here. Bytes stay in memory.
+  Future<DownloadedFile> downloadAttachment(
+    int conversationId,
+    int attachmentId, {
+    int? companyId,
+    void Function(double progress)? onProgress,
+  }) async {
+    final response = await _client.download(
+      '/api/v1/conversations/$conversationId/attachments/$attachmentId',
+      headers: {'X-Company': ?companyId?.toString()},
+      onReceiveProgress: onProgress == null
+          ? null
+          : (got, total) {
+              if (total > 0) onProgress((got / total).clamp(0, 1));
+            },
+    );
+    return DownloadedFile(
+      bytes: Uint8List.fromList(response.data ?? const []),
+      contentType: response.headers.value('content-type'),
+      fileName: fileNameFromDisposition(
+        response.headers.value('content-disposition'),
+      ),
+    );
   }
 
   /// `PUT …/{id}` body `{title}` (≤ 255). 200 with `data.id`. Partial

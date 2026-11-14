@@ -600,5 +600,13 @@
   "conversationDeletedForMe": "حُذفت المحادثة لديك.",
   "joinRequestCheckHint": "لا يستطيع التطبيق التحقق من الطلب تلقائيًا. بعد أن يقبلك المضيف، حاول الانضمام مجددًا.",
   "tryJoiningAgain": "حاول الانضمام مجددًا",
-  "validationMax255": "استخدم 255 حرفًا أو أقل."
+  "validationMax255": "استخدم 255 حرفًا أو أقل.",
+  "attachment": "مرفق",
+  "attachmentTooMany": "يمكنك إرفاق 5 ملفات كحد أقصى في الرسالة.",
+  "attachmentEmpty": "هذا الملف فارغ.",
+  "attachmentTooLarge": "يجب ألا يتجاوز حجم كل ملف 10 ميغابايت.",
+  "attachmentTypeNotAllowed": "يمكن إرسال ملفات JPEG وPNG وGIF وWebP وPDF والنصوص فقط.",
+  "attachmentNoPreview": "لا يمكن فتح هذا النوع من الملفات في التطبيق بعد.",
+  "attachmentUnavailable": "لا يمكن فتح هذا المرفق.",
+  "attachmentsSelected": "{count, plural, =1{ملف واحد} other{{count} ملفات}}"
 }

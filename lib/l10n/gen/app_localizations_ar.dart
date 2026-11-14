@@ -2003,4 +2003,38 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get validationMax255 => 'استخدم 255 حرفًا أو أقل.';
+
+  @override
+  String get attachment => 'مرفق';
+
+  @override
+  String get attachmentTooMany => 'يمكنك إرفاق 5 ملفات كحد أقصى في الرسالة.';
+
+  @override
+  String get attachmentEmpty => 'هذا الملف فارغ.';
+
+  @override
+  String get attachmentTooLarge => 'يجب ألا يتجاوز حجم كل ملف 10 ميغابايت.';
+
+  @override
+  String get attachmentTypeNotAllowed =>
+      'يمكن إرسال ملفات JPEG وPNG وGIF وWebP وPDF والنصوص فقط.';
+
+  @override
+  String get attachmentNoPreview =>
+      'لا يمكن فتح هذا النوع من الملفات في التطبيق بعد.';
+
+  @override
+  String get attachmentUnavailable => 'لا يمكن فتح هذا المرفق.';
+
+  @override
+  String attachmentsSelected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ملفات',
+      one: 'ملف واحد',
+    );
+    return '$_temp0';
+  }
 }

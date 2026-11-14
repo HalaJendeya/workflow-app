@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +14,7 @@ import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/data/auth_repository.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/conversations/data/conversations_repository.dart';
+import 'package:workflow_app/features/conversations/presentation/chat_attachment_widgets.dart';
 import 'package:workflow_app/features/meetings/data/meetings_repository.dart';
 import 'package:workflow_app/features/notifications/data/notifications_repository.dart';
 
@@ -338,6 +341,7 @@ void main() {
     Future<void> pump(
       WidgetTester tester, {
       Map<String, (int, Object?)> routes = const {},
+      AttachmentPicker? picker,
     }) async {
       useViewport(tester, const Size(390, 844));
       await loadAppFonts();
@@ -456,6 +460,7 @@ void main() {
             ),
             sessionStorageProvider.overrideWithValue(storage),
             authRepositoryProvider.overrideWithValue(_Auth()),
+            attachmentPickerProvider.overrideWithValue(picker),
             apiClientProvider.overrideWith(
               (ref) => ApiClient(
                 baseUrl: 'https://api.test',
@@ -529,9 +534,7 @@ void main() {
         .where((r) => r.method == 'GET' && r.uri.path == path)
         .length;
     void lifecycle(WidgetTester tester, List<AppLifecycleState> states) {
-      for (final st in states) {
-        tester.binding.handleAppLifecycleStateChanged(st);
-      }
+      states.forEach(tester.binding.handleAppLifecycleStateChanged);
     }
 
     int polls() => http.requests
@@ -738,6 +741,158 @@ void main() {
       expect(find.text("You don't have access to this."), findsOneWidget);
       expect(gets('/api/v1/client/conversations/1'), 1, reason: 'no reload');
       expect(find.byKey(const Key('conversation-rename')), findsOneWidget);
+    });
+
+    final png = Uint8List.fromList([
+      0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 13, //
+    ]);
+
+    testWidgets('attachments: received files open from the chat', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        routes: {
+          'GET /api/v1/conversations/1/attachments/77': (
+            200,
+            RawReply(Uint8List.fromList('Line one'.codeUnits), const {
+              'content-type': 'text/plain; charset=UTF-8',
+              'content-disposition': 'attachment; filename="notes.txt"',
+            }),
+          ),
+          'GET /api/v1/conversations/1/attachments/78': (
+            403,
+            failure('Forbidden'),
+          ),
+        },
+      );
+      newer = [
+        {
+          ..._msg(12, ''),
+          'attachments': [
+            {'id': 77},
+            {'id': 78},
+          ],
+        },
+      ];
+      await openChat(tester);
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('attachment-77')), findsOneWidget);
+      expect(find.byKey(const Key('attachment-78')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('attachment-77')));
+      await tester.pumpAndSettle();
+      final get = http.requests.lastWhere(
+        (r) => r.uri.path == '/api/v1/conversations/1/attachments/77',
+      );
+      expect(get.headers['X-Company'], '3');
+      expect(find.text('notes.txt'), findsOneWidget);
+      expect(find.byKey(const Key('attachment-text')), findsOneWidget);
+      expect(find.text('Line one'), findsOneWidget);
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+
+      // A refused file says why; nothing is shown from it.
+      await tester.tap(find.byKey(const Key('attachment-78')));
+      await tester.pumpAndSettle();
+      expect(find.text("You don't have access to this."), findsOneWidget);
+      expect(find.byType(AlertDialog), findsNothing);
+    });
+
+    testWidgets('attachments: without a picker nothing is read or sent', (
+      tester,
+    ) async {
+      await pump(tester);
+      await openChat(tester);
+      await tester.tap(find.byKey(const Key('chat-attach')));
+      await tester.pump();
+      expect(find.textContaining('needs a file picker'), findsOneWidget);
+      expect(sends(), 0);
+    });
+
+    testWidgets('attachments: a refused type never uploads', (tester) async {
+      await pump(
+        tester,
+        picker: (_, {images = false}) async => [
+          OutgoingFile(
+            name: 'archive.png',
+            bytes: Uint8List.fromList([0x50, 0x4B, 0x03, 0x04, 1, 2]),
+          ),
+        ],
+      );
+      await openChat(tester);
+      await tester.tap(find.byKey(const Key('chat-image')));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Only JPEG, PNG'), findsOneWidget);
+      expect(sends(), 0);
+    });
+
+    testWidgets('attachments: upload fails, Retry sends once, chips show', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        picker: (_, {images = false}) async => [
+          OutgoingFile(name: 'photo.png', bytes: png),
+        ],
+      );
+      send = (_) => (503, failure('Service Unavailable'));
+      await openChat(tester);
+      await tester.enterText(find.byKey(const Key('chat-input')), 'See this');
+      await tester.tap(find.byKey(const Key('chat-attach')));
+      await tester.pumpAndSettle();
+      expect(sends(), 1);
+      final form =
+          http.requests
+                  .lastWhere(
+                    (r) =>
+                        r.method == 'POST' && r.uri.path.endsWith('/messages'),
+                  )
+                  .data
+              as FormData;
+      expect(form.files.single.key, 'files[]');
+      expect(Map.fromEntries(form.fields), {
+        'message': 'See this',
+        'type': 'image',
+      });
+      // Kept with its file, marked, and not shown as uploading any more.
+      expect(find.byKey(const Key('chat-message-failed')), findsOneWidget);
+      expect(find.byKey(const Key('chat-upload-progress')), findsNothing);
+      expect(find.text('See this'), findsOneWidget);
+
+      send = (_) => (
+        200,
+        ok({
+          'message': {
+            ..._msg(13, 'See this', sender: 1),
+            'attachments': [
+              {'id': 90},
+            ],
+          },
+        }),
+      );
+      await tester.tap(find.byKey(const Key('chat-message-retry')));
+      await tester.tap(
+        find.byKey(const Key('chat-message-retry')),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+      expect(sends(), 2, reason: 'a double tap on Retry sends once');
+      expect(find.byKey(const Key('chat-message-failed')), findsNothing);
+      expect(find.byKey(const Key('attachment-90')), findsOneWidget);
+      // The poll that returns the same message adds no second copy.
+      newer = [
+        {
+          ..._msg(13, 'See this', sender: 1),
+          'attachments': [
+            {'id': 90},
+          ],
+        },
+      ];
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('attachment-90')), findsOneWidget);
     });
 
     testWidgets('a failed history load shows Retry inside the chat', (
