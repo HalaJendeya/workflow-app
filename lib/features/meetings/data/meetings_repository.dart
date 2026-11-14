@@ -338,6 +338,50 @@ class MeetingsRepository {
     if (d is! Json) missingField('data');
     return d;
   }
+
+  /// `POST /{role}/meetings/{id}/join` (no body). 200: the caller's
+  /// participant row (`data.id`, `data.connection_status`). 202: in an
+  /// `approval` meeting a caller not on the roster gets `{join_request}`
+  /// and waits for the host (2026-11-04). 403/404/422 are errors.
+  Future<JoinOutcome> join(int meetingId) async {
+    final response = await _client.post('$_base/meetings/$meetingId/join');
+    final data = ApiEnvelope.unwrapObject(response);
+    if (response.statusCode == 202) return const JoinRequested();
+    final status = data['connection_status'];
+    return Joined(
+      participantId: asInt(data['id']) ?? missingField('id'),
+      connectionStatus: status is String
+          ? status
+          : missingField('connection_status'),
+    );
+  }
+
+  /// `POST /{role}/meeting-participants/{id}/leave` (no body).
+  Future<void> leave(int participantId) async {
+    ApiEnvelope.unwrapObject(
+      await _client.post('$_base/meeting-participants/$participantId/leave'),
+    );
+  }
+}
+
+/// What joining a meeting led to.
+sealed class JoinOutcome {
+  const new();
+}
+
+/// On the roster: the caller's participant row.
+class Joined extends JoinOutcome {
+  const new({required this.participantId, required this.connectionStatus});
+
+  final int participantId;
+
+  /// `waiting | connected | disconnected`.
+  final String connectionStatus;
+}
+
+/// 202: a join request the host must admit.
+class JoinRequested extends JoinOutcome {
+  const new();
 }
 
 final meetingsRepositoryProvider = Provider<MeetingsRepository>((ref) {
@@ -348,20 +392,22 @@ final meetingsRepositoryProvider = Provider<MeetingsRepository>((ref) {
 
 final FutureProviderFamily<ApiPage<ApiMeeting>, MeetingQuery>
 apiMeetingsProvider = FutureProvider.autoDispose
-    .family<ApiPage<ApiMeeting>, MeetingQuery>(
-      (ref, q) => ref.watch(meetingsRepositoryProvider).list(q),
-    );
+    .family<ApiPage<ApiMeeting>, MeetingQuery>((ref, q) {
+      _scope(ref);
+      return ref.watch(meetingsRepositoryProvider).list(q);
+    });
 
 /// The first 100 meetings, for the calendar and the day list. The list
 /// route has no date filter, so the calendar can only mark what it loads.
 final FutureProvider<ApiPage<ApiMeeting>> apiMeetingCalendarProvider =
-    FutureProvider.autoDispose(
-      (ref) => ref.watch(meetingsRepositoryProvider).list((
+    FutureProvider.autoDispose((ref) {
+      _scope(ref);
+      return ref.watch(meetingsRepositoryProvider).list((
         search: '',
         status: null,
         page: 1,
-      ), perPage: 100),
-    );
+      ), perPage: 100);
+    });
 
 /// Status counts. When the calendar page already holds every meeting they
 /// are counted from it; otherwise one `per_page=1` request per status
@@ -382,23 +428,34 @@ final FutureProvider<MeetingCounts> apiMeetingCountsProvider =
 
 final FutureProviderFamily<ApiMeeting, int> apiMeetingProvider = FutureProvider
     .autoDispose
-    .family<ApiMeeting, int>(
-      (ref, id) => ref.watch(meetingsRepositoryProvider).get(id),
-    );
+    .family<ApiMeeting, int>((ref, id) {
+      _scope(ref);
+      return ref.watch(meetingsRepositoryProvider).get(id);
+    });
 
 final FutureProviderFamily<ApiPage<ApiParticipant>, int>
 apiParticipantsProvider = FutureProvider.autoDispose
-    .family<ApiPage<ApiParticipant>, int>(
-      (ref, id) => ref.watch(meetingsRepositoryProvider).participants(id),
-    );
+    .family<ApiPage<ApiParticipant>, int>((ref, id) {
+      _scope(ref);
+      return ref.watch(meetingsRepositoryProvider).participants(id);
+    });
 
 final FutureProviderFamily<ApiPage<ApiInvitation>, int>
 apiMeetingInvitationsProvider = FutureProvider.autoDispose
-    .family<ApiPage<ApiInvitation>, int>(
-      (ref, id) => ref.watch(meetingsRepositoryProvider).invitations(id),
-    );
+    .family<ApiPage<ApiInvitation>, int>((ref, id) {
+      _scope(ref);
+      return ref.watch(meetingsRepositoryProvider).invitations(id);
+    });
 
 final FutureProvider<ApiPage<ApiInvitation>> apiMyInvitationsProvider =
-    FutureProvider.autoDispose(
-      (ref) => ref.watch(meetingsRepositoryProvider).myInvitations(),
-    );
+    FutureProvider.autoDispose((ref) {
+      _scope(ref);
+      return ref.watch(meetingsRepositoryProvider).myInvitations();
+    });
+
+/// Meetings belong to one account in one company.
+void _scope(Ref ref) => ref.watch(
+  sessionControllerProvider.select(
+    (s) => (s.value?.userId, s.value?.companyId),
+  ),
+);

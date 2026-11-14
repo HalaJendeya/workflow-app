@@ -3595,6 +3595,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'From the payments list. The server doesn\'t document a payment\'s full details yet, so only these list fields are shown.'**
   String get paymentSummaryNote;
+
+  /// No description provided for @loadEarlierMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Load earlier messages'**
+  String get loadEarlierMessages;
+
+  /// No description provided for @noAvailableUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no one you can start a conversation with yet.'**
+  String get noAvailableUsers;
+
+  /// No description provided for @joinedNoMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'You joined this meeting. Audio and video aren\'t available in the app yet.'**
+  String get joinedNoMedia;
+
+  /// No description provided for @joinRequestPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Join request sent. The host must admit you before you can join.'**
+  String get joinRequestPending;
+
+  /// No description provided for @leftMeeting.
+  ///
+  /// In en, this message translates to:
+  /// **'You left the meeting.'**
+  String get leftMeeting;
 }
 
 class _AppLocalizationsDelegate

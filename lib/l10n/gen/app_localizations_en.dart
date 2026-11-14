@@ -1950,4 +1950,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get paymentSummaryNote =>
       'From the payments list. The server doesn\'t document a payment\'s full details yet, so only these list fields are shown.';
+
+  @override
+  String get loadEarlierMessages => 'Load earlier messages';
+
+  @override
+  String get noAvailableUsers =>
+      'There is no one you can start a conversation with yet.';
+
+  @override
+  String get joinedNoMedia =>
+      'You joined this meeting. Audio and video aren\'t available in the app yet.';
+
+  @override
+  String get joinRequestPending =>
+      'Join request sent. The host must admit you before you can join.';
+
+  @override
+  String get leftMeeting => 'You left the meeting.';
 }

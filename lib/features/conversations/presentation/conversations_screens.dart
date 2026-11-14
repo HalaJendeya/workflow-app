@@ -13,6 +13,7 @@ import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/conversations/data/conversations_repository.dart';
+import 'package:workflow_app/features/conversations/presentation/api_new_conversation_screen.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/profile/data/profile_repository.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -213,6 +214,29 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
   _Filter _filter = _Filter.all;
   String _query = '';
 
+  /// API mode: the list (unread counts, latest messages) refreshes while it
+  /// is open; the rows stay on screen during the refresh.
+  static const refreshEvery = Duration(seconds: 30);
+  Timer? _refresher;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || ref.read(demoModeProvider)) return;
+      _refresher = Timer.periodic(
+        refreshEvery,
+        (_) => ref.invalidate(apiConversationsProvider),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _refresher?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -246,12 +270,14 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       title: l10n.catConversations,
       description: '',
       onSearch: (v) => setState(() => _query = v),
-      // Demo only: the form lists demo people and the API's create and
-      // available-users routes are not wired in yet.
-      onCreate: () => openDemoForm(
-        context,
-        page: (_) => const NewConversationScreen(),
-        unavailable: l10n.conversationCreateUnavailable,
+      // API mode: who can be added and which type to create come from
+      // `available-users`; demo mode keeps the demo form.
+      onCreate: () => Navigator.of(context, rootNavigator: true).push(
+        MaterialPageRoute<void>(
+          builder: (_) => demo
+              ? const NewConversationScreen()
+              : const ApiNewConversationScreen(),
+        ),
       ),
       createLabel: l10n.newConversation,
       children: [
@@ -270,7 +296,14 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
               ),
           ],
         ),
-        if (source is! AsyncData)
+        // A failed refresh says so above the rows it could not update; only
+        // a first load shows the spinner.
+        if (source case AsyncError(:final error))
+          ApiErrorCard(
+            error: error,
+            onRetry: () => ref.invalidate(apiConversationsProvider),
+          )
+        else if (!source.hasValue)
           AsyncSection(
             value: source,
             onRetry: () => ref.invalidate(apiConversationsProvider),
@@ -363,12 +396,18 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _text = TextEditingController();
 
+  /// How often an open chat asks for newer messages (`after_id`). There is
+  /// no realtime channel for conversations in the app.
+  static const pollEvery = Duration(seconds: 10);
+  Timer? _poller;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!ref.read(demoModeProvider)) {
         unawaited(_markRead());
+        _poller = Timer.periodic(pollEvery, (_) => unawaited(_poll()));
         return;
       }
       final n = ref.read(conversationsProvider.notifier);
@@ -379,11 +418,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   void dispose() {
+    _poller?.cancel();
     _text.dispose();
     super.dispose();
   }
 
   int get _apiId => int.parse(widget.id);
+
+  /// Newer messages; arrivals are marked read since the chat is open. A
+  /// failed poll is silent and the next one retries.
+  Future<void> _poll() async {
+    try {
+      final n = await ref
+          .read(conversationThreadProvider(_apiId).notifier)
+          .poll();
+      if (n > 0 && mounted) await _markRead();
+    } on ApiException {
+      // Kept quiet: the thread stays as it was.
+    }
+  }
+
   bool _sending = false;
 
   /// Clears the unread badge on the server; a failure only leaves the badge.
@@ -401,15 +455,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     try {
       await ref.read(conversationsRepositoryProvider).send(_apiId, text);
       _text.clear();
-      ref
-        ..invalidate(apiConversationProvider(_apiId))
-        ..invalidate(apiConversationsProvider);
+      // The sent message comes back with the next page of newer messages;
+      // the conversation itself is not reloaded (no spinner).
+      await _poll();
+      ref.invalidate(apiConversationsProvider);
     } on ApiException catch (e) {
       if (mounted) {
         showSnack(context, localizedError(AppLocalizations.of(context), e));
       }
     } finally {
       if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  Future<void> _loadEarlier() async {
+    try {
+      await ref.read(conversationThreadProvider(_apiId).notifier).loadEarlier();
+    } on ApiException catch (e) {
+      if (mounted) {
+        showSnack(context, localizedError(AppLocalizations.of(context), e));
+      }
     }
   }
 
@@ -443,6 +508,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final Conversation? found;
+    var earlier = false;
+    AsyncValue<MessageThread>? thread;
     if (ref.watch(demoModeProvider)) {
       found = ref
           .watch(conversationsProvider)
@@ -450,7 +517,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           .firstOrNull;
     } else {
       final api = ref.watch(apiConversationProvider(_apiId));
-      if (api is! AsyncData<ApiConversation>) {
+      // A refresh keeps the conversation on screen; only the first load
+      // (or a failure with nothing to show) replaces it.
+      final detail = api.value;
+      if (detail == null) {
         return Scaffold(
           backgroundColor: AppColors.appBackground,
           appBar: AppBar(),
@@ -461,8 +531,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
         );
       }
+      final loaded = ref.watch(conversationThreadProvider(_apiId));
+      thread = loaded;
+      earlier = loaded.value?.hasEarlier ?? false;
       found = conversationFromApi(
-        api.value,
+        detail.withMessages(loaded.value?.messages ?? detail.messages),
         ref.watch(sessionControllerProvider).value?.userId,
         l10n.you,
       );
@@ -588,6 +661,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     tone: BadgeTone.info,
                   ),
                 ),
+                // Top of the (reversed) list: older history and thread
+                // errors.
+                if (thread case AsyncError(:final error) when !thread.hasValue)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: ApiErrorCard(
+                      error: error,
+                      onRetry: () =>
+                          ref.invalidate(conversationThreadProvider(_apiId)),
+                    ),
+                  ),
+                if (earlier)
+                  Center(
+                    child: TextButton(
+                      key: const Key('chat-load-earlier'),
+                      onPressed: () => unawaited(_loadEarlier()),
+                      child: Text(l10n.loadEarlierMessages),
+                    ),
+                  ),
               ],
             ),
           ),

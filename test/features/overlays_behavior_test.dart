@@ -168,21 +168,36 @@ void main() {
     expect(find.byKey(const Key('chat-sending')), findsNothing);
   });
 
-  testWidgets('API mode: New conversation does not open a demo form', (
+  testWidgets("API mode: New conversation lists the server's people", (
     tester,
   ) async {
     await _pump(
       tester,
       Portal.employee,
       mode: AppMode.api,
-      server: _Server(_employeeChatRoutes()),
+      server: _Server({
+        ..._employeeChatRoutes(),
+        'GET /api/v1/employee/conversations/available-users': (
+          200,
+          ok({
+            'role': 'employee',
+            'default_type': 'team_chat',
+            'can_create_group': true,
+            'users': [
+              {'id': 9, 'name': 'Sara Khalil', 'image': null},
+            ],
+          }),
+        ),
+      }),
     );
     await tester.tap(find.text('Chat').last);
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('create-fab')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('create-conversation')), findsNothing);
-    expect(find.textContaining('only works in demo mode'), findsOneWidget);
+    // People come from `available-users`; no demo person is offered.
+    expect(find.byKey(const Key('participant-9')), findsOneWidget);
+    expect(find.textContaining('@gmail.com'), findsNothing);
+    expect(find.textContaining('only works in demo mode'), findsNothing);
   });
 
   testWidgets('API mode: Schedule meeting from the More menu is refused', (

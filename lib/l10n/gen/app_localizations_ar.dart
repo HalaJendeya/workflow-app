@@ -1944,4 +1944,21 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get paymentSummaryNote =>
       'من قائمة الدفعات. لا يوثّق الخادم بعد التفاصيل الكاملة للدفعة، لذا تظهر حقول القائمة هذه فقط.';
+
+  @override
+  String get loadEarlierMessages => 'تحميل الرسائل الأقدم';
+
+  @override
+  String get noAvailableUsers => 'لا يوجد بعد من يمكنك بدء محادثة معه.';
+
+  @override
+  String get joinedNoMedia =>
+      'انضممت إلى هذا الاجتماع. الصوت والفيديو غير متاحين في التطبيق بعد.';
+
+  @override
+  String get joinRequestPending =>
+      'تم إرسال طلب الانضمام. يجب أن يقبلك المضيف قبل أن تنضم.';
+
+  @override
+  String get leftMeeting => 'غادرت الاجتماع.';
 }

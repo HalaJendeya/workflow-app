@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
@@ -739,9 +740,117 @@ class ApiMeetingDetailsScreen extends ConsumerWidget {
             );
           },
         ),
+        // Join only while the meeting can be joined.
+        if (meeting.value case final m?
+            when m.status == ApiMeetingStatus.waiting ||
+                m.status == ApiMeetingStatus.live)
+          _JoinCard(meetingId: id),
         _ParticipantsCard(meetingId: id),
         if (isEmployee) _InvitationsCard(meetingId: id),
       ],
+    );
+  }
+}
+
+/// `POST …/meetings/{id}/join`: on the roster (200) the caller joins and
+/// may leave again; in an approval meeting (202) a join request waits for
+/// the host. The app has no audio/video, so it says so instead of opening a
+/// call.
+class _JoinCard extends ConsumerStatefulWidget {
+  const new({required this.meetingId});
+
+  final int meetingId;
+
+  @override
+  ConsumerState<_JoinCard> createState() => _JoinCardState();
+}
+
+class _JoinCardState extends ConsumerState<_JoinCard> {
+  JoinOutcome? _outcome;
+  bool _busy = false;
+  bool _left = false;
+
+  Future<void> _run(Future<void> Function() action) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await action();
+      ref.invalidate(apiParticipantsProvider(widget.meetingId));
+    } on ApiException catch (e) {
+      if (mounted) {
+        showSnack(context, localizedError(AppLocalizations.of(context), e));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _join() => _run(() async {
+    final outcome = await ref
+        .read(meetingsRepositoryProvider)
+        .join(widget.meetingId);
+    if (mounted) {
+      setState(() {
+        _outcome = outcome;
+        _left = false;
+      });
+    }
+  });
+
+  Future<void> _leave(int participantId) => _run(() async {
+    await ref.read(meetingsRepositoryProvider).leave(participantId);
+    if (mounted) {
+      setState(() {
+        _outcome = null;
+        _left = true;
+      });
+    }
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final outcome = _outcome;
+    final text = switch (outcome) {
+      Joined() => l10n.joinedNoMedia,
+      JoinRequested() => l10n.joinRequestPending,
+      null => _left ? l10n.leftMeeting : null,
+    };
+    return ModuleCard(
+      key: const Key('meeting-join-card'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (text != null) ...[
+            Text(
+              text,
+              key: const Key('meeting-join-status'),
+              style: AppTextStyles.mobileBaseRegular.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          switch (outcome) {
+            Joined(:final participantId) => OutlinedButton(
+              key: const Key('meeting-leave'),
+              onPressed: _busy ? null : () => _leave(participantId),
+              child: Text(l10n.leave),
+            ),
+            JoinRequested() => const SizedBox.shrink(),
+            null => FilledButton(
+              key: const Key('meeting-join'),
+              onPressed: _busy ? null : _join,
+              child: _busy
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(l10n.joinMeeting),
+            ),
+          },
+        ],
+      ),
     );
   }
 }
