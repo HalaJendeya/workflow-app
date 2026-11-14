@@ -1,6 +1,6 @@
 # WorkFlow app
 
-Flutter app for WorkFlow's **Client** and **Employee** roles. The Laravel backend is documented by the Postman collection **WorFlowNets** (Hala's Workspace).
+Flutter app for WorkFlow's **Client** and **Employee** roles. The Laravel backend is documented by the Postman collection **WorkFlow** (Hala's Workspace).
 
 ## Commands
 
@@ -46,7 +46,7 @@ lib/l10n/arb/            app_en.arb, app_ar.arb (generated code in lib/l10n/gen)
 - **Figma is the visual source of truth.** File `NGIAdfhxsrEy5hRorKjT8K`. Mobile app frames are on page `534:30389` (client at y≈0, employee at y≈5900); mobile auth frames are in `130:20944` and `150:2174`. Don't build screens from guesses; routes stay `DesignPendingScreen` until their frame has been inspected.
 - `www.figma.com` is blocked in cloud sessions, so asset URLs can't be curled. Export icons with `use_figma` (`node.exportAsync({format: 'SVG_STRING'})`); export raster images as base64 in chunks of 46 KB or less, then decode them from the session transcript.
 - Theme values come only from `AppTheme` / `AppSpacing`. Never hardcode colors or sizes in screens.
-- Integrate an endpoint only when the collection documents its request and response. Model only the fields that are documented, and record anything missing in `docs/api-contract-gaps.md`. The collection (uid `56083386-3bd0b0e2-751a-4dd1-83c7-40b21362dc2e`, read with the Postman MCP) is the contract; the backend is `https://work.isradev.shop`. Postman MCP reads the collection but does not run requests: check responses only with safe read-only GETs.
+- Integrate an endpoint only when the collection documents its request and response. Model only the fields that are documented, and record anything missing in `docs/api-contract-gaps.md`. The collection `WorkFlow` (uid `56083386-d0da80f4-f067-42e4-9b96-9e021769e55e`, read with the Postman MCP) is the contract; the backend is `https://api.workflownets.com` (set as `API_BASE_URL`, host only). The older `WorFlowNets` collection and `work.isradev.shop` are superseded. Postman MCP reads the collection but does not run requests: check responses only with safe read-only GETs.
 - Never run requests marked ⚠️ (destructive) or that mutate data against a real server without explicit approval.
 - Every user-facing string goes in both ARB files. Layouts must work in RTL; use `EdgeInsetsDirectional` and `AlignmentDirectional`.
 - Use `main` plus short-lived `feat/*` branches. Never commit secrets or `.env`. Don't push or merge without the owner's approval.

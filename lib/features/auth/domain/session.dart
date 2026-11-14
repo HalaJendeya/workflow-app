@@ -5,8 +5,9 @@
 /// `data.user.company_id` — no role field. The user picks the portal at
 /// sign-in and the app confirms it before opening a session: each portal's
 /// prefix is gated by `role:client` / `role:employee`, so
-/// `GET /api/v1/{portal}/account` answers 403 for any other role. See
-/// docs/api-contract-gaps.md.
+/// `GET /api/v1/{portal}/account` answers 403 for any other role (seen on
+/// api.workflownets.com, 2026-11-14: an employee token gets 403 on
+/// `/client/account`). See docs/api-contract-gaps.md.
 enum Portal { client, employee }
 
 /// Sign-in succeeded but the account does not hold the role of the portal

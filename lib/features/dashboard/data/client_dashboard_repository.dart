@@ -6,8 +6,9 @@ import 'package:workflow_app/core/network/api_response.dart';
 
 /// `GET /api/v1/client/dashboard` → `data {projectsCount, projectsCompleted,
 /// projectsInProgress}`. The collection documents no fields for this route;
-/// these three keys were read from the live server (work.isradev.shop) and
-/// are the only ones it returns.
+/// these three keys were read from the previous live server
+/// (work.isradev.shop); a client token for api.workflownets.com is needed
+/// to re-check them (docs/api-contract-gaps.md).
 class ClientDashboardSummary {
   const new({
     required this.projects,

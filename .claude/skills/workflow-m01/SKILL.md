@@ -14,7 +14,7 @@ Request: **$ARGUMENTS**
 - **One batch per invocation.** Batches run in order: 3, then 4, then 5. Before starting batch N, confirm batch N-1 is committed and the owner accepted it. Check `git log` for its commit, and if acceptance isn't in the conversation, ask. Never start the next batch on your own.
 - **Scope comes from the owner.** The repo doesn't define Batches 3–5. Use the scope given in `$ARGUMENTS` or the prompt. If none is given, propose one from the frame map in `/figma-ui-verify` and the screens Batches 1–2 didn't cover, then wait for confirmation. Don't invent a scope and start.
 - **Local commits only.** No `git push`, merge, rebase of shared history, force operations, or branch deletion without explicit approval of that exact action.
-- **No mutating or ⚠️ destructive API requests** against a real server. Integrate only endpoints the Postman collection *WorFlowNets* documents, and model only documented fields. Never fake success in api mode or fall back to mock data.
+- **No mutating or ⚠️ destructive API requests** against a real server. Integrate only endpoints the Postman collection *WorkFlow* documents, and model only documented fields. Never fake success in api mode or fall back to mock data.
 - **Preserve accepted work:** Sprint/Kanban, Drag & Drop, M02, and M01 Batches 1–2. Their tests must stay green.
 - **Preserve uncommitted files**, especially `pubspec.lock`. Run `git status` first. Don't stage, revert, or overwrite files you didn't change. Stage paths explicitly and never use `git add -A`.
 - **English** for progress updates and reports. English locale and light theme only; Arabic, RTL, and dark mode are out of scope.

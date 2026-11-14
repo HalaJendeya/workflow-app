@@ -45,7 +45,8 @@ class ApiMessage {
 
 /// A conversation as listed by `GET /{portal}/conversations` or opened by
 /// `GET /{portal}/conversations/{id}` (`data.conversation`). Field names are
-/// the ones the live server returns (work.isradev.shop, employee account);
+/// the ones the live server returns (re-checked on api.workflownets.com,
+/// employee account, 2026-11-14);
 /// the collection documents the routes but not these response fields.
 class ApiConversation {
   const new({

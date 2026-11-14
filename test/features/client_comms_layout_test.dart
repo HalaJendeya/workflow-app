@@ -24,7 +24,7 @@ const List<double> _scales = [1.0, 1.3];
 
 const _longName = 'Customer Success & Billing Migration Working Group';
 const _unbroken =
-    'https://work.isradev.shop/api/v1/client/invoices/00000000000000000000'
+    'https://api.workflownets.com/api/v1/client/invoices/00000000000000000000'
     '0000000000/attachments/very_long_unbroken_file_name_without_spaces.pdf';
 
 Map<String, dynamic> _message(int id, int sender, String text) => {

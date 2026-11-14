@@ -6,14 +6,14 @@ import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/network/api_response.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 
-/// Task status values the backend uses. The collection names three
-/// different sets (see the backend gap report):
+/// Task status values the backend uses (collection `WorkFlow`, 2026-11-14):
 ///
-/// * list filter and `stats.by_status`: backlog, todo, pending,
-///   in_progress, in_review, completed;
+/// * list filter, `stats.by_status` and task create/update: backlog, todo,
+///   pending, in_progress, in_review, completed (create/update also accept
+///   the legacy `waiting_review` → in_review and `done` → completed, stored
+///   canonically);
 /// * kanban update-status: backlog, todo, in_progress, in_review,
-///   completed;
-/// * task create/update: backlog, todo, in_progress, waiting_review, done.
+///   completed.
 ///
 /// Rows are read with the list/stats set. Values outside it stay [other]
 /// and keep their raw text, so nothing is silently renamed.
