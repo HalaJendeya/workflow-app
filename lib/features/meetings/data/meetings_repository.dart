@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/core/network/api_client.dart';
+import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/network/api_response.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
@@ -345,8 +346,13 @@ class MeetingsRepository {
   /// and waits for the host (2026-11-04). 403/404/422 are errors.
   Future<JoinOutcome> join(int meetingId) async {
     final response = await _client.post('$_base/meetings/$meetingId/join');
+    // 202 carries `{join_request}`, whose fields are not documented: only
+    // the status is used.
+    if (response.statusCode == 202) {
+      ApiEnvelope.unwrapData(response);
+      return const JoinRequested();
+    }
     final data = ApiEnvelope.unwrapObject(response);
-    if (response.statusCode == 202) return const JoinRequested();
     final status = data['connection_status'];
     return Joined(
       participantId: asInt(data['id']) ?? missingField('id'),
@@ -383,6 +389,85 @@ class Joined extends JoinOutcome {
 class JoinRequested extends JoinOutcome {
   const new();
 }
+
+/// This account's join state for one meeting. Kept while the session and
+/// company stay the same, so leaving and reopening the meeting never offers
+/// Join again over a pending request or an active participation.
+class MeetingJoinState {
+  const new({this.outcome, this.busy = false, this.left = false, this.error});
+
+  final JoinOutcome? outcome;
+
+  /// A join or leave is on its way; a second tap does nothing.
+  final bool busy;
+
+  /// Left after joining in this session.
+  final bool left;
+
+  /// The last join or leave failure (a refusal carries the server's
+  /// reason).
+  final Object? error;
+}
+
+class MeetingJoin extends Notifier<MeetingJoinState> {
+  new(this.meetingId);
+
+  final int meetingId;
+
+  @override
+  MeetingJoinState build() {
+    _scope(ref);
+    return const MeetingJoinState();
+  }
+
+  /// `POST …/join`. After a 202 this is "Try joining again": the client
+  /// role has no route to read its join request, so asking again is the
+  /// only way to learn the host admitted it (200) or refused it (an error
+  /// with the server's reason).
+  Future<void> join() async {
+    if (state.busy || state.outcome is Joined) return;
+    final before = state;
+    state = MeetingJoinState(outcome: before.outcome, busy: true);
+    try {
+      final outcome = await ref
+          .read(meetingsRepositoryProvider)
+          .join(meetingId);
+      if (!ref.mounted) return;
+      state = MeetingJoinState(outcome: outcome);
+      ref.invalidate(apiParticipantsProvider(meetingId));
+    } on ApiException catch (e) {
+      if (!ref.mounted) return;
+      state = MeetingJoinState(
+        outcome: before.outcome,
+        left: before.left,
+        error: e,
+      );
+    }
+  }
+
+  /// `POST meeting-participants/{id}/leave`, only after a join in this
+  /// session (the participant id comes from that answer).
+  Future<void> leave() async {
+    final joined = state.outcome;
+    if (state.busy || joined is! Joined) return;
+    state = MeetingJoinState(outcome: joined, busy: true);
+    try {
+      await ref.read(meetingsRepositoryProvider).leave(joined.participantId);
+      if (!ref.mounted) return;
+      state = const MeetingJoinState(left: true);
+      ref.invalidate(apiParticipantsProvider(meetingId));
+    } on ApiException catch (e) {
+      if (!ref.mounted) return;
+      state = MeetingJoinState(outcome: joined, error: e);
+    }
+  }
+}
+
+final NotifierProviderFamily<MeetingJoin, MeetingJoinState, int>
+meetingJoinProvider =
+    NotifierProvider.family<MeetingJoin, MeetingJoinState, int>(
+      MeetingJoin.new,
+    );
 
 final meetingsRepositoryProvider = Provider<MeetingsRepository>((ref) {
   final portal =

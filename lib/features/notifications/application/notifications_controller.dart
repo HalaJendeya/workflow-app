@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
@@ -38,22 +40,44 @@ class NotificationFilterController extends Notifier<NotificationFilter> {
 /// state changes only after the server confirms.
 class NotificationsController extends AsyncNotifier<NotificationInbox> {
   @override
-  Future<NotificationInbox> build() => ref
-      .watch(notificationsRepositoryProvider)
-      .list(filter: ref.watch(notificationFilterProvider));
+  Future<NotificationInbox> build() {
+    _marking.clear();
+    _loadingMore = null;
+    _markingAll = null;
+    return ref
+        .watch(notificationsRepositoryProvider)
+        .list(filter: ref.watch(notificationFilterProvider));
+  }
 
-  Future<void> loadMore() async {
+  /// In-flight requests: a repeated tap joins the one already sent instead
+  /// of sending another.
+  final _marking = <String, Future<void>>{};
+  Future<void>? _loadingMore;
+  Future<void>? _markingAll;
+
+  Future<void> loadMore() {
     final current = state.value;
-    if (current == null || !current.hasMore || state.isLoading) return;
+    if (current == null || !current.hasMore || state.isLoading) {
+      return Future.value();
+    }
+    return _loadingMore ??= _loadMore(current)
+        .whenComplete(() => _loadingMore = null);
+  }
+
+  Future<void> _loadMore(NotificationInbox current) async {
     final next = await ref
         .read(notificationsRepositoryProvider)
         .list(
           page: current.currentPage + 1,
           filter: ref.read(notificationFilterProvider),
         );
+    if (!ref.mounted) return;
+    // A notification that arrived meanwhile shifts the pages: an item can
+    // come back on the next page. Keep one copy.
+    final seen = {for (final n in current.items) n.id};
     state = AsyncData(
       NotificationInbox(
-        items: [...current.items, ...next.items],
+        items: [...current.items, ...next.items.where((n) => seen.add(n.id))],
         currentPage: next.currentPage,
         lastPage: next.lastPage,
         total: next.total,
@@ -62,10 +86,18 @@ class NotificationsController extends AsyncNotifier<NotificationInbox> {
     );
   }
 
-  Future<void> markRead(String id) async {
+  Future<void> markRead(String id) =>
+      _marking[id] ??= _markRead(id).whenComplete(() {
+        // A block that discards the result: `remove` returns this very
+        // future, which `whenComplete` would otherwise wait for — forever.
+        unawaited(_marking.remove(id));
+      });
+
+  Future<void> _markRead(String id) async {
     final updated = await ref
         .read(notificationsRepositoryProvider)
         .markRead(id);
+    if (!ref.mounted) return;
     final current = state.value;
     if (current == null) return;
     final wasUnread = current.items.any((n) => n.id == id && !n.isRead);
@@ -109,10 +141,14 @@ class NotificationsController extends AsyncNotifier<NotificationInbox> {
     }
   }
 
-  Future<void> markAllRead() async {
+  Future<void> markAllRead() =>
+      _markingAll ??= _markAllRead().whenComplete(() => _markingAll = null);
+
+  Future<void> _markAllRead() async {
     final unread = await ref
         .read(notificationsRepositoryProvider)
         .markAllRead();
+    if (!ref.mounted) return;
     final current = state.value;
     if (current == null) return;
     _settle(

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
-import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
@@ -754,99 +753,74 @@ class ApiMeetingDetailsScreen extends ConsumerWidget {
 
 /// `POST …/meetings/{id}/join`: on the roster (200) the caller joins and
 /// may leave again; in an approval meeting (202) a join request waits for
-/// the host. The app has no audio/video, so it says so instead of opening a
-/// call.
-class _JoinCard extends ConsumerStatefulWidget {
+/// the host. The state lives in [meetingJoinProvider], so it survives
+/// leaving the screen. The app has no audio/video, so it says so instead of
+/// opening a call.
+class _JoinCard extends ConsumerWidget {
   const new({required this.meetingId});
 
   final int meetingId;
 
   @override
-  ConsumerState<_JoinCard> createState() => _JoinCardState();
-}
-
-class _JoinCardState extends ConsumerState<_JoinCard> {
-  JoinOutcome? _outcome;
-  bool _busy = false;
-  bool _left = false;
-
-  Future<void> _run(Future<void> Function() action) async {
-    if (_busy) return;
-    setState(() => _busy = true);
-    try {
-      await action();
-      ref.invalidate(apiParticipantsProvider(widget.meetingId));
-    } on ApiException catch (e) {
-      if (mounted) {
-        showSnack(context, localizedError(AppLocalizations.of(context), e));
-      }
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _join() => _run(() async {
-    final outcome = await ref
-        .read(meetingsRepositoryProvider)
-        .join(widget.meetingId);
-    if (mounted) {
-      setState(() {
-        _outcome = outcome;
-        _left = false;
-      });
-    }
-  });
-
-  Future<void> _leave(int participantId) => _run(() async {
-    await ref.read(meetingsRepositoryProvider).leave(participantId);
-    if (mounted) {
-      setState(() {
-        _outcome = null;
-        _left = true;
-      });
-    }
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final outcome = _outcome;
+    final join = ref.watch(meetingJoinProvider(meetingId));
+    final notifier = ref.read(meetingJoinProvider(meetingId).notifier);
+    final outcome = join.outcome;
     final text = switch (outcome) {
       Joined() => l10n.joinedNoMedia,
       JoinRequested() => l10n.joinRequestPending,
-      null => _left ? l10n.leftMeeting : null,
+      null => join.left ? l10n.leftMeeting : null,
     };
+    final body = AppTextStyles.mobileBaseRegular.copyWith(
+      color: AppColors.textPrimary,
+    );
+    const spinner = SizedBox.square(
+      key: Key('meeting-join-busy'),
+      dimension: 18,
+      child: CircularProgressIndicator(strokeWidth: 2),
+    );
     return ModuleCard(
       key: const Key('meeting-join-card'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (text != null) ...[
+            Text(text, key: const Key('meeting-join-status'), style: body),
+            const SizedBox(height: 12),
+          ],
+          if (outcome is JoinRequested) ...[
             Text(
-              text,
-              key: const Key('meeting-join-status'),
-              style: AppTextStyles.mobileBaseRegular.copyWith(
-                color: AppColors.textPrimary,
+              l10n.joinRequestCheckHint,
+              style: AppTextStyles.mobileXsRegular.copyWith(
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 12),
           ],
-          switch (outcome) {
-            Joined(:final participantId) => OutlinedButton(
-              key: const Key('meeting-leave'),
-              onPressed: _busy ? null : () => _leave(participantId),
-              child: Text(l10n.leave),
+          if (join.error case final error?) ...[
+            Text(
+              localizedError(l10n, error),
+              key: const Key('meeting-join-error'),
+              style: body.copyWith(color: ModuleColors.dangerFg),
             ),
-            JoinRequested() => const SizedBox.shrink(),
+            const SizedBox(height: 12),
+          ],
+          switch (outcome) {
+            Joined() => OutlinedButton(
+              key: const Key('meeting-leave'),
+              onPressed: join.busy ? null : notifier.leave,
+              child: join.busy ? spinner : Text(l10n.leave),
+            ),
+            JoinRequested() => OutlinedButton(
+              key: const Key('meeting-join-again'),
+              onPressed: join.busy ? null : notifier.join,
+              child: join.busy ? spinner : Text(l10n.tryJoiningAgain),
+            ),
             null => FilledButton(
               key: const Key('meeting-join'),
-              onPressed: _busy ? null : _join,
-              child: _busy
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(l10n.joinMeeting),
+              onPressed: join.busy ? null : notifier.join,
+              child: join.busy ? spinner : Text(l10n.joinMeeting),
             ),
           },
         ],

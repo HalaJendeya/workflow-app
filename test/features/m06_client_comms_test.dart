@@ -327,6 +327,8 @@ void main() {
     late List<Object> older;
     late List<Object> newer;
     late (int, Object?) Function(RequestOptions) join;
+    late (int, Object?) Function(RequestOptions) send;
+    late bool pollFails;
 
     int count(String path) =>
         http.requests.where((r) => r.uri.path == path).length;
@@ -352,6 +354,13 @@ void main() {
       older = [_msg(9, 'From last week')];
       newer = [];
       join = (_) => (200, ok({'id': 55, 'connection_status': 'connected'}));
+      send = (_) => (
+        200,
+        ok({
+          'message': {'id': 13, 'conversation_id': 1},
+        }),
+      );
+      pollFails = false;
       http = RouteHttpAdapter(
         {
           'GET /api/v1/client/account': (
@@ -405,6 +414,8 @@ void main() {
             200,
             ok({'id': 55}),
           ),
+          'PUT /api/v1/client/conversations/1': (200, ok({'id': 1})),
+          'DELETE /api/v1/client/conversations/1': (200, ok(null)),
           ...routes,
         },
         handlers: {
@@ -419,6 +430,7 @@ void main() {
             final q = o.queryParameters;
             if (q.containsKey('before_id')) return (200, _messages(older));
             if (q.containsKey('after_id')) {
+              if (pollFails) return (503, failure('Service Unavailable'));
               final rows = [...newer];
               newer = [];
               return (200, _messages(rows));
@@ -429,6 +441,7 @@ void main() {
             );
           },
           'POST /api/v1/client/meetings/41/join': (o) => join(o),
+          'POST /api/v1/client/conversations/1/messages': (o) => send(o),
         },
       );
       await tester.pumpWidget(
@@ -510,6 +523,221 @@ void main() {
       final polls = count('/api/v1/client/conversations/1/messages');
       await tester.pump(const Duration(seconds: 30));
       expect(count('/api/v1/client/conversations/1/messages'), polls);
+    });
+
+    int gets(String path) => http.requests
+        .where((r) => r.method == 'GET' && r.uri.path == path)
+        .length;
+    void lifecycle(WidgetTester tester, List<AppLifecycleState> states) {
+      for (final st in states) {
+        tester.binding.handleAppLifecycleStateChanged(st);
+      }
+    }
+
+    int polls() => http.requests
+        .where(
+          (r) =>
+              r.uri.path == '/api/v1/client/conversations/1/messages' &&
+              r.queryParameters.containsKey('after_id'),
+        )
+        .length;
+    int sends() => http.requests
+        .where(
+          (r) =>
+              r.method == 'POST' &&
+              r.uri.path == '/api/v1/client/conversations/1/messages',
+        )
+        .length;
+
+    testWidgets('chat: a refused send stays as "Not sent"; Retry sends it', (
+      tester,
+    ) async {
+      await pump(tester);
+      send = (_) => (503, failure('Service Unavailable'));
+      await openChat(tester);
+      await tester.enterText(find.byKey(const Key('chat-input')), 'Draft');
+      await tester.tap(find.byKey(const Key('chat-send')));
+      await tester.pumpAndSettle();
+      // The input is free for the next message; the refused one is in the
+      // thread, marked, with Retry — not lost and not shown as delivered.
+      expect(find.byKey(const Key('chat-message-failed')), findsOneWidget);
+      expect(find.text('Draft'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('chat-input')))
+            .controller!
+            .text,
+        isEmpty,
+      );
+      expect(sends(), 1);
+
+      // The server is back and answers with the full message row: it shows
+      // at once, once.
+      send = (_) => (200, ok({'message': _msg(13, 'Draft', sender: 1)}));
+      await tester.tap(find.byKey(const Key('chat-message-retry')));
+      await tester.pumpAndSettle();
+      expect(sends(), 2);
+      expect(find.byKey(const Key('chat-message-failed')), findsNothing);
+      expect(find.text('Draft'), findsOneWidget);
+      expect(find.byKey(const ValueKey('message-server-13')), findsOneWidget);
+      // The next poll returns the same message: still one copy.
+      newer = [_msg(13, 'Draft', sender: 1)];
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpAndSettle();
+      expect(find.text('Draft'), findsOneWidget);
+    });
+
+    testWidgets('chat: Discard drops a refused message without sending', (
+      tester,
+    ) async {
+      await pump(tester);
+      send = (_) => (422, failure('Validation Error'));
+      await openChat(tester);
+      await tester.enterText(find.byKey(const Key('chat-input')), 'Oops');
+      await tester.tap(find.byKey(const Key('chat-send')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('chat-message-discard')));
+      await tester.pumpAndSettle();
+      expect(find.text('Oops'), findsNothing);
+      expect(sends(), 1);
+    });
+
+    testWidgets('chat: a send never skips a message that arrived before it', (
+      tester,
+    ) async {
+      await pump(tester);
+      send = (_) => (200, ok({'message': _msg(13, 'Mine', sender: 1)}));
+      await openChat(tester);
+      await tester.enterText(find.byKey(const Key('chat-input')), 'Mine');
+      await tester.tap(find.byKey(const Key('chat-send')));
+      await tester.pumpAndSettle();
+      // Message 12 reached the server before mine (13): the next poll still
+      // asks from 11.
+      newer = [_msg(12, 'Between'), _msg(13, 'Mine', sender: 1)];
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpAndSettle();
+      final q = http.requests
+          .lastWhere((r) => r.queryParameters.containsKey('after_id'))
+          .queryParameters;
+      expect(q['after_id'], 11);
+      expect(find.text('Between'), findsOneWidget);
+      expect(find.text('Mine'), findsOneWidget);
+    });
+
+    testWidgets('chat: offline polls say so quietly and recover', (
+      tester,
+    ) async {
+      await pump(tester);
+      await openChat(tester);
+      pollFails = true;
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpAndSettle();
+      // The thread stays; only a line says the app is retrying.
+      expect(find.byKey(const Key('chat-offline')), findsOneWidget);
+      expect(find.text('Ready?'), findsOneWidget);
+      pollFails = false;
+      newer = [_msg(12, 'Back online')];
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('chat-offline')), findsNothing);
+      expect(find.text('Back online'), findsOneWidget);
+    });
+
+    testWidgets('chat: no polling in the background or under a sheet', (
+      tester,
+    ) async {
+      await pump(tester);
+      await openChat(tester);
+      final before = polls();
+      lifecycle(tester, const [
+        AppLifecycleState.inactive,
+        AppLifecycleState.hidden,
+        AppLifecycleState.paused,
+      ]);
+      await tester.pump(const Duration(seconds: 35));
+      expect(polls(), before, reason: 'paused: no requests');
+      // Back in the foreground: one catch-up poll at once.
+      newer = [_msg(12, 'While away')];
+      lifecycle(tester, const [
+        AppLifecycleState.hidden,
+        AppLifecycleState.inactive,
+        AppLifecycleState.resumed,
+      ]);
+      await tester.pumpAndSettle();
+      expect(polls(), before + 1);
+      expect(find.text('While away'), findsOneWidget);
+
+      // The info sheet covers the chat: the timer skips.
+      await tester.tap(find.byTooltip('Conversation info'));
+      await tester.pumpAndSettle();
+      final covered = polls();
+      await tester.pump(const Duration(seconds: 25));
+      expect(polls(), covered);
+    });
+
+    testWidgets('chat info: rename a group and delete it for me', (
+      tester,
+    ) async {
+      await pump(tester);
+      await openChat(tester);
+      await tester.tap(find.byTooltip('Conversation info'));
+      await tester.pumpAndSettle();
+      expect(find.text('Me, Sara'), findsOneWidget, reason: 'participants');
+
+      await tester.tap(find.byKey(const Key('conversation-rename')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('conversation-title')),
+        'Launch team',
+      );
+      await tester.tap(find.byKey(const Key('conversation-title-save')));
+      await tester.pumpAndSettle();
+      final put = http.requests.lastWhere((r) => r.method == 'PUT');
+      expect(put.uri.path, '/api/v1/client/conversations/1');
+      expect(put.data, {'title': 'Launch team'});
+      expect(find.text('Conversation renamed.'), findsOneWidget);
+      // The detail is read again (the new title), without a full-screen
+      // spinner in between.
+      expect(gets('/api/v1/client/conversations/1'), 2);
+      expect(find.byKey(const Key('chat-input')), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Conversation info'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('conversation-delete-for-me')));
+      await tester.pumpAndSettle();
+      // Confirmation first: nothing is deleted on the first tap.
+      expect(http.requests.where((r) => r.method == 'DELETE'), isEmpty);
+      await tester.tap(find.byKey(const Key('confirm-delete')));
+      await tester.pumpAndSettle();
+      expect(
+        http.requests.where((r) => r.method == 'DELETE').single.uri.path,
+        '/api/v1/client/conversations/1',
+      );
+      // Back on the list with the outcome.
+      expect(find.byKey(const Key('chat-input')), findsNothing);
+      expect(find.text('Conversation deleted for you.'), findsOneWidget);
+    });
+
+    testWidgets('chat info: a refused rename keeps the old name', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        routes: {
+          'PUT /api/v1/client/conversations/1': (403, failure('Forbidden')),
+        },
+      );
+      await openChat(tester);
+      await tester.tap(find.byTooltip('Conversation info'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('conversation-rename')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('conversation-title')), 'X');
+      await tester.tap(find.byKey(const Key('conversation-title-save')));
+      await tester.pumpAndSettle();
+      expect(find.text("You don't have access to this."), findsOneWidget);
+      expect(gets('/api/v1/client/conversations/1'), 1, reason: 'no reload');
+      expect(find.byKey(const Key('conversation-rename')), findsOneWidget);
     });
 
     testWidgets('a failed history load shows Retry inside the chat', (
@@ -674,6 +902,67 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text("You don't have access to this."), findsOneWidget);
       expect(find.byKey(const Key('meeting-join')), findsOneWidget);
+    });
+
+    testWidgets('meeting: a pending request survives reopening; try again', (
+      tester,
+    ) async {
+      await pump(tester);
+      join = (_) => (
+        202,
+        ok({
+          'join_request': {'id': 5, 'status': 'pending'},
+        }),
+      );
+      await openMeeting(tester);
+      await tester.tap(find.byKey(const Key('meeting-join')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('meeting-join-again')), findsOneWidget);
+      // Leave the details and come back: still pending, no fresh Join.
+      Navigator.of(tester.element(find.byKey(const Key('participants')))).pop();
+      await tester.pumpAndSettle();
+      final view = find.descendant(
+        of: find.byKey(const Key('meeting-41')),
+        matching: find.text('View Details'),
+      );
+      await reveal(tester, view);
+      await tester.tap(view);
+      await tester.pumpAndSettle();
+      await reveal(tester, find.byKey(const Key('meeting-join-card')));
+      expect(find.byKey(const Key('meeting-join')), findsNothing);
+      expect(find.textContaining('The host must admit you'), findsOneWidget);
+      int joins() => http.requests
+          .where((r) => r.uri.path == '/api/v1/client/meetings/41/join')
+          .length;
+      expect(joins(), 1);
+
+      // The host admitted the request: trying again joins.
+      join = (_) => (200, ok({'id': 55, 'connection_status': 'connected'}));
+      await tester.tap(find.byKey(const Key('meeting-join-again')));
+      await tester.pumpAndSettle();
+      expect(joins(), 2);
+      expect(find.byKey(const Key('meeting-leave')), findsOneWidget);
+    });
+
+    testWidgets('meeting: a failed leave says why and keeps Leave', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        routes: {
+          'POST /api/v1/client/meeting-participants/55/leave': (
+            500,
+            failure('Server Error'),
+          ),
+        },
+      );
+      await openMeeting(tester);
+      await tester.tap(find.byKey(const Key('meeting-join')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('meeting-leave')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('meeting-join-error')), findsOneWidget);
+      expect(find.byKey(const Key('meeting-leave')), findsOneWidget);
     });
 
     testWidgets('meeting: an ended meeting offers no Join', (tester) async {
