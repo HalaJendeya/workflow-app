@@ -3751,6 +3751,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 file} other{{count} files}}'**
   String attachmentsSelected(int count);
+
+  /// No description provided for @openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get openSettings;
+
+  /// No description provided for @turnOnCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn camera on'**
+  String get turnOnCamera;
+
+  /// No description provided for @turnOffCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn camera off'**
+  String get turnOffCamera;
+
+  /// No description provided for @meetingConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to the meeting…'**
+  String get meetingConnecting;
+
+  /// No description provided for @meetingRequestingPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow microphone access to join. The camera is optional.'**
+  String get meetingRequestingPermission;
+
+  /// No description provided for @meetingMicDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'WorkFlow needs microphone access to join the meeting.'**
+  String get meetingMicDenied;
+
+  /// No description provided for @meetingMicDeniedSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access is off for WorkFlow. Turn it on in Settings, then try again.'**
+  String get meetingMicDeniedSettings;
+
+  /// No description provided for @meetingCameraDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access is off. You can still take part with audio.'**
+  String get meetingCameraDenied;
+
+  /// No description provided for @meetingReconnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection lost. Reconnecting…'**
+  String get meetingReconnecting;
+
+  /// No description provided for @meetingConnectFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t connect to the meeting\'s audio and video.'**
+  String get meetingConnectFailed;
+
+  /// No description provided for @meetingDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'The meeting connection ended.'**
+  String get meetingDisconnected;
+
+  /// No description provided for @backToMeeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to meeting details'**
+  String get backToMeeting;
+
+  /// No description provided for @meetingAudioOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio only'**
+  String get meetingAudioOnly;
+
+  /// No description provided for @attachmentsDemo.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments are sent in the live app. The demo has no server to receive them.'**
+  String get attachmentsDemo;
+
+  /// No description provided for @saveToDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to device'**
+  String get saveToDevice;
+
+  /// No description provided for @attachmentSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved.'**
+  String get attachmentSaved;
+
+  /// No description provided for @attachmentSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The file couldn\'t be saved.'**
+  String get attachmentSaveFailed;
+
+  /// No description provided for @attachmentPdfHint.
+  ///
+  /// In en, this message translates to:
+  /// **'PDFs open from a saved copy: save it, then open it from your Files app.'**
+  String get attachmentPdfHint;
+
+  /// No description provided for @removeAttachment.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}'**
+  String removeAttachment(String name);
 }
 
 class _AppLocalizationsDelegate

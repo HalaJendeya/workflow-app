@@ -2037,4 +2037,69 @@ class AppLocalizationsAr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get openSettings => 'فتح الإعدادات';
+
+  @override
+  String get turnOnCamera => 'تشغيل الكاميرا';
+
+  @override
+  String get turnOffCamera => 'إيقاف الكاميرا';
+
+  @override
+  String get meetingConnecting => 'جارٍ الاتصال بالاجتماع…';
+
+  @override
+  String get meetingRequestingPermission =>
+      'اسمح بالوصول إلى الميكروفون للانضمام. الكاميرا اختيارية.';
+
+  @override
+  String get meetingMicDenied =>
+      'يحتاج WorkFlow إلى الوصول إلى الميكروفون للانضمام إلى الاجتماع.';
+
+  @override
+  String get meetingMicDeniedSettings =>
+      'الوصول إلى الميكروفون متوقف لتطبيق WorkFlow. فعّله من الإعدادات ثم حاول مجددًا.';
+
+  @override
+  String get meetingCameraDenied =>
+      'الوصول إلى الكاميرا متوقف. يمكنك المشاركة بالصوت.';
+
+  @override
+  String get meetingReconnecting => 'انقطع الاتصال. جارٍ إعادة الاتصال…';
+
+  @override
+  String get meetingConnectFailed => 'تعذّر الاتصال بصوت الاجتماع وصورته.';
+
+  @override
+  String get meetingDisconnected => 'انتهى الاتصال بالاجتماع.';
+
+  @override
+  String get backToMeeting => 'العودة إلى تفاصيل الاجتماع';
+
+  @override
+  String get meetingAudioOnly => 'صوت فقط';
+
+  @override
+  String get attachmentsDemo =>
+      'تُرسل المرفقات في التطبيق الفعلي. لا يوجد خادم في العرض التجريبي لاستقبالها.';
+
+  @override
+  String get saveToDevice => 'حفظ على الجهاز';
+
+  @override
+  String get attachmentSaved => 'تم الحفظ.';
+
+  @override
+  String get attachmentSaveFailed => 'تعذّر حفظ الملف.';
+
+  @override
+  String get attachmentPdfHint =>
+      'تُفتح ملفات PDF من نسخة محفوظة: احفظها ثم افتحها من تطبيق الملفات.';
+
+  @override
+  String removeAttachment(String name) {
+    return 'إزالة $name';
+  }
 }

@@ -13,6 +13,7 @@ import 'package:workflow_app/features/meetings/application/meeting_media_control
 import 'package:workflow_app/features/meetings/data/meeting_media.dart';
 
 import '../helpers/fake_http_adapter.dart';
+import '../helpers/fake_media.dart';
 
 /// Meeting audio/video: the documented `04 Media & LiveKit` contract and the
 /// session logic behind the media-engine interfaces. No LiveKit SDK is in
@@ -147,12 +148,12 @@ void main() {
   });
 
   group('media session (fake engine)', () {
-    late _Engine engine;
+    late FakeMediaEngine engine;
     late _Api api;
     late ProviderContainer c;
 
     setUp(() async {
-      engine = _Engine();
+      engine = FakeMediaEngine();
       api = _Api();
       final ids = MemoryDeviceIdStore();
       await ids.write('device-abcdef12');
@@ -182,6 +183,7 @@ void main() {
         overrides: [
           sessionControllerProvider.overrideWith(_Session.new),
           meetingMediaApiProvider.overrideWithValue(api),
+          mediaEngineProvider.overrideWithValue(null),
         ],
       );
       addTearDown(c.dispose);
@@ -327,6 +329,15 @@ void main() {
       expect(api.calls.where((x) => x == 'leave'), hasLength(1));
     });
 
+    test('a room that fails to close still tells the server', () async {
+      open();
+      await media().join();
+      engine.rooms.single.failDisconnect = true;
+      await media().leave();
+      expect(api.calls.last, 'leave');
+      expect(state().phase, MediaPhase.ended);
+    });
+
     test('closing the screen or switching company releases media', () async {
       final sub = open();
       await media().join();
@@ -405,68 +416,4 @@ class _Api implements MeetingMediaApi {
     calls.add('leave');
     if (leaveError case final e?) throw e;
   }
-}
-
-class _Engine implements MediaEngine {
-  MediaPermission microphone = MediaPermission.granted;
-  MediaPermission camera = MediaPermission.granted;
-  bool failConnect = false;
-  final rooms = <_Room>[];
-
-  @override
-  Future<({MediaPermission microphone, MediaPermission? camera})>
-  requestPermissions({required bool camera}) async =>
-      (microphone: microphone, camera: camera ? this.camera : null);
-
-  @override
-  MediaRoom createRoom() {
-    final r = _Room(failConnect: failConnect);
-    rooms.add(r);
-    return r;
-  }
-}
-
-class _Room implements MediaRoom {
-  new({required this.failConnect});
-
-  final bool failConnect;
-  final _events = StreamController<MediaRoomEvent>.broadcast();
-  (String, String)? connectedWith;
-  bool microphone = false;
-  bool camera = false;
-  bool disconnected = false;
-  bool failToggle = false;
-
-  void emit(MediaRoomEvent e) => _events.add(e);
-
-  @override
-  Stream<MediaRoomEvent> get events => _events.stream;
-
-  @override
-  Future<void> connect(
-    String url,
-    String token, {
-    required bool microphone,
-    required bool camera,
-  }) async {
-    if (failConnect) throw StateError('could not connect');
-    connectedWith = (url, token);
-    this.microphone = microphone;
-    this.camera = camera;
-  }
-
-  @override
-  Future<void> setMicrophone({required bool enabled}) async {
-    if (failToggle) throw StateError('device busy');
-    microphone = enabled;
-  }
-
-  @override
-  Future<void> setCamera({required bool enabled}) async {
-    if (failToggle) throw StateError('device busy');
-    camera = enabled;
-  }
-
-  @override
-  Future<void> disconnect() async => disconnected = true;
 }

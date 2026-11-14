@@ -1062,5 +1062,31 @@
         "type": "int"
       }
     }
+  },
+  "openSettings": "Open settings",
+  "turnOnCamera": "Turn camera on",
+  "turnOffCamera": "Turn camera off",
+  "meetingConnecting": "Connecting to the meeting…",
+  "meetingRequestingPermission": "Allow microphone access to join. The camera is optional.",
+  "meetingMicDenied": "WorkFlow needs microphone access to join the meeting.",
+  "meetingMicDeniedSettings": "Microphone access is off for WorkFlow. Turn it on in Settings, then try again.",
+  "meetingCameraDenied": "Camera access is off. You can still take part with audio.",
+  "meetingReconnecting": "Connection lost. Reconnecting…",
+  "meetingConnectFailed": "Couldn't connect to the meeting's audio and video.",
+  "meetingDisconnected": "The meeting connection ended.",
+  "backToMeeting": "Back to meeting details",
+  "meetingAudioOnly": "Audio only",
+  "attachmentsDemo": "Attachments are sent in the live app. The demo has no server to receive them.",
+  "saveToDevice": "Save to device",
+  "attachmentSaved": "Saved.",
+  "attachmentSaveFailed": "The file couldn't be saved.",
+  "attachmentPdfHint": "PDFs open from a saved copy: save it, then open it from your Files app.",
+  "removeAttachment": "Remove {name}",
+  "@removeAttachment": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

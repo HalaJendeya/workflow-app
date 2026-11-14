@@ -9,8 +9,10 @@ import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
+import 'package:workflow_app/features/meetings/application/meeting_media_controller.dart';
 import 'package:workflow_app/features/meetings/data/meetings_repository.dart';
 import 'package:workflow_app/features/meetings/domain/meeting.dart';
+import 'package:workflow_app/features/meetings/presentation/api_meeting_room_screen.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_details_screen.dart';
 import 'package:workflow_app/features/meetings/presentation/meetings_screen.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
@@ -743,7 +745,7 @@ class ApiMeetingDetailsScreen extends ConsumerWidget {
         if (meeting.value case final m?
             when m.status == ApiMeetingStatus.waiting ||
                 m.status == ApiMeetingStatus.live)
-          _JoinCard(meetingId: id),
+          _JoinCard(meetingId: id, title: m.title),
         _ParticipantsCard(meetingId: id),
         if (isEmployee) _InvitationsCard(meetingId: id),
       ],
@@ -757,13 +759,32 @@ class ApiMeetingDetailsScreen extends ConsumerWidget {
 /// leaving the screen. The app has no audio/video, so it says so instead of
 /// opening a call.
 class _JoinCard extends ConsumerWidget {
-  const new({required this.meetingId});
+  const new({required this.meetingId, required this.title});
 
   final int meetingId;
+  final String title;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    // With a media engine, joining is the room: `media/join` joins the
+    // meeting and returns the LiveKit credentials in one step (collection:
+    // "Joins the meeting and returns participant + LiveKit media token").
+    if (ref.watch(mediaEngineProvider) != null) {
+      return ModuleCard(
+        key: const Key('meeting-join-card'),
+        child: FilledButton(
+          key: const Key('meeting-join'),
+          onPressed: () => Navigator.of(context, rootNavigator: true).push(
+            MaterialPageRoute<void>(
+              builder: (_) =>
+                  ApiMeetingRoomScreen(meetingId: meetingId, title: title),
+            ),
+          ),
+          child: Text(l10n.joinMeeting),
+        ),
+      );
+    }
     final join = ref.watch(meetingJoinProvider(meetingId));
     final notifier = ref.read(meetingJoinProvider(meetingId).notifier);
     final outcome = join.outcome;

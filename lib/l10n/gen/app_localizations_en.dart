@@ -2043,4 +2043,70 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get openSettings => 'Open settings';
+
+  @override
+  String get turnOnCamera => 'Turn camera on';
+
+  @override
+  String get turnOffCamera => 'Turn camera off';
+
+  @override
+  String get meetingConnecting => 'Connecting to the meeting…';
+
+  @override
+  String get meetingRequestingPermission =>
+      'Allow microphone access to join. The camera is optional.';
+
+  @override
+  String get meetingMicDenied =>
+      'WorkFlow needs microphone access to join the meeting.';
+
+  @override
+  String get meetingMicDeniedSettings =>
+      'Microphone access is off for WorkFlow. Turn it on in Settings, then try again.';
+
+  @override
+  String get meetingCameraDenied =>
+      'Camera access is off. You can still take part with audio.';
+
+  @override
+  String get meetingReconnecting => 'Connection lost. Reconnecting…';
+
+  @override
+  String get meetingConnectFailed =>
+      'Couldn\'t connect to the meeting\'s audio and video.';
+
+  @override
+  String get meetingDisconnected => 'The meeting connection ended.';
+
+  @override
+  String get backToMeeting => 'Back to meeting details';
+
+  @override
+  String get meetingAudioOnly => 'Audio only';
+
+  @override
+  String get attachmentsDemo =>
+      'Attachments are sent in the live app. The demo has no server to receive them.';
+
+  @override
+  String get saveToDevice => 'Save to device';
+
+  @override
+  String get attachmentSaved => 'Saved.';
+
+  @override
+  String get attachmentSaveFailed => 'The file couldn\'t be saved.';
+
+  @override
+  String get attachmentPdfHint =>
+      'PDFs open from a saved copy: save it, then open it from your Files app.';
+
+  @override
+  String removeAttachment(String name) {
+    return 'Remove $name';
+  }
 }

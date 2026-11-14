@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
+import 'package:workflow_app/features/meetings/data/livekit_media_engine.dart';
 import 'package:workflow_app/features/meetings/data/meeting_media.dart';
 
 /// Audio/video for a meeting, behind two small interfaces so the session
@@ -27,6 +29,9 @@ abstract interface class MediaEngine {
   requestPermissions({required bool camera});
 
   MediaRoom createRoom();
+
+  /// The system settings page for this app (permission granted there).
+  Future<void> openSettings();
 }
 
 sealed class MediaRoomEvent {
@@ -47,6 +52,31 @@ class MediaDisconnected extends MediaRoomEvent {
   const new();
 }
 
+/// Someone joined or left, or a microphone, camera or speaker changed.
+class MediaParticipantsChanged extends MediaRoomEvent {
+  const new();
+}
+
+/// One person in the room as the screen shows them. [id] is the media
+/// server's participant id; no account data beyond the display name.
+class MediaParticipant {
+  const new({
+    required this.id,
+    required this.name,
+    required this.isLocal,
+    required this.microphone,
+    required this.camera,
+    this.speaking = false,
+  });
+
+  final String id;
+  final String name;
+  final bool isLocal;
+  final bool microphone;
+  final bool camera;
+  final bool speaking;
+}
+
 abstract interface class MediaRoom {
   Stream<MediaRoomEvent> get events;
 
@@ -62,9 +92,26 @@ abstract interface class MediaRoom {
 
   /// Leaves the room and stops every local track (camera, microphone).
   Future<void> disconnect();
+
+  /// Me first, then everyone else, as of now.
+  List<MediaParticipant> get participants;
+
+  /// The live video of [participantId], or `null` while their camera is
+  /// off or not received yet.
+  Widget? videoOf(String participantId);
 }
 
-final mediaEngineProvider = Provider<MediaEngine?>((_) => null);
+/// A device permission the person refused (shown, never an API error).
+class MediaPermissionDenied implements Exception {
+  const new();
+}
+
+/// The media engine of this build: LiveKit in API mode, none in demo mode
+/// (the demo room needs no server). Tests replace it with a fake.
+final mediaEngineProvider = Provider<MediaEngine?>(
+  (ref) =>
+      ref.watch(appConfigProvider).isMock ? null : const LiveKitMediaEngine(),
+);
 
 final meetingMediaApiProvider = Provider<MeetingMediaApi>((ref) {
   final portal =
@@ -100,9 +147,13 @@ class MediaSessionState {
     this.camera = false,
     this.error,
     this.permanentlyDenied = false,
+    this.participants = const [],
   });
 
   final MediaPhase phase;
+
+  /// Who is in the room (me first) while connected.
+  final List<MediaParticipant> participants;
   final bool microphone;
   final bool camera;
 
@@ -132,12 +183,14 @@ class MediaSessionState {
     Object? error,
     bool clearError = false,
     bool? permanentlyDenied,
+    List<MediaParticipant>? participants,
   }) => MediaSessionState(
     phase: phase ?? this.phase,
     microphone: microphone ?? this.microphone,
     camera: camera ?? this.camera,
     error: clearError ? null : (error ?? this.error),
     permanentlyDenied: permanentlyDenied ?? this.permanentlyDenied,
+    participants: participants ?? this.participants,
   );
 }
 
@@ -173,7 +226,7 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
     _events = null;
     _room = null;
     if (room == null) return;
-    unawaited(room.disconnect());
+    unawaited(room.disconnect().catchError((Object _) {}));
     if (device != null) {
       // Captured before disposal: `ref` is not usable from here on.
       final api = _api;
@@ -258,7 +311,16 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
       phase: MediaPhase.connected,
       microphone: true,
       camera: camera,
+      participants: room.participants,
     );
+  }
+
+  /// The live video of [participantId] while in the room.
+  Widget? videoOf(String participantId) => _room?.videoOf(participantId);
+
+  /// Opens the system settings after a permanent refusal.
+  Future<void> openSettings() async {
+    await ref.read(mediaEngineProvider)?.openSettings();
   }
 
   void _onEvent(MediaRoomEvent e) {
@@ -272,6 +334,11 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
         if (!state.inRoom) return;
         _release();
         state = const MediaSessionState(phase: MediaPhase.ended);
+      case MediaParticipantsChanged():
+        final room = _room;
+        if (room != null && state.inRoom) {
+          state = state.copy(participants: room.participants);
+        }
     }
   }
 
@@ -291,6 +358,20 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
       return;
     }
     _toggling = true;
+    if (camera ?? false) {
+      // Joined audio-only after a refusal: ask again before the camera.
+      final engine = ref.read(mediaEngineProvider);
+      final asked = await engine?.requestPermissions(camera: true);
+      if (!ref.mounted) return;
+      if (asked?.camera != MediaPermission.granted) {
+        _toggling = false;
+        state = state.copy(
+          error: const MediaPermissionDenied(),
+          permanentlyDenied: asked?.camera == MediaPermission.permanentlyDenied,
+        );
+        return;
+      }
+    }
     try {
       if (microphone != null) await room.setMicrophone(enabled: microphone);
       if (camera != null) await room.setCamera(enabled: camera);
@@ -304,6 +385,7 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
       microphone: microphone,
       camera: camera,
       clearError: true,
+      participants: room.participants,
     );
     try {
       await _api?.state(meetingId, microphone: microphone, camera: camera);
@@ -325,7 +407,12 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
     unawaited(_events?.cancel());
     _events = null;
     _room = null;
-    await room?.disconnect();
+    try {
+      await room?.disconnect();
+    } on Object {
+      // The server is still told below; a room that failed to close has
+      // released what it could.
+    }
     Object? error;
     if (device != null) {
       try {
