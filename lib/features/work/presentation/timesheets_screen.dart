@@ -73,7 +73,15 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
     return ModulePage(
       title: l10n.timesheetsTitle,
       description: l10n.timesheetsBody,
-      onSearch: (v) => setState(() => _query = v),
+      // API mode loads no rows (their fields are undocumented), so there
+      // is nothing to search, filter or page: those controls showed
+      // "Approved (0)" and "No records" beside the server's real counts.
+      onSearch: demo
+          ? (v) => setState(() {
+              _query = v;
+              _page = 0;
+            })
+          : null,
       children: [
         if (!demo) const BackendPendingNotice(),
         if (api case AsyncError(:final error))
@@ -121,99 +129,108 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
               ? '—'
               : apiMoney(sum),
         ),
-        WfSearchBox(
-          fieldKey: const Key('timesheets-search'),
-          hint: l10n.searchTimesheetsHint,
-          onChanged: (v) => setState(() {
-            _query = v;
-            _page = 0;
-          }),
-        ),
-        ChipRow(
-          children: [
-            FilterChipBox(
-              label: '${l10n.filterAll} (${all.length})',
-              selected: _status == null,
-              onTap: () => setState(() => _status = null),
-            ),
-            for (final s in TimesheetStatus.values)
+        if (demo) ...[
+          WfSearchBox(
+            fieldKey: const Key('timesheets-search'),
+            hint: l10n.searchTimesheetsHint,
+            onChanged: (v) => setState(() {
+              _query = v;
+              _page = 0;
+            }),
+          ),
+          ChipRow(
+            children: [
               FilterChipBox(
-                label: '${timesheetStatusLabel(l10n, s)} (${n(s)})',
-                selected: _status == s,
+                label: '${l10n.filterAll} (${all.length})',
+                selected: _status == null,
                 onTap: () => setState(() {
-                  _status = s;
+                  _status = null;
                   _page = 0;
                 }),
               ),
-          ],
-        ),
-        if (visible.isEmpty) EmptyNotice(text: l10n.noRecords),
-        for (final e in visible)
-          StackedRecordCard(
-            key: Key('timesheet-${e.id}'),
-            title: e.task,
-            subtitle: e.project,
-            badge: StatusBadge(
-              label: timesheetStatusLabel(l10n, e.status),
-              tone: timesheetTone(e.status),
-            ),
-            amount: money(e.amount),
-            rows: [
-              (l10n.fieldProject, e.project),
-              (l10n.fieldEmployee, e.employee),
-              (l10n.startDate, dt.format(e.start)),
-              (l10n.endDate, dt.format(e.end)),
-              (l10n.duration, durationLabel(e.duration)),
+              for (final s in TimesheetStatus.values)
+                FilterChipBox(
+                  label: '${timesheetStatusLabel(l10n, s)} (${n(s)})',
+                  selected: _status == s,
+                  onTap: () => setState(() {
+                    _status = s;
+                    _page = 0;
+                  }),
+                ),
             ],
-            actions: TintedActions(
-              onView: () => showRecordDetails(
-                context,
-                title: e.task,
-                status: timesheetStatusLabel(l10n, e.status),
-                tone: timesheetTone(e.status),
-                fields: [
-                  DetailField(l10n.fieldProject, e.project),
-                  DetailField(l10n.fieldEmployee, e.employee),
-                  DetailField(l10n.startDate, dt.format(e.start)),
-                  DetailField(l10n.endDate, dt.format(e.end)),
-                  DetailField(l10n.duration, durationLabel(e.duration)),
-                  DetailField(l10n.fieldAmount, money(e.amount)),
-                ],
-              ),
-              onEdit: () async {
-                final s = await showOptionSheet<TimesheetStatus>(
-                  context,
-                  options: TimesheetStatus.values,
-                  labelOf: (st) => timesheetStatusLabel(l10n, st),
-                  selected: e.status,
-                );
-                if (s != null) {
-                  final applied = ref
-                      .read(timesheetsProvider.notifier)
-                      .replace(e.withStatus(s));
-                  if (context.mounted) {
-                    showLocalOutcome(context, applied: applied);
-                  }
-                }
-              },
-              onDelete: () async {
-                if (await confirmDelete(context, e.task)) {
-                  final removed = ref
-                      .read(timesheetsProvider.notifier)
-                      .remove(e.id);
-                  if (context.mounted) {
-                    showLocalOutcome(context, applied: removed, deleted: true);
-                  }
-                }
-              },
-            ),
           ),
-        Pager(
-          page: page,
-          pageSize: _pageSize,
-          total: filtered.length,
-          onPage: (p) => setState(() => _page = p),
-        ),
+          if (visible.isEmpty) EmptyNotice(text: l10n.noRecords),
+          for (final e in visible)
+            StackedRecordCard(
+              key: Key('timesheet-${e.id}'),
+              title: e.task,
+              subtitle: e.project,
+              badge: StatusBadge(
+                label: timesheetStatusLabel(l10n, e.status),
+                tone: timesheetTone(e.status),
+              ),
+              amount: money(e.amount),
+              rows: [
+                (l10n.fieldProject, e.project),
+                (l10n.fieldEmployee, e.employee),
+                (l10n.startDate, dt.format(e.start)),
+                (l10n.endDate, dt.format(e.end)),
+                (l10n.duration, durationLabel(e.duration)),
+              ],
+              actions: TintedActions(
+                onView: () => showRecordDetails(
+                  context,
+                  title: e.task,
+                  status: timesheetStatusLabel(l10n, e.status),
+                  tone: timesheetTone(e.status),
+                  fields: [
+                    DetailField(l10n.fieldProject, e.project),
+                    DetailField(l10n.fieldEmployee, e.employee),
+                    DetailField(l10n.startDate, dt.format(e.start)),
+                    DetailField(l10n.endDate, dt.format(e.end)),
+                    DetailField(l10n.duration, durationLabel(e.duration)),
+                    DetailField(l10n.fieldAmount, money(e.amount)),
+                  ],
+                ),
+                onEdit: () async {
+                  final s = await showOptionSheet<TimesheetStatus>(
+                    context,
+                    options: TimesheetStatus.values,
+                    labelOf: (st) => timesheetStatusLabel(l10n, st),
+                    selected: e.status,
+                  );
+                  if (s != null) {
+                    final applied = ref
+                        .read(timesheetsProvider.notifier)
+                        .replace(e.withStatus(s));
+                    if (context.mounted) {
+                      showLocalOutcome(context, applied: applied);
+                    }
+                  }
+                },
+                onDelete: () async {
+                  if (await confirmDelete(context, e.task)) {
+                    final removed = ref
+                        .read(timesheetsProvider.notifier)
+                        .remove(e.id);
+                    if (context.mounted) {
+                      showLocalOutcome(
+                        context,
+                        applied: removed,
+                        deleted: true,
+                      );
+                    }
+                  }
+                },
+              ),
+            ),
+          Pager(
+            page: page,
+            pageSize: _pageSize,
+            total: filtered.length,
+            onPage: (p) => setState(() => _page = p),
+          ),
+        ],
       ],
     );
   }

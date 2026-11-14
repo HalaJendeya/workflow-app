@@ -113,7 +113,12 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     return ModulePage(
       title: l10n.tasksManagement,
       description: l10n.tasksManagementBody,
-      onSearch: (v) => setState(() => _query = v),
+      // A new search starts on page 1: in API mode a kept page number past
+      // the result's last page showed an empty list with no pager.
+      onSearch: (v) => setState(() {
+        _query = v;
+        _page = 0;
+      }),
       onCreate: () => openTaskForm(context),
       createLabel: l10n.addTask,
       children: [
