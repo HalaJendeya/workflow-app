@@ -523,14 +523,24 @@ class _ApiPaymentCard extends StatelessWidget {
       status: status,
       tone: tone,
       fields: fields,
-      // The row is the whole documented record; `GET /client/payments/{id}`
-      // documents only `data.id`, so details come from the row.
-      onView: () => showRecordDetails(
-        context,
-        title: '#${p.id}',
-        status: status,
-        tone: tone,
-        fields: [DetailField(l10n.fieldAmount, amount), ...fields],
+      // `GET /client/payments/{id}` documents only `data.id` (no example in
+      // any role) and the QA account has no payment to check it against, so
+      // the view is labelled a summary of the list row, not full details.
+      onView: () => showModalBottomSheet<void>(
+        context: context,
+        useRootNavigator: true,
+        isScrollControlled: true,
+        builder: (_) => RecordDetailsBody(
+          key: const Key('payment-summary'),
+          title: '${l10n.paymentSummaryTitle} · #${p.id}',
+          status: status,
+          tone: tone,
+          fields: [DetailField(l10n.fieldAmount, amount), ...fields],
+          footer: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: InfoNotice(text: l10n.paymentSummaryNote),
+          ),
+        ),
       ),
     );
   }

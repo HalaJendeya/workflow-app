@@ -153,6 +153,12 @@ final FutureProviderFamily<ProjectList, ProjectQuery> apiProjectsProvider =
 /// signed-in user like the list.
 final FutureProviderFamily<ProjectRecord, int> apiProjectProvider =
     FutureProvider.autoDispose.family<ProjectRecord, int>((ref, id) {
-      ref.watch(sessionControllerProvider.select((s) => s.value?.userId));
+      // Keyed to the account and its company: a project is never shown
+      // under another account or company.
+      ref.watch(
+        sessionControllerProvider.select(
+          (s) => (s.value?.userId, s.value?.companyId),
+        ),
+      );
       return ref.watch(projectsRepositoryProvider).show(id);
     });

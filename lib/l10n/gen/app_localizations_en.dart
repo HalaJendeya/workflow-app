@@ -1940,4 +1940,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get paymentRowsNote =>
       'Payments as the server lists them. It doesn\'t report a payment\'s status or currency on each row, so the status filter and the totals above come from the server.';
+
+  @override
+  String get loadMore => 'Load more';
+
+  @override
+  String get paymentSummaryTitle => 'Payment summary';
+
+  @override
+  String get paymentSummaryNote =>
+      'From the payments list. The server doesn\'t document a payment\'s full details yet, so only these list fields are shown.';
 }

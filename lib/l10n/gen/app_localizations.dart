@@ -3577,6 +3577,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Payments as the server lists them. It doesn\'t report a payment\'s status or currency on each row, so the status filter and the totals above come from the server.'**
   String get paymentRowsNote;
+
+  /// No description provided for @loadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get loadMore;
+
+  /// No description provided for @paymentSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment summary'**
+  String get paymentSummaryTitle;
+
+  /// No description provided for @paymentSummaryNote.
+  ///
+  /// In en, this message translates to:
+  /// **'From the payments list. The server doesn\'t document a payment\'s full details yet, so only these list fields are shown.'**
+  String get paymentSummaryNote;
 }
 
 class _AppLocalizationsDelegate

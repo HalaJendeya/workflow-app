@@ -106,8 +106,12 @@ void main() {
 
     await tester.tap(find.byKey(const Key('invoice-filter-paid')));
     await tester.pumpAndSettle();
+    // Cards also look up their project's name, so pick the list request.
     expect(
-      http.requests.last.uri.queryParameters['status'],
+      http.requests
+          .lastWhere((r) => r.uri.path == '/api/v1/client/invoices')
+          .uri
+          .queryParameters['status'],
       'paid',
       reason: 'status filtering is done by the server',
     );

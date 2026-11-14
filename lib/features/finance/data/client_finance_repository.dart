@@ -282,6 +282,11 @@ const PaymentQuery defaultPaymentQuery = (
 /// `GET /client/projects`.
 typedef ProjectOption = ({int id, String title});
 
+/// A page of the project picker: the typed search and the page number.
+typedef ProjectSearch = ({String search, int page});
+
+const projectSearchPageSize = 20;
+
 /// `05 Client / 04 Invoices` and `05 Client / 05 Payments`. Read-only:
 /// paying an invoice (`POST /pay`, Stripe Checkout) is not part of this
 /// repository; the client has no create, update or delete routes.
@@ -354,11 +359,20 @@ class ClientFinanceRepository {
     );
   }
 
-  /// Up to 100 of the client's projects (`per_page` max), for the invoice
-  /// project filter and project names on invoice cards.
-  Future<List<ProjectOption>> projectOptions() async {
+  /// One page of the client's projects for the invoice project filter:
+  /// `GET /client/projects` with its documented server-side `search` and
+  /// `page`. Pages are small and loaded on demand, so no eligible project is
+  /// left out and nothing is downloaded up front.
+  Future<ApiPage<ProjectOption>> searchProjects(ProjectSearch q) async {
     final body = ApiEnvelope.unwrapBody(
-      await _client.get('/api/v1/client/projects', query: {'per_page': 100}),
+      await _client.get(
+        '/api/v1/client/projects',
+        query: {
+          'page': q.page,
+          'per_page': projectSearchPageSize,
+          if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
+        },
+      ),
     );
     final data = body['data'];
     if (data is! Json) missingField('data');
@@ -368,7 +382,7 @@ class ClientFinanceRepository {
         id: asInt(j['id']) ?? missingField('id'),
         title: title is String ? title : missingField('title'),
       );
-    }).items;
+    });
   }
 }
 
@@ -403,8 +417,9 @@ final FutureProviderFamily<PaymentList, PaymentQuery> clientPaymentsProvider =
       return ref.watch(clientFinanceRepositoryProvider).payments(q);
     });
 
-final FutureProvider<List<ProjectOption>> clientProjectOptionsProvider =
-    FutureProvider.autoDispose((ref) {
+final FutureProviderFamily<ApiPage<ProjectOption>, ProjectSearch>
+clientProjectSearchProvider = FutureProvider.autoDispose
+    .family<ApiPage<ProjectOption>, ProjectSearch>((ref, q) {
       _scope(ref);
-      return ref.watch(clientFinanceRepositoryProvider).projectOptions();
+      return ref.watch(clientFinanceRepositoryProvider).searchProjects(q);
     });

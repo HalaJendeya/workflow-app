@@ -11,6 +11,7 @@ import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/core/config/app_config.dart';
 import 'package:workflow_app/core/network/api_client.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
+import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/storage/session_storage.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/data/auth_repository.dart';
@@ -147,16 +148,35 @@ Map<String, dynamic> _paymentList(
       ],
 };
 
-Map<String, dynamic> _projects(List<(int, String)> rows) => {
+/// Company 3 has 105 projects: more than the old 100-project cut-off.
+final List<(int, String)> _companyProjects = [
+  for (var id = 1; id <= 105; id++)
+    (
+      id,
+      switch (id) {
+        7 => 'Customer Portal Revamp',
+        8 => 'Billing',
+        105 => 'Warehouse Migration',
+        _ => 'Project $id',
+      },
+    ),
+];
+
+Map<String, dynamic> _projects(
+  List<(int, String)> rows, {
+  int page = 1,
+  int perPage = 20,
+}) => {
   'success': true,
   'message': 'OK',
   'data': {
-    'current_page': 1,
-    'per_page': 100,
+    'current_page': page,
+    'per_page': perPage,
     'total': rows.length,
-    'last_page': 1,
+    'last_page': rows.isEmpty ? 1 : (rows.length + perPage - 1) ~/ perPage,
     'data': [
-      for (final (id, title) in rows) {'id': id, 'title': title},
+      for (final (id, title) in rows.skip((page - 1) * perPage).take(perPage))
+        {'id': id, 'title': title},
     ],
   },
   'stats': {
@@ -175,11 +195,18 @@ class _Server implements HttpClientAdapter {
   final Map<String, Completer<void>> gates = {};
   final Map<String, int> fail = {};
 
+  /// Replaces the normal answer for a path.
+  final Map<String, Object> overrides = {};
+
+  /// Holds the invoice list for one `project_id` open.
+  final Map<int, Completer<void>> projectGates = {};
+
   (int, Object?) _reply(RequestOptions o) {
     final path = o.uri.path;
     if (fail[path] case final status?) {
       return (status, failure(status == 404 ? 'Invoice not found' : 'Error'));
     }
+    if (overrides[path] case final body?) return (200, body);
     final company = o.headers['X-Company'];
     switch (path) {
       case '/api/v1/client/account':
@@ -201,15 +228,28 @@ class _Server implements HttpClientAdapter {
       case '/api/v1/client/notifications/unread-count':
         return (200, ok({'unread_count': 0}));
       case '/api/v1/client/projects':
+        // Documented server-side `search` and `page`.
+        final search = '${o.queryParameters['search'] ?? ''}'.toLowerCase();
+        final rows = company == '3'
+            ? [
+                for (final r in _companyProjects)
+                  if (r.$2.toLowerCase().contains(search)) r,
+              ]
+            : <(int, String)>[];
         return (
           200,
-          company == '3'
-              ? _projects([(7, 'Customer Portal Revamp'), (8, 'Billing')])
-              : _projects(const []),
+          _projects(
+            rows,
+            page: int.tryParse('${o.queryParameters['page']}') ?? 1,
+            perPage: int.tryParse('${o.queryParameters['per_page']}') ?? 20,
+          ),
         );
       case '/api/v1/client/invoices':
         if (company == '4') return (200, _invoiceList([_invoice(41)]));
         if (company != '3') return (200, _invoiceList(const []));
+        if (asInt(o.queryParameters['project_id']) case final pid?) {
+          return (200, _invoiceList([_invoice(500 + pid, project: pid)]));
+        }
         final page = int.tryParse('${o.queryParameters['page']}') ?? 1;
         return (
           200,
@@ -224,6 +264,21 @@ class _Server implements HttpClientAdapter {
             last: 2,
           ),
         );
+      case final p when p.startsWith('/api/v1/client/projects/'):
+        final id = int.parse(p.split('/').last);
+        final match = company == '3'
+            ? _companyProjects.where((r) => r.$1 == id)
+            : const <(int, String)>[];
+        return match.isEmpty
+            ? (404, failure('Project not found'))
+            : (
+                200,
+                ok({
+                  'id': id,
+                  'title': match.first.$2,
+                  'status': 'in_progress',
+                }),
+              );
       case '/api/v1/client/invoices/12':
         return (
           200,
@@ -248,6 +303,9 @@ class _Server implements HttpClientAdapter {
   ) async {
     requests.add(o);
     await gates[o.uri.path]?.future;
+    if (o.uri.path == '/api/v1/client/invoices') {
+      await projectGates[asInt(o.queryParameters['project_id'])]?.future;
+    }
     final (status, body) = _reply(o);
     return ResponseBody.fromString(
       jsonEncode(body),
@@ -519,12 +577,37 @@ void main() {
       }
     });
 
-    test('project options: first 100 projects, id and title', () async {
-      http.reply(200, _projects([(7, 'Portal')]));
-      final options = await repo.projectOptions();
+    test('project search: one small page at a time, server-side', () async {
+      http.reply(200, _projects(_companyProjects, page: 6));
+      final page = await repo.searchProjects((search: ' ware ', page: 6));
       expect(http.last.path, '/api/v1/client/projects');
-      expect(http.last.queryParameters, {'per_page': 100});
-      expect(options.single, (id: 7, title: 'Portal'));
+      expect(http.last.queryParameters, {
+        'page': 6,
+        'per_page': 20,
+        'search': 'ware',
+      });
+      // Page 6 of 105 holds the projects past the old 100 cut-off.
+      expect(page.items.map((p) => p.id), [101, 102, 103, 104, 105]);
+      expect(page.hasMore, isFalse);
+    });
+
+    test('a project row without a title is invalid', () async {
+      http.reply(200, {
+        ..._projects(const []),
+        'data': {
+          'current_page': 1,
+          'per_page': 20,
+          'total': 1,
+          'last_page': 1,
+          'data': [
+            {'id': 7},
+          ],
+        },
+      });
+      await expectLater(
+        repo.searchProjects((search: '', page: 1)),
+        _kind(ApiFailureKind.invalidResponse),
+      );
     });
   });
 
@@ -671,11 +754,105 @@ void main() {
       expect(q['sort'], 'due_date');
       expect(q['page'], 1);
 
-      await _pick(tester, const Key('invoice-project'), 'Billing');
+      await _tap(tester, find.byKey(const Key('invoice-project')));
+      await tester.tap(find.byKey(const Key('project-option-8')));
+      await tester.pumpAndSettle();
+      q = server.last('/api/v1/client/invoices').queryParameters;
+      expect(q['project_id'], 8);
+      expect(q['page'], 1);
+    });
+
+    testWidgets('a project past the first 100 can be found and selected', (
+      tester,
+    ) async {
+      final (server, _) = await _pump(tester);
+      await _invoicesTab(tester);
+      await _tap(tester, find.byKey(const Key('invoice-project')));
+      // Page 1 only: no project list is downloaded up front.
       expect(
-        server.last('/api/v1/client/invoices').queryParameters['project_id'],
-        8,
+        server.requests.where(
+          (r) =>
+              r.uri.path == '/api/v1/client/projects' &&
+              r.queryParameters['per_page'] == 20,
+        ),
+        hasLength(1),
       );
+      expect(find.byKey(const Key('project-option-21')), findsNothing);
+      // Load more until project 105 (page 6 of 20 per page).
+      final more = find.byKey(const Key('project-picker-more'));
+      for (var i = 0; i < 6 && more.evaluate().isNotEmpty; i++) {
+        await tester.ensureVisible(more);
+        await tester.pumpAndSettle();
+        await tester.tap(more);
+        await tester.pumpAndSettle();
+      }
+      expect(more, findsNothing);
+      final last = find.byKey(const Key('project-option-105'));
+      await tester.ensureVisible(last);
+      await tester.pumpAndSettle();
+      await tester.tap(last);
+      await tester.pumpAndSettle();
+      final q = server.last('/api/v1/client/invoices').queryParameters;
+      expect(q['project_id'], 105);
+      expect(q['page'], 1);
+      expect(find.text('Warehouse Migration ⌄'), findsOneWidget);
+      expect(find.byKey(const Key('api-invoice-605')), findsOneWidget);
+
+      // Back to all projects.
+      await _tap(tester, find.byKey(const Key('invoice-project')));
+      await tester.tap(find.byKey(const Key('project-option-all')));
+      await tester.pumpAndSettle();
+      expect(
+        server
+            .last('/api/v1/client/invoices')
+            .queryParameters
+            .containsKey('project_id'),
+        isFalse,
+      );
+    });
+
+    testWidgets('picker search is sent to the server', (tester) async {
+      final (server, _) = await _pump(tester);
+      await _invoicesTab(tester);
+      await _tap(tester, find.byKey(const Key('invoice-project')));
+      await tester.enterText(
+        find.byKey(const Key('project-picker-search')),
+        'warehouse',
+      );
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+      expect(
+        server.last('/api/v1/client/projects').queryParameters['search'],
+        'warehouse',
+      );
+      expect(find.byKey(const Key('project-option-105')), findsOneWidget);
+      expect(find.byKey(const Key('project-option-7')), findsNothing);
+    });
+
+    testWidgets('rapid project changes never show a superseded result', (
+      tester,
+    ) async {
+      final (server, _) = await _pump(tester);
+      await _invoicesTab(tester);
+      // Project 7's answer is slow; project 8 is chosen before it arrives.
+      server.projectGates[7] = Completer<void>();
+      await _tap(tester, find.byKey(const Key('invoice-project')));
+      await tester.tap(find.byKey(const Key('project-option-7')));
+      // Project 7's spinner never settles while its answer is held.
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      // The chip is still on screen: tap it without settling.
+      await tester.tap(find.byKey(const Key('invoice-project')));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await tester.tap(find.byKey(const Key('project-option-8')));
+      await tester.pumpAndSettle();
+      server.projectGates[7]!.complete();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('api-invoice-508')), findsOneWidget);
+      expect(find.byKey(const Key('api-invoice-507')), findsNothing);
     });
 
     testWidgets('details load from the server; 404 shows Retry', (
@@ -732,6 +909,50 @@ void main() {
   });
 
   group('Payments screen', () {
+    testWidgets('the payment view is a labelled summary of the row', (
+      tester,
+    ) async {
+      final (server, _) = await _pump(tester);
+      await _payments(tester);
+      await _tap(tester, _view('api-payment-31'));
+      final sheet = find.byKey(const Key('payment-summary'));
+      expect(sheet, findsOneWidget);
+      expect(
+        find.descendant(
+          of: sheet,
+          matching: find.text('Payment summary · #31'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: sheet,
+          matching: find.textContaining("doesn't document a payment's full"),
+        ),
+        findsOneWidget,
+      );
+      // No undocumented details request is made.
+      expect(
+        server.requests.where(
+          (r) => r.uri.path.startsWith('/api/v1/client/payments/'),
+        ),
+        isEmpty,
+      );
+    });
+
+    testWidgets('an incomplete payment row shows an error, no rows', (
+      tester,
+    ) async {
+      final (server, _) = await _pump(tester, size: const Size(320, 640));
+      server.overrides['/api/v1/client/payments'] = _paymentList([
+        _payment(31),
+        _payment(33)..remove('amount'),
+      ]);
+      await _payments(tester);
+      await _reveal(tester, find.byKey(const Key('api-error')));
+      expect(find.byKey(const Key('api-payment-31')), findsNothing);
+    });
+
     testWidgets('rows, single currency and server-side status filter', (
       tester,
     ) async {
@@ -840,6 +1061,15 @@ void main() {
       if (next.companyId == 4) {
         expect(find.byKey(const Key('api-payment-91')), findsOneWidget);
       }
+      // The project picker under the new context offers none of company 3's
+      // projects.
+      await _invoicesTab(tester);
+      await _tap(tester, find.byKey(const Key('invoice-project')));
+      expect(find.byKey(const Key('project-option-7')), findsNothing);
+      expect(
+        server.last('/api/v1/client/projects').headers['X-Company'],
+        next.companyId?.toString(),
+      );
     });
   }
 }

@@ -1934,4 +1934,14 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get paymentRowsNote =>
       'الدفعات كما يعرضها الخادم. لا يذكر الخادم حالة كل دفعة أو عملتها، لذا يأتي فلتر الحالة والمجاميع أعلاه من الخادم.';
+
+  @override
+  String get loadMore => 'تحميل المزيد';
+
+  @override
+  String get paymentSummaryTitle => 'ملخص الدفعة';
+
+  @override
+  String get paymentSummaryNote =>
+      'من قائمة الدفعات. لا يوثّق الخادم بعد التفاصيل الكاملة للدفعة، لذا تظهر حقول القائمة هذه فقط.';
 }

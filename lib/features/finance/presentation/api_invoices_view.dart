@@ -7,6 +7,7 @@ import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/data/client_finance_repository.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
+import 'package:workflow_app/features/projects/data/projects_repository.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -54,7 +55,7 @@ class ApiInvoicesView extends ConsumerStatefulWidget {
 class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
   InvoiceFilter _filter = InvoiceFilter.all;
   InvoiceSort _sort = InvoiceSort.newest;
-  int? _projectId;
+  ProjectOption? _project;
   DateRange _range = DateRange.all;
   String _search = '';
   int _page = 1;
@@ -84,7 +85,7 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
     search: _search,
     from: _range.start(DateTime.now()),
     to: null,
-    projectId: _projectId,
+    projectId: _project?.id,
     page: _page,
   );
 
@@ -93,12 +94,6 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
     final l10n = AppLocalizations.of(context);
     final query = _query;
     final result = ref.watch(clientInvoicesProvider(query));
-    // The client's projects name the invoices' `project_id`s and feed the
-    // project filter; without them, cards show the id and no filter.
-    final projects = ref.watch(clientProjectOptionsProvider).value;
-    final projectTitles = <int, String>{
-      for (final p in projects ?? const <ProjectOption>[]) p.id: p.title,
-    };
     final stats = result.value?.stats;
     String n(int Function(InvoiceStats) pick) =>
         stats == null ? '—' : count(pick(stats));
@@ -149,18 +144,20 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
                 _page = 1;
               }),
             ),
-            if (projects != null && projects.isNotEmpty)
-              DropdownChip<int?>(
-                key: const Key('invoice-project'),
-                value: _projectId,
-                options: [null, for (final p in projects) p.id],
-                labelOf: (id) =>
-                    id == null ? l10n.allProjects : projectTitles[id] ?? '#$id',
-                onChanged: (id) => setState(() {
-                  _projectId = id;
+            // Searchable, paged picker over all of the client's projects.
+            FilterChipBox(
+              key: const Key('invoice-project'),
+              label: '${_project?.title ?? l10n.allProjects} ⌄',
+              selected: _project != null,
+              onTap: () async {
+                final choice = await showProjectPicker(context);
+                if (choice == null || !mounted) return;
+                setState(() {
+                  _project = choice.project;
                   _page = 1;
-                }),
-              ),
+                });
+              },
+            ),
           ],
         ),
         ChipRow(
@@ -196,7 +193,9 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
                 ApiInvoiceCard(
                   invoice: i,
                   currency: list.currencies[i.currencyId],
-                  projectTitle: projectTitles[i.projectId],
+                  projectTitle: i.projectId == _project?.id
+                      ? _project?.title
+                      : null,
                 ),
                 const SizedBox(height: 16),
               ],
@@ -216,7 +215,7 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
 }
 
 /// One invoice row from the API (reference, amount, derived status).
-class ApiInvoiceCard extends StatelessWidget {
+class ApiInvoiceCard extends ConsumerWidget {
   const new({
     required this.invoice,
     required this.currency,
@@ -227,13 +226,22 @@ class ApiInvoiceCard extends StatelessWidget {
   final InvoiceRecord invoice;
   final CurrencyRef? currency;
 
-  /// From the client's projects; the invoice itself carries only the id.
+  /// Known title of the invoice's project. The invoice carries only the
+  /// id; otherwise the title is looked up with `GET /client/projects/{id}`
+  /// (one request per distinct project) and `#id` shows until then or if
+  /// the project cannot be read.
   final String? projectTitle;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final i = invoice;
+    final projectTitle =
+        this.projectTitle ??
+        switch (i.projectId) {
+          final id? => ref.watch(apiProjectProvider(id)).value?.title,
+          null => null,
+        };
     final fields = invoiceFields(l10n, i, currency, projectTitle);
     final (label, tone) = _status(l10n, i);
     return RecordCard(
@@ -363,6 +371,144 @@ class _InvoiceDetailsSheet extends ConsumerWidget {
           child: LinearProgressIndicator(key: Key('invoice-details-loading')),
         ),
       },
+    );
+  }
+}
+
+/// The picker's answer: a project, or `null` for all projects.
+typedef ProjectChoice = ({ProjectOption? project});
+
+/// Searchable project picker for the invoice filter: server-side `search`,
+/// pages of [projectSearchPageSize] loaded on demand with "Load more", so
+/// every project can be reached without downloading them all. `null` when
+/// dismissed.
+Future<ProjectChoice?> showProjectPicker(BuildContext context) =>
+    showModalBottomSheet<ProjectChoice>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      builder: (_) => const _ProjectPicker(),
+    );
+
+class _ProjectPicker extends ConsumerStatefulWidget {
+  const new();
+
+  @override
+  ConsumerState<_ProjectPicker> createState() => _ProjectPickerState();
+}
+
+class _ProjectPickerState extends ConsumerState<_ProjectPicker> {
+  String _search = '';
+  int _pages = 1;
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onSearch(String v) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) {
+        setState(() {
+          _search = v;
+          _pages = 1;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final rows = <Widget>[
+      ListTile(
+        key: const Key('project-option-all'),
+        title: Text(l10n.allProjects),
+        onTap: () => Navigator.pop(context, (project: null)),
+      ),
+    ];
+    var more = false;
+    for (var page = 1; page <= _pages; page++) {
+      final q = (search: _search, page: page);
+      final value = ref.watch(clientProjectSearchProvider(q));
+      switch (value) {
+        case AsyncData(:final value):
+          for (final p in value.items) {
+            rows.add(
+              ListTile(
+                key: Key('project-option-${p.id}'),
+                title: Text(p.title),
+                onTap: () => Navigator.pop(context, (project: p)),
+              ),
+            );
+          }
+          if (page == 1 && value.items.isEmpty) {
+            rows.add(EmptyNotice(text: l10n.noRecords));
+          }
+          more = page == _pages && value.hasMore;
+        case AsyncError(:final error):
+          rows.add(
+            ApiErrorCard(
+              error: error,
+              onRetry: () => ref.invalidate(clientProjectSearchProvider(q)),
+            ),
+          );
+        default:
+          rows.add(
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          );
+      }
+    }
+    if (more) {
+      rows.add(
+        TextButton(
+          key: const Key('project-picker-more'),
+          onPressed: () => setState(() => _pages++),
+          child: Text(l10n.loadMore),
+        ),
+      );
+    }
+    return SafeArea(
+      child: Padding(
+        key: const Key('project-picker'),
+        padding: EdgeInsetsDirectional.only(
+          start: 20,
+          end: 20,
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.8,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              WfSearchBox(
+                fieldKey: const Key('project-picker-search'),
+                hint: l10n.searchProjectsHint,
+                onChanged: _onSearch,
+              ),
+              const SizedBox(height: 8),
+              // Pages arrive 20 rows at a time on demand, so the loaded rows
+              // are laid out together.
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: rows,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

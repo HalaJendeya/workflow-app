@@ -1026,5 +1026,8 @@
   "sortDueSoonest": "Due date",
   "sortHighestAmount": "Highest amount",
   "statusConfirmed": "Confirmed",
-  "paymentRowsNote": "Payments as the server lists them. It doesn't report a payment's status or currency on each row, so the status filter and the totals above come from the server."
+  "paymentRowsNote": "Payments as the server lists them. It doesn't report a payment's status or currency on each row, so the status filter and the totals above come from the server.",
+  "loadMore": "Load more",
+  "paymentSummaryTitle": "Payment summary",
+  "paymentSummaryNote": "From the payments list. The server doesn't document a payment's full details yet, so only these list fields are shown."
 }
