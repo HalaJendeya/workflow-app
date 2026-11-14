@@ -28,6 +28,16 @@ class LiveKitMediaEngine implements MediaEngine {
     }
     final mic = await Permission.microphone.request();
     final cam = camera ? await Permission.camera.request() : null;
+    // Android 12+: Bluetooth headsets need "Nearby devices" for audio
+    // routing. Optional — a refusal keeps the call on the phone's own
+    // speaker and microphone. Below Android 12 it is granted at install.
+    if (mic.isGranted && defaultTargetPlatform == TargetPlatform.android) {
+      try {
+        await Permission.bluetoothConnect.request();
+      } on Object {
+        // Not available on this device: nothing to route.
+      }
+    }
     return (
       microphone: mapPermission(mic),
       camera: cam == null ? null : mapPermission(cam),

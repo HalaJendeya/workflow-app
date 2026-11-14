@@ -6,7 +6,11 @@ plugins {
 
 android {
     namespace = "app.workflow.workflow_app"
-    compileSdk = flutter.compileSdkVersion
+    // permission_handler_android 14.x (required by permission_handler 13)
+    // compiles against API 37 and requires the app to do the same. This is
+    // only the API the code is compiled against: minSdk and targetSdk below
+    // are unchanged. Needs "Android SDK Platform 37" on the build machine.
+    compileSdk = maxOf(flutter.compileSdkVersion, 37)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
