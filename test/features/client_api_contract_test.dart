@@ -95,9 +95,11 @@ void main() {
   group('client invoices', () {
     const q = (
       filter: InvoiceFilter.partiallyPaid,
+      sort: InvoiceSort.newest,
       search: ' INV ',
       from: null,
       to: null,
+      projectId: null,
       page: 2,
     );
 
@@ -111,6 +113,7 @@ void main() {
         'page': 2,
         'per_page': 15,
         'status': 'partially_paid',
+        'sort': '-invoice_date',
         'search': 'INV',
       });
       final first = list.page.items.first;
@@ -183,7 +186,7 @@ void main() {
     });
   });
 
-  test('payment summary reads stats.total and per-currency totals', () async {
+  test('payments read stats.total, per-currency totals and rows', () async {
     // Shape seen live on GET /client/payments (empty account) plus one
     // documented totals row.
     http.reply(200, {
@@ -208,8 +211,10 @@ void main() {
       ],
       'stats': {'total': 3, 'received': 400, 'pending': 50, 'paid_out': 0},
     });
-    final s = await ClientFinanceRepository(client()).paymentSummary();
+    final s = await ClientFinanceRepository(client())
+        .payments(defaultPaymentQuery);
     expect(http.last.path, '/api/v1/client/payments');
+    expect(http.last.queryParameters, {'page': 1});
     expect(s.count, 3);
     expect(s.totals.single.code, 'ILS');
     expect(s.totals.single.received, 400);

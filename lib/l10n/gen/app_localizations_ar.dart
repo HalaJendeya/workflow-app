@@ -1915,4 +1915,23 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get viewAllLabel => 'عرض الكل';
+
+  @override
+  String get sortNewest => 'الأحدث أولاً';
+
+  @override
+  String get sortOldest => 'الأقدم أولاً';
+
+  @override
+  String get sortDueSoonest => 'تاريخ الاستحقاق';
+
+  @override
+  String get sortHighestAmount => 'المبلغ الأعلى';
+
+  @override
+  String get statusConfirmed => 'مؤكدة';
+
+  @override
+  String get paymentRowsNote =>
+      'الدفعات كما يعرضها الخادم. لا يذكر الخادم حالة كل دفعة أو عملتها، لذا يأتي فلتر الحالة والمجاميع أعلاه من الخادم.';
 }

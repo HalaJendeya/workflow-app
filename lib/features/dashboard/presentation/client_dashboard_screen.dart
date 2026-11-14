@@ -500,13 +500,7 @@ class _ApiClientDashboard extends ConsumerWidget {
     final summary = ref.watch(clientDashboardSummaryProvider);
     const projectsQuery = (search: '', status: null, page: 1);
     final projects = ref.watch(apiProjectsProvider(projectsQuery));
-    const invoicesQuery = (
-      filter: InvoiceFilter.all,
-      search: '',
-      from: null,
-      to: null,
-      page: 1,
-    );
+    const invoicesQuery = defaultInvoiceQuery;
     final invoices = ref.watch(clientInvoicesProvider(invoicesQuery));
     void openProjects([ApiProjectStatus? status]) => Navigator.of(context).push(
       MaterialPageRoute<void>(

@@ -1020,5 +1020,11 @@
   "myCompaniesNote": "Companies linked to your account. The server doesn't report your membership status or list companies you could join yet.",
   "noCompaniesYet": "Your account isn't linked to any company yet.",
   "runningLabel": "Running",
-  "viewAllLabel": "View All"
+  "viewAllLabel": "View All",
+  "sortNewest": "Newest first",
+  "sortOldest": "Oldest first",
+  "sortDueSoonest": "Due date",
+  "sortHighestAmount": "Highest amount",
+  "statusConfirmed": "Confirmed",
+  "paymentRowsNote": "Payments as the server lists them. It doesn't report a payment's status or currency on each row, so the status filter and the totals above come from the server."
 }

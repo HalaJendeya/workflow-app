@@ -1921,4 +1921,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewAllLabel => 'View All';
+
+  @override
+  String get sortNewest => 'Newest first';
+
+  @override
+  String get sortOldest => 'Oldest first';
+
+  @override
+  String get sortDueSoonest => 'Due date';
+
+  @override
+  String get sortHighestAmount => 'Highest amount';
+
+  @override
+  String get statusConfirmed => 'Confirmed';
+
+  @override
+  String get paymentRowsNote =>
+      'Payments as the server lists them. It doesn\'t report a payment\'s status or currency on each row, so the status filter and the totals above come from the server.';
 }

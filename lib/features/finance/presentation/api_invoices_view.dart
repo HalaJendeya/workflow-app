@@ -19,6 +19,13 @@ String invoiceFilterLabel(AppLocalizations l10n, InvoiceFilter f) =>
       InvoiceFilter.overdue => l10n.statusOverdue,
     };
 
+String invoiceSortLabel(AppLocalizations l10n, InvoiceSort s) => switch (s) {
+  InvoiceSort.newest => l10n.sortNewest,
+  InvoiceSort.oldest => l10n.sortOldest,
+  InvoiceSort.dueSoonest => l10n.sortDueSoonest,
+  InvoiceSort.highestAmount => l10n.sortHighestAmount,
+};
+
 (String, BadgeTone) _status(AppLocalizations l10n, InvoiceRecord i) =>
     switch (i.status) {
       ApiInvoiceStatus.paid => (l10n.statusPaid, BadgeTone.success),
@@ -31,7 +38,8 @@ String invoiceFilterLabel(AppLocalizations l10n, InvoiceFilter f) =>
     };
 
 /// "Invoices Management" (643:36002) backed by `GET /api/v1/client/invoices`.
-/// Search, status and date filters and paging are done by the server.
+/// Search, status, date and project filters, sorting and paging are done by
+/// the server.
 /// Clients have no invoice create, update or delete routes, so records are
 /// read-only here; "Create Invoice" reports that nothing can be saved.
 class ApiInvoicesView extends ConsumerStatefulWidget {
@@ -45,6 +53,8 @@ class ApiInvoicesView extends ConsumerStatefulWidget {
 
 class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
   InvoiceFilter _filter = InvoiceFilter.all;
+  InvoiceSort _sort = InvoiceSort.newest;
+  int? _projectId;
   DateRange _range = DateRange.all;
   String _search = '';
   int _page = 1;
@@ -70,9 +80,11 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
 
   InvoiceQuery get _query => (
     filter: _filter,
+    sort: _sort,
     search: _search,
     from: _range.start(DateTime.now()),
     to: null,
+    projectId: _projectId,
     page: _page,
   );
 
@@ -81,6 +93,12 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
     final l10n = AppLocalizations.of(context);
     final query = _query;
     final result = ref.watch(clientInvoicesProvider(query));
+    // The client's projects name the invoices' `project_id`s and feed the
+    // project filter; without them, cards show the id and no filter.
+    final projects = ref.watch(clientProjectOptionsProvider).value;
+    final projectTitles = <int, String>{
+      for (final p in projects ?? const <ProjectOption>[]) p.id: p.title,
+    };
     final stats = result.value?.stats;
     String n(int Function(InvoiceStats) pick) =>
         stats == null ? '—' : count(pick(stats));
@@ -121,6 +139,28 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
                 _page = 1;
               }),
             ),
+            DropdownChip<InvoiceSort>(
+              key: const Key('invoice-sort'),
+              value: _sort,
+              options: InvoiceSort.values,
+              labelOf: (s) => invoiceSortLabel(l10n, s),
+              onChanged: (s) => setState(() {
+                _sort = s;
+                _page = 1;
+              }),
+            ),
+            if (projects != null && projects.isNotEmpty)
+              DropdownChip<int?>(
+                key: const Key('invoice-project'),
+                value: _projectId,
+                options: [null, for (final p in projects) p.id],
+                labelOf: (id) =>
+                    id == null ? l10n.allProjects : projectTitles[id] ?? '#$id',
+                onChanged: (id) => setState(() {
+                  _projectId = id;
+                  _page = 1;
+                }),
+              ),
           ],
         ),
         ChipRow(
@@ -156,6 +196,7 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
                 ApiInvoiceCard(
                   invoice: i,
                   currency: list.currencies[i.currencyId],
+                  projectTitle: projectTitles[i.projectId],
                 ),
                 const SizedBox(height: 16),
               ],
@@ -176,48 +217,152 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
 
 /// One invoice row from the API (reference, amount, derived status).
 class ApiInvoiceCard extends StatelessWidget {
-  const new({required this.invoice, required this.currency, super.key});
+  const new({
+    required this.invoice,
+    required this.currency,
+    this.projectTitle,
+    super.key,
+  });
 
   final InvoiceRecord invoice;
   final CurrencyRef? currency;
+
+  /// From the client's projects; the invoice itself carries only the id.
+  final String? projectTitle;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final i = invoice;
-    final fmt = DateFormat('MMM d, y', 'en');
-    String m(double v) => money(
-      v,
-      currency: currency?.code ?? '',
-      symbol: currency?.symbol ?? '',
-    );
+    final fields = invoiceFields(l10n, i, currency, projectTitle);
     final (label, tone) = _status(l10n, i);
-    final fields = [
-      if (i.projectId != null)
-        DetailField(l10n.fieldProject, '#${i.projectId}'),
-      DetailField(l10n.fieldIssueDate, fmt.format(i.invoiceDate)),
-      if (i.dueDate != null)
-        DetailField(l10n.fieldDueDate, fmt.format(i.dueDate!)),
-    ];
     return RecordCard(
       key: key ?? Key('api-invoice-${i.id}'),
       reference: '#${i.id}',
-      title: m(i.amount),
+      title: invoiceMoney(i.amount, currency),
       status: label,
       tone: tone,
-      fields: fields,
-      onView: () => showRecordDetails(
+      fields: fields.where((f) => f.summary).map((f) => f.field).toList(),
+      onView: () => showApiInvoiceDetails(
         context,
-        title: '#${i.id}',
-        status: label,
-        tone: tone,
-        fields: [
-          DetailField(l10n.fieldAmount, m(i.amount)),
-          DetailField(l10n.fieldPaid, m(i.paidAmount)),
-          DetailField(l10n.fieldRemaining, m(i.remainingAmount)),
-          ...fields,
-        ],
+        row: i,
+        currency: currency,
+        projectTitle: projectTitle,
       ),
+    );
+  }
+}
+
+String invoiceMoney(double v, CurrencyRef? c) =>
+    money(v, currency: c?.code ?? '', symbol: c?.symbol ?? '');
+
+/// An invoice's rows; `summary` ones are also shown on the card.
+List<({DetailField field, bool summary})> invoiceFields(
+  AppLocalizations l10n,
+  InvoiceRecord i,
+  CurrencyRef? currency,
+  String? projectTitle,
+) {
+  final fmt = DateFormat('MMM d, y', 'en');
+  return [
+    (
+      field: DetailField(l10n.fieldAmount, invoiceMoney(i.amount, currency)),
+      summary: false,
+    ),
+    (
+      field: DetailField(l10n.fieldPaid, invoiceMoney(i.paidAmount, currency)),
+      summary: false,
+    ),
+    (
+      field: DetailField(
+        l10n.fieldRemaining,
+        invoiceMoney(i.remainingAmount, currency),
+      ),
+      summary: false,
+    ),
+    if (i.projectId != null)
+      (
+        field: DetailField(
+          l10n.fieldProject,
+          projectTitle ?? '#${i.projectId}',
+        ),
+        summary: true,
+      ),
+    (
+      field: DetailField(l10n.fieldIssueDate, fmt.format(i.invoiceDate)),
+      summary: true,
+    ),
+    if (i.dueDate != null)
+      (
+        field: DetailField(l10n.fieldDueDate, fmt.format(i.dueDate!)),
+        summary: true,
+      ),
+  ];
+}
+
+/// Invoice details from `GET /client/invoices/{id}`: the row at once with a
+/// loading bar, then the server's record; 403/404 or a network failure
+/// shows the error with Retry and no stale amounts.
+Future<void> showApiInvoiceDetails(
+  BuildContext context, {
+  required InvoiceRecord row,
+  required CurrencyRef? currency,
+  required String? projectTitle,
+}) => showModalBottomSheet<void>(
+  context: context,
+  useRootNavigator: true,
+  isScrollControlled: true,
+  builder: (_) => _InvoiceDetailsSheet(
+    row: row,
+    currency: currency,
+    projectTitle: projectTitle,
+  ),
+);
+
+class _InvoiceDetailsSheet extends ConsumerWidget {
+  const new({
+    required this.row,
+    required this.currency,
+    required this.projectTitle,
+  });
+
+  final InvoiceRecord row;
+  final CurrencyRef? currency;
+  final String? projectTitle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final value = ref.watch(clientInvoiceProvider(row.id));
+    final shown = value.value ?? row;
+    final (label, tone) = _status(l10n, shown);
+    return RecordDetailsBody(
+      key: const Key('invoice-details'),
+      title: '#${shown.id}',
+      status: label,
+      tone: tone,
+      fields: value.hasError
+          ? const []
+          : [
+              for (final f in invoiceFields(
+                l10n,
+                shown,
+                currency,
+                projectTitle,
+              ))
+                f.field,
+            ],
+      footer: switch (value) {
+        AsyncError(:final error) => ApiErrorCard(
+          error: error,
+          onRetry: () => ref.invalidate(clientInvoiceProvider(row.id)),
+        ),
+        AsyncData() => null,
+        _ => const Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: LinearProgressIndicator(key: Key('invoice-details-loading')),
+        ),
+      },
     );
   }
 }

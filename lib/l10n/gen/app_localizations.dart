@@ -3541,6 +3541,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View All'**
   String get viewAllLabel;
+
+  /// No description provided for @sortNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get sortNewest;
+
+  /// No description provided for @sortOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest first'**
+  String get sortOldest;
+
+  /// No description provided for @sortDueSoonest.
+  ///
+  /// In en, this message translates to:
+  /// **'Due date'**
+  String get sortDueSoonest;
+
+  /// No description provided for @sortHighestAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Highest amount'**
+  String get sortHighestAmount;
+
+  /// No description provided for @statusConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get statusConfirmed;
+
+  /// No description provided for @paymentRowsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments as the server lists them. It doesn\'t report a payment\'s status or currency on each row, so the status filter and the totals above come from the server.'**
+  String get paymentRowsNote;
 }
 
 class _AppLocalizationsDelegate

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +10,7 @@ import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/data/client_finance_repository.dart';
 import 'package:workflow_app/features/finance/domain/finance_models.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
+import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 /// Figma "Payment Records" (643:35269).
@@ -23,6 +26,31 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
   String? _method;
   DateRange _range = DateRange.last30;
   PaymentDirection? _direction;
+
+  // API mode: server-side filters of `GET /client/payments`.
+  PaymentStatusFilter _apiStatus = PaymentStatusFilter.all;
+  DateRange _apiRange = DateRange.all;
+  String _apiSearch = '';
+  int _apiPage = 1;
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onApiSearch(String v) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) {
+        setState(() {
+          _apiSearch = v;
+          _apiPage = 1;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,13 +77,10 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
     return ModulePage(
       title: l10n.paymentsTitle,
       description: l10n.paymentsDescription,
-      // Search and filters only work on demo rows: the API's payment rows
-      // are not wired in, so API mode shows no controls that do nothing.
-      onSearch: demo ? (v) => setState(() => _query = v) : null,
+      onSearch: demo ? (v) => setState(() => _query = v) : _onApiSearch,
       onCreate: () => _openForm(context),
       createLabel: l10n.addPayment,
       children: [
-        if (!demo) const BackendPendingNotice(),
         const ExportReportChip(),
         if (demo) ...[
           MetricCard(
@@ -74,10 +99,88 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
             delta: '5.2% ${l10n.vsLastMonth}',
           ),
         ] else
-          const _ApiPaymentMetrics(),
+          ..._apiChildren(context),
         if (demo) ..._localRecords(context, visible, all.length, dir),
       ],
     );
+  }
+
+  /// `GET /client/payments`: metrics, filters and rows from one response.
+  List<Widget> _apiChildren(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final query = (
+      status: _apiStatus,
+      search: _apiSearch,
+      from: _apiRange.start(DateTime.now()),
+      page: _apiPage,
+    );
+    final result = ref.watch(clientPaymentsProvider(query));
+    String statusLabel(PaymentStatusFilter s) => switch (s) {
+      PaymentStatusFilter.all => l10n.filterAllStatus,
+      PaymentStatusFilter.confirmed => l10n.statusConfirmed,
+      PaymentStatusFilter.pending => l10n.statusPending,
+    };
+    return [
+      _ApiPaymentMetrics(result: result),
+      InfoNotice(
+        key: const Key('payment-rows-note'),
+        text: l10n.paymentRowsNote,
+      ),
+      WfSearchBox(
+        fieldKey: const Key('payments-search'),
+        hint: l10n.searchPaymentsHint,
+        onChanged: _onApiSearch,
+      ),
+      ChipRow(
+        children: [
+          DropdownChip<DateRange>(
+            key: const Key('payment-range'),
+            value: _apiRange,
+            options: DateRange.values,
+            labelOf: (r) => r.label(l10n),
+            onChanged: (r) => setState(() {
+              _apiRange = r;
+              _apiPage = 1;
+            }),
+          ),
+        ],
+      ),
+      ChipRow(
+        children: [
+          for (final s in PaymentStatusFilter.values)
+            FilterChipBox(
+              key: Key('payment-status-${s.name}'),
+              label: statusLabel(s),
+              selected: _apiStatus == s,
+              onTap: () => setState(() {
+                _apiStatus = s;
+                _apiPage = 1;
+              }),
+            ),
+        ],
+      ),
+      AsyncSection(
+        value: result,
+        onRetry: () => ref.invalidate(clientPaymentsProvider(query)),
+        builder: (list) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (list.page.items.isEmpty) EmptyNotice(text: l10n.noRecords),
+            for (final p in list.page.items) ...[
+              _ApiPaymentCard(payment: p, currency: list.onlyCurrency),
+              const SizedBox(height: 16),
+            ],
+            if (list.page.lastPage > 1)
+              Pager(
+                page: list.page.currentPage - 1,
+                pageSize: list.page.perPage,
+                total: list.page.total,
+                onPage: (p) => setState(() => _apiPage = p + 1),
+              ),
+          ],
+        ),
+      ),
+    ];
   }
 
   List<Widget> _localRecords(
@@ -332,50 +435,103 @@ class _PaymentFormScreenState extends ConsumerState<PaymentFormScreen> {
 /// Payment metrics from `GET /api/v1/client/payments` (`stats.total` and
 /// per-currency `totals[]`). Payment rows stay pending: the collection does
 /// not document their fields.
-class _ApiPaymentMetrics extends ConsumerWidget {
-  const new();
+class _ApiPaymentMetrics extends StatelessWidget {
+  const new({required this.result});
+
+  final AsyncValue<PaymentList> result;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final summary = ref.watch(clientPaymentSummaryProvider);
-    return AsyncSection(
-      value: summary,
-      onRetry: () => ref.invalidate(clientPaymentSummaryProvider),
-      builder: (s) {
-        String sum(double Function(PaymentTotal) pick) => s.totals.isEmpty
-            ? '0'
-            : s.totals
-                  .map(
-                    (t) => money(pick(t), currency: t.code, symbol: t.symbol),
-                  )
-                  .join(' · ');
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            MetricCard(
-              key: const Key('api-payments-received'),
-              title: l10n.metricTotalRevenue,
-              value: sum((t) => t.received),
-              delta: '—',
-            ),
-            const SizedBox(height: 16),
-            MetricCard(
-              title: l10n.metricPendingPayments,
-              value: sum((t) => t.pending),
-              delta: '—',
-              negative: true,
-            ),
-            const SizedBox(height: 16),
-            MetricCard(
-              key: const Key('api-payments-count'),
-              title: l10n.metricTransactionVolume,
-              value: count(s.count),
-              delta: '—',
-            ),
-          ],
-        );
-      },
+    // Metrics without data say nothing ("—"): the list below shows the
+    // loading spinner or the error with Retry.
+    final s = result.value;
+    String sum(double Function(PaymentTotal) pick) => s == null
+        ? '—'
+        : s.totals.isEmpty
+        ? '0'
+        : s.totals
+              .map((t) => money(pick(t), currency: t.code, symbol: t.symbol))
+              .join(' · ');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        MetricCard(
+          key: const Key('api-payments-received'),
+          title: l10n.metricTotalRevenue,
+          value: sum((t) => t.received),
+          delta: '—',
+        ),
+        const SizedBox(height: 16),
+        MetricCard(
+          title: l10n.metricPendingPayments,
+          value: sum((t) => t.pending),
+          delta: '—',
+          negative: true,
+        ),
+        const SizedBox(height: 16),
+        MetricCard(
+          key: const Key('api-payments-count'),
+          title: l10n.metricTransactionVolume,
+          value: s == null ? '—' : count(s.count),
+          delta: '—',
+        ),
+      ],
+    );
+  }
+}
+
+/// One payment row. Amount is shown in the list's currency only when the
+/// totals name a single one; rows carry no currency of their own.
+class _ApiPaymentCard extends StatelessWidget {
+  const new({required this.payment, required this.currency});
+
+  final PaymentRecord payment;
+  final PaymentTotal? currency;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final p = payment;
+    final amount = money(
+      p.amount,
+      currency: currency?.code ?? '',
+      symbol: currency?.symbol ?? '',
+    );
+    final when = DateFormat('yyyy-MM-dd', 'en').format(p.date);
+    final (status, tone) = switch (p.direction) {
+      ApiPaymentDirection.incoming => (
+        l10n.directionIncoming,
+        BadgeTone.success,
+      ),
+      ApiPaymentDirection.outgoing => (
+        l10n.directionOutgoing,
+        BadgeTone.neutral,
+      ),
+      null => ('', BadgeTone.neutral),
+    };
+    final fields = [
+      DetailField(l10n.fieldPaymentDate, when),
+      if (p.method != null) DetailField(l10n.fieldMethod, p.method!),
+      if (p.invoiceId != null)
+        DetailField(l10n.fieldInvoice, '#${p.invoiceId}'),
+    ];
+    return RecordCard(
+      key: Key('api-payment-${p.id}'),
+      reference: '#${p.id}',
+      title: amount,
+      status: status,
+      tone: tone,
+      fields: fields,
+      // The row is the whole documented record; `GET /client/payments/{id}`
+      // documents only `data.id`, so details come from the row.
+      onView: () => showRecordDetails(
+        context,
+        title: '#${p.id}',
+        status: status,
+        tone: tone,
+        fields: [DetailField(l10n.fieldAmount, amount), ...fields],
+      ),
     );
   }
 }

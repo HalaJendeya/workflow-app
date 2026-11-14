@@ -634,8 +634,11 @@ class RecordCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              StatusBadge(label: status, tone: tone),
+              // No badge when the server reports no status for the record.
+              if (status.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                StatusBadge(label: status, tone: tone),
+              ],
             ],
           ),
           const SizedBox(height: 16),

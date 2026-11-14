@@ -521,17 +521,23 @@ void main() {
       });
     }
 
-    testWidgets('Payments shows no demo-only search or filters', (
+    testWidgets('Payments: server filters, no demo-only controls', (
       tester,
     ) async {
       await _pump(tester, size, 1.3);
       await _open(tester, 'Payments');
-      expect(find.text('Searching....'), findsNothing);
-      expect(find.textContaining('ready for the new WorkFlow API'), findsOne);
+      // The note says what the rows can and cannot show.
+      expect(find.byKey(const Key('payment-rows-note')), findsOneWidget);
+      expect(
+        find.textContaining('ready for the new WorkFlow API'),
+        findsNothing,
+      );
       await _checkEnd(tester, 'client_Payments_api_controls');
-      expect(find.byKey(const Key('payments-search')), findsNothing);
-      expect(find.textContaining('Incoming'), findsNothing);
-      expect(find.text('No records match these filters'), findsNothing);
+      // Server-side search and status filters; the demo-only direction
+      // chips ("Incoming (n)") are not offered.
+      expect(find.byKey(const Key('payments-search')), findsOneWidget);
+      expect(find.byKey(const Key('payment-status-confirmed')), findsOneWidget);
+      expect(find.textContaining('Incoming ('), findsNothing);
     });
 
     testWidgets('Companies lists the account companies, read-only', (
