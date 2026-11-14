@@ -39,11 +39,17 @@ class NotificationFilterController extends Notifier<NotificationFilter> {
 /// Inbox for the current filter with optimistic-free read updates: local
 /// state changes only after the server confirms.
 class NotificationsController extends AsyncNotifier<NotificationInbox> {
+  /// A badge older than this is reloaded when the app comes back.
+  static const staleAfter = Duration(seconds: 60);
+
+  DateTime? _loadedAt;
+
   @override
   Future<NotificationInbox> build() {
     _marking.clear();
     _loadingMore = null;
     _markingAll = null;
+    _loadedAt = DateTime.now();
     return ref
         .watch(notificationsRepositoryProvider)
         .list(filter: ref.watch(notificationFilterProvider));
@@ -54,6 +60,19 @@ class NotificationsController extends AsyncNotifier<NotificationInbox> {
   final _marking = <String, Future<void>>{};
   Future<void>? _loadingMore;
   Future<void>? _markingAll;
+
+  /// Back in the foreground: reload the inbox (and so the badge) unless it
+  /// was read within [staleAfter] or a load is already running. Every bell
+  /// on screen may ask; only the first stale request reloads.
+  void refreshIfStale([DateTime? now]) {
+    final at = _loadedAt;
+    final t = now ?? DateTime.now();
+    if (state.isLoading || (at != null && t.difference(at) < staleAfter)) {
+      return;
+    }
+    _loadedAt = t;
+    ref.invalidateSelf();
+  }
 
   Future<void> loadMore() {
     final current = state.value;

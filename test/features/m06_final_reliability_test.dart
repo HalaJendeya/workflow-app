@@ -64,7 +64,7 @@ ApiMessage _m(int id, {int sender = 9}) => ApiMessage(
   senderName: sender == _me ? 'Me' : 'Sara',
   text: 'm$id',
   createdAt: DateTime.utc(2026, 11, 5, 10, id % 60),
-  attachments: 0,
+  attachments: const [],
 );
 
 /// One pending `GET …/messages` call.
@@ -369,6 +369,21 @@ void main() {
       final v = c.read(notificationsControllerProvider).value!;
       expect(v.unreadCount, 1);
       expect(v.items.firstWhere((n) => n.id == 'n1').isRead, isTrue);
+    });
+
+    test('resume reloads a stale badge once, a fresh one never', () async {
+      expect(repo.pages, [1]);
+      // Just loaded: resuming does not ask again.
+      inbox().refreshIfStale();
+      await pumpEventQueue();
+      expect(repo.pages, [1]);
+      // A minute later several bells ask at once: one reload.
+      final later = DateTime.now().add(const Duration(minutes: 2));
+      inbox()
+        ..refreshIfStale(later)
+        ..refreshIfStale(later);
+      await c.read(notificationsControllerProvider.future);
+      expect(repo.pages, [1, 1]);
     });
 
     test('mark all and load more do not stack requests', () async {

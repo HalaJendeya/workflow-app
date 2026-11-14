@@ -69,13 +69,38 @@ class WorkspaceHeader extends ConsumerWidget {
   }
 }
 
-class _BellButton extends ConsumerWidget {
+class _BellButton extends ConsumerStatefulWidget {
   const new({required this.onTap});
 
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_BellButton> createState() => _BellButtonState();
+}
+
+class _BellButtonState extends ConsumerState<_BellButton> {
+  /// The badge would otherwise keep the count from before the app went to
+  /// the background.
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(
+      onResume: () =>
+          ref.read(notificationsControllerProvider.notifier).refreshIfStale(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final onTap = widget.onTap;
     final unread = ref
         .watch(notificationsControllerProvider)
         .value
