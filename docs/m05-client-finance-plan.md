@@ -106,3 +106,42 @@ for invoices or payments.
 
 **Deferred:** CSV export (needs file-saving/share dependency), payment
 details and rows (undocumented fields).
+
+## 6. M05a outcome (2026-11-14)
+
+Implemented (read-only, no new dependencies, no payment calls):
+
+- **Strict parsing.** Invoice `paid_amount`, `remaining_amount`,
+  `is_overdue` (boolean), `stats` (all five counts) and `totals` (each row
+  with `code`) are required; payment `stats.total`, `totals[].received` /
+  `pending` / `code`, and row `amount` / `payment_date` are required. A
+  missing value is an invalid response with Retry — no 0, full balance,
+  `false` or empty currency is invented.
+- **Invoices:** server-side status chips, search, date range, **sort**
+  (newest, oldest, due date, highest amount), **project filter** (options
+  and card names from `GET /client/projects?per_page=100`, first 100
+  projects), paging; **details from `GET /client/invoices/{id}`** (row first
+  with a loading bar, then the server record; 403/404/5xx/network show the
+  error with Retry and no stale amounts).
+- **Payments:** rows from the documented example of the same controller
+  (`id`, `invoice_id`, `amount`, `payment_method`, `payment_date`) plus
+  `direction`; server-side status (`confirmed`/`pending`), search, date
+  range, paging; metrics and rows from one request; amounts carry the
+  currency only when `totals` names exactly one. Details are the row
+  itself.
+- **Isolation:** every finance provider is keyed to the signed-in user and
+  company; tests cover a company switch for the same user and a switch to
+  another account.
+
+Still limited by the API (not invented):
+
+| Item | Missing |
+|---|---|
+| Payment row status | No status field in the documented row (the `status` filter works server-side). |
+| Payment row currency | No currency on rows; with several currencies in `totals` amounts show without a symbol. |
+| Payment details | `GET /client/payments/{id}` documents only `data.id`; not called. |
+| Invoice details shape | Documented only by `data.id`; parsed with the list row fields (the collection says "every invoice carries" them). Not yet seen live (no QA invoices). |
+| Payment `type` and `payment_method` filters | `type` is for staff payments; `facets.methods` element shape is undocumented (empty live). |
+| Project filter beyond 100 projects | `per_page` maximum is 100. |
+| CSV export | Deferred (needs a file-saving dependency). |
+
