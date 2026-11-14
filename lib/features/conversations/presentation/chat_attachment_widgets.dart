@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/conversations/data/chat_attachments.dart';
+import 'package:workflow_app/features/conversations/data/file_picker_attachments.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 /// Picks files for a message: images only when [images] is true. Returns
@@ -14,10 +15,22 @@ typedef AttachmentPicker = Future<List<OutgoingFile>?> Function(
   bool images,
 });
 
-/// The platform file picker. `null` until a picker dependency is approved:
-/// the attach buttons then say attachments need one, and no file is ever
-/// read or sent. Tests provide a picker to exercise the upload path.
-final attachmentPickerProvider = Provider<AttachmentPicker?>((_) => null);
+/// The platform file picker (`file_picker`). Tests replace it; `null`
+/// means none is available and the attach buttons say so.
+final attachmentPickerProvider = Provider<AttachmentPicker?>(
+  (_) => pickAttachments,
+);
+
+/// Saves a downloaded attachment through the system save dialog; `false`
+/// when the person cancels.
+typedef AttachmentSaver = Future<bool> Function(
+  DownloadedFile file,
+  String fallbackName,
+);
+
+final attachmentSaverProvider = Provider<AttachmentSaver>(
+  (_) => saveAttachment,
+);
 
 /// The message a refused selection shows.
 String attachmentProblemText(AppLocalizations l10n, AttachmentProblem p) =>
@@ -79,9 +92,13 @@ class AttachmentChip extends StatelessWidget {
 }
 
 /// Shows a downloaded attachment from memory: images and plain text in the
-/// app; any other type says it cannot be opened here yet (saving or
-/// handing a file to another app needs a dependency that is not approved).
-Future<void> showAttachmentPreview(BuildContext context, DownloadedFile file) {
+/// app. Every file — and the only way for a PDF — can be saved through the
+/// system save dialog and opened from the Files app; the app keeps no copy.
+Future<void> showAttachmentPreview(
+  BuildContext context,
+  DownloadedFile file, {
+  required AttachmentSaver save,
+}) {
   final l10n = AppLocalizations.of(context);
   final mime = file.mime;
   final Widget body;
@@ -102,7 +119,12 @@ Future<void> showAttachmentPreview(BuildContext context, DownloadedFile file) {
       ),
     );
   } else {
-    body = Text(l10n.attachmentNoPreview, key: const Key('attachment-other'));
+    body = Text(
+      mime == 'application/pdf'
+          ? l10n.attachmentPdfHint
+          : l10n.attachmentNoPreview,
+      key: const Key('attachment-other'),
+    );
   }
   return showDialog<void>(
     context: context,
@@ -115,10 +137,65 @@ Future<void> showAttachmentPreview(BuildContext context, DownloadedFile file) {
       content: SizedBox(width: double.maxFinite, child: body),
       actions: [
         TextButton(
+          key: const Key('attachment-save'),
+          onPressed: () async {
+            final messenger = ScaffoldMessenger.of(context);
+            try {
+              final saved = await save(file, l10n.attachment);
+              if (saved) {
+                messenger.showSnackBar(
+                  SnackBar(content: Text(l10n.attachmentSaved)),
+                );
+              }
+            } on Exception {
+              messenger.showSnackBar(
+                SnackBar(content: Text(l10n.attachmentSaveFailed)),
+              );
+            }
+          },
+          child: Text(l10n.saveToDevice),
+        ),
+        TextButton(
           onPressed: () => Navigator.of(dialog).pop(),
           child: Text(MaterialLocalizations.of(dialog).closeButtonLabel),
         ),
       ],
     ),
   );
+}
+
+/// Files chosen for the next message, each removable before sending.
+class SelectedFilesTray extends StatelessWidget {
+  const new({required this.files, required this.onRemove, super.key});
+
+  final List<OutgoingFile> files;
+  final void Function(int index) onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Wrap(
+      key: const Key('selected-files'),
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (var i = 0; i < files.length; i++)
+          InputChip(
+            key: Key('selected-file-$i'),
+            avatar: Icon(
+              files[i].isImage
+                  ? Icons.image_outlined
+                  : Icons.insert_drive_file_outlined,
+              size: 18,
+            ),
+            label: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 160),
+              child: Text(files[i].name, overflow: TextOverflow.ellipsis),
+            ),
+            deleteButtonTooltipMessage: l10n.removeAttachment(files[i].name),
+            onDeleted: () => onRemove(i),
+          ),
+      ],
+    );
+  }
 }

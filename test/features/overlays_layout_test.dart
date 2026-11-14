@@ -201,7 +201,7 @@ void main() {
 
           await tester.tap(find.byKey(const Key('chat-attach')));
           await tester.pump();
-          expect(find.textContaining('file picker'), findsOneWidget);
+          expect(find.textContaining('demo has no server'), findsOneWidget);
           await tester.pumpAndSettle(const Duration(seconds: 5));
 
           await tester.tap(find.byTooltip('Conversation info'));

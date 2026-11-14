@@ -35,6 +35,13 @@ class OutgoingFile {
 
 enum AttachmentProblem { tooMany, empty, tooLarge, typeNotAllowed }
 
+/// A selection refused before its files were read (too many, too large).
+class AttachmentRejected implements Exception {
+  const new(this.problem);
+
+  final AttachmentProblem problem;
+}
+
 /// The first rule [files] break, or `null` when the server should accept
 /// them. Checked before anything is uploaded, so a refused file never
 /// costs a request.

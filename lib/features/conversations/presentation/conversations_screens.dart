@@ -596,9 +596,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   void _discard(int localId) =>
       setState(() => _outgoing.removeWhere((x) => x.localId == localId));
 
-  /// Files from the platform picker (none without one), checked against
-  /// the route's limits before anything is queued or uploaded. The typed
-  /// text goes with them.
+  /// Files chosen for the next message; sent with the typed text.
+  final _selected = <OutgoingFile>[];
+
+  /// Adds files from the platform picker to the selection, checked against
+  /// the route's limits together with what is already selected. Nothing is
+  /// uploaded until Send.
   Future<void> _attach({required bool images}) async {
     final l10n = AppLocalizations.of(context);
     final pick = ref.read(attachmentPickerProvider);
@@ -606,18 +609,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       showSnack(context, l10n.attachmentsPending);
       return;
     }
-    final files = await pick(context, images: images);
+    final List<OutgoingFile>? files;
+    try {
+      files = await pick(context, images: images);
+    } on AttachmentRejected catch (e) {
+      if (mounted && !_disposed) {
+        showSnack(context, attachmentProblemText(l10n, e.problem));
+      }
+      return;
+    }
     if (!mounted || _disposed || files == null || files.isEmpty) return;
-    if (checkAttachments(files) case final problem?) {
+    if (checkAttachments([..._selected, ...files]) case final problem?) {
       showSnack(context, attachmentProblemText(l10n, problem));
       return;
     }
-    final text = _text.text.trim();
-    setState(() {
-      _outgoing.add(_Outgoing(_nextLocalId++, text, DateTime.now(), files));
-      _text.clear();
-    });
-    unawaited(_drain());
+    setState(() => _selected.addAll(files!));
   }
 
   /// Attachments whose bytes are on the way: a second tap waits for them.
@@ -643,7 +649,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       _opening.remove(attachmentId);
       if (!mounted || _disposed) return;
       setState(() {});
-      await showAttachmentPreview(context, file);
+      await showAttachmentPreview(
+        context,
+        file,
+        save: ref.read(attachmentSaverProvider),
+      );
     } on ApiException catch (e) {
       _opening.remove(attachmentId);
       if (!mounted || _disposed) return;
@@ -666,17 +676,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   void _send() {
     final text = _text.text.trim();
-    if (text.isEmpty) return;
     if (!ref.read(demoModeProvider)) {
-      // The input clears at once; the message shows as "Sending…" until the
-      // server confirms it, so typing the next one never races the send.
+      if (text.isEmpty && _selected.isEmpty) return;
+      // The input and the selection clear at once; the message shows as
+      // "Sending…" until the server confirms it, so the next one never
+      // races the send.
+      final files = List<OutgoingFile>.of(_selected);
       setState(() {
-        _outgoing.add(_Outgoing(_nextLocalId++, text, DateTime.now()));
+        _outgoing.add(_Outgoing(_nextLocalId++, text, DateTime.now(), files));
         _text.clear();
+        _selected.clear();
       });
       unawaited(_drain());
       return;
     }
+    if (text.isEmpty) return;
     final n = ref.read(conversationsProvider.notifier);
     final c = n.byId(widget.id);
     if (c == null) return;
@@ -947,6 +961,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (_selected.isNotEmpty) ...[
+                    SelectedFilesTray(
+                      files: _selected,
+                      onRemove: (i) => setState(() => _selected.removeAt(i)),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   TextField(
                     key: const Key('chat-input'),
                     controller: _text,
@@ -982,13 +1003,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                           'chat-attach',
                           'chat_attach',
                           l10n.tipAttachFile,
-                          l10n.attachmentsPending,
+                          l10n.attachmentsDemo,
                         ),
                         (
                           'chat-image',
                           'chat_image',
                           l10n.tipAttachImage,
-                          l10n.attachmentsPending,
+                          l10n.attachmentsDemo,
                         ),
                         (
                           'chat-mic',
@@ -1403,8 +1424,7 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
                         const SizedBox(height: 8),
                         InkWell(
                           borderRadius: BorderRadius.circular(16),
-                          onTap: () =>
-                              showSnack(context, l10n.attachmentsPending),
+                          onTap: () => showSnack(context, l10n.attachmentsDemo),
                           child: Container(
                             height: 48,
                             padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -15,10 +15,13 @@ import 'package:workflow_app/features/auth/data/auth_repository.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/conversations/data/conversations_repository.dart';
 import 'package:workflow_app/features/conversations/presentation/chat_attachment_widgets.dart';
+import 'package:workflow_app/features/meetings/application/meeting_media_controller.dart';
+import 'package:workflow_app/features/meetings/data/meeting_media.dart';
 import 'package:workflow_app/features/meetings/data/meetings_repository.dart';
 import 'package:workflow_app/features/notifications/data/notifications_repository.dart';
 
 import '../helpers/fake_http_adapter.dart';
+import '../helpers/fake_media.dart';
 import '../helpers/route_http_adapter.dart';
 import '../helpers/viewport.dart';
 import 'conversations_api_test.dart' show conversationRow;
@@ -342,6 +345,8 @@ void main() {
       WidgetTester tester, {
       Map<String, (int, Object?)> routes = const {},
       AttachmentPicker? picker,
+      AttachmentSaver? saver,
+      MediaEngine? engine,
     }) async {
       useViewport(tester, const Size(390, 844));
       await loadAppFonts();
@@ -461,6 +466,13 @@ void main() {
             sessionStorageProvider.overrideWithValue(storage),
             authRepositoryProvider.overrideWithValue(_Auth()),
             attachmentPickerProvider.overrideWithValue(picker),
+            attachmentSaverProvider.overrideWithValue(
+              saver ?? (_, _) async => false,
+            ),
+            // No engine: the details keep the plain `join` card (the
+            // fallback); room tests pass a fake engine.
+            mediaEngineProvider.overrideWithValue(engine),
+            deviceIdStoreProvider.overrideWithValue(MemoryDeviceIdStore()),
             apiClientProvider.overrideWith(
               (ref) => ApiClient(
                 baseUrl: 'https://api.test',
@@ -800,6 +812,108 @@ void main() {
       expect(find.byType(AlertDialog), findsNothing);
     });
 
+    testWidgets('attachments: chips can be removed; limits count them all', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        picker: (_, {images = false}) async => [
+          OutgoingFile(name: 'a.png', bytes: png),
+          OutgoingFile(name: 'b.png', bytes: png),
+          OutgoingFile(name: 'c.png', bytes: png),
+        ],
+      );
+      await openChat(tester);
+      await tester.tap(find.byKey(const Key('chat-attach')));
+      await tester.pumpAndSettle();
+      expect(find.text('a.png'), findsOneWidget);
+      // Three more would make six: refused, the first three stay.
+      await tester.tap(find.byKey(const Key('chat-attach')));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('up to 5 files'), findsOneWidget);
+      expect(find.byKey(const Key('selected-file-2')), findsOneWidget);
+      expect(find.byKey(const Key('selected-file-3')), findsNothing);
+      // The notice goes away on its own (it covers the composer meanwhile).
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      // Remove one before sending.
+      await tester.tap(find.byTooltip('Remove b.png'));
+      await tester.pumpAndSettle();
+      expect(find.text('b.png'), findsNothing);
+      await tester.tap(find.byKey(const Key('chat-send')));
+      await tester.pumpAndSettle();
+      final form =
+          http.requests
+                  .lastWhere(
+                    (r) =>
+                        r.method == 'POST' && r.uri.path.endsWith('/messages'),
+                  )
+                  .data
+              as FormData;
+      expect(form.files.map((f) => f.value.filename), ['a.png', 'c.png']);
+      expect(Map.fromEntries(form.fields), {'type': 'image'});
+      expect(sends(), 1);
+    });
+
+    testWidgets('attachments: a file refused by size is never read', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        picker: (_, {images = false}) async =>
+            throw const AttachmentRejected(AttachmentProblem.tooLarge),
+      );
+      await openChat(tester);
+      await tester.tap(find.byKey(const Key('chat-attach')));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('10 MB or smaller'), findsOneWidget);
+      expect(find.byKey(const Key('selected-files')), findsNothing);
+      expect(sends(), 0);
+    });
+
+    testWidgets('attachments: a PDF is saved through the system dialog', (
+      tester,
+    ) async {
+      final saved = <String?>[];
+      await pump(
+        tester,
+        routes: {
+          'GET /api/v1/conversations/1/attachments/79': (
+            200,
+            RawReply(Uint8List.fromList('%PDF-1.7\n...'.codeUnits), const {
+              'content-type': 'application/pdf',
+              'content-disposition': 'attachment; filename="contract.pdf"',
+            }),
+          ),
+        },
+        saver: (file, fallback) async {
+          saved.add(file.fileName);
+          return true;
+        },
+      );
+      newer = [
+        {
+          ..._msg(12, 'Signed copy'),
+          'attachments': [
+            {'id': 79},
+          ],
+        },
+      ];
+      await openChat(tester);
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('attachment-79')));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('PDFs open from a saved copy'),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const Key('attachment-save')));
+      await tester.pumpAndSettle();
+      expect(saved, ['contract.pdf']);
+      expect(find.text('Saved.'), findsOneWidget);
+    });
+
     testWidgets('attachments: without a picker nothing is read or sent', (
       tester,
     ) async {
@@ -842,7 +956,13 @@ void main() {
       await tester.enterText(find.byKey(const Key('chat-input')), 'See this');
       await tester.tap(find.byKey(const Key('chat-attach')));
       await tester.pumpAndSettle();
+      // Selected, not sent: a chip that can still be removed.
+      expect(find.byKey(const Key('selected-file-0')), findsOneWidget);
+      expect(sends(), 0);
+      await tester.tap(find.byKey(const Key('chat-send')));
+      await tester.pumpAndSettle();
       expect(sends(), 1);
+      expect(find.byKey(const Key('selected-files')), findsNothing);
       final form =
           http.requests
                   .lastWhere(
@@ -1118,6 +1238,214 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('meeting-join-error')), findsOneWidget);
       expect(find.byKey(const Key('meeting-leave')), findsOneWidget);
+    });
+
+    Map<String, (int, Object?)> mediaRoutes({int joinStatus = 200}) => {
+      'POST /api/v1/client/meetings/41/media/join': (
+        joinStatus,
+        joinStatus == 202
+            ? ok({
+                'join_request': {'id': 5, 'status': 'pending'},
+                'media': null,
+              })
+            : ok({
+                'participant': {'id': 55, 'connection_status': 'connected'},
+                'media': {
+                  'token': 'lk-test-token',
+                  'url': 'wss://media.example.test',
+                  'room': 'room-uuid',
+                },
+              }),
+      ),
+      'POST /api/v1/client/meetings/41/media/state': (
+        200,
+        ok({
+          'participant': {'id': 55},
+        }),
+      ),
+      'POST /api/v1/client/meetings/41/media/leave': (200, ok({'id': 55})),
+    };
+
+    int posts(String path) => http.requests
+        .where((r) => r.method == 'POST' && r.uri.path == path)
+        .length;
+
+    Future<void> openRoom(WidgetTester tester) async {
+      await openMeeting(tester);
+      await tester.tap(find.byKey(const Key('meeting-join')));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('room: join with audio and video, toggle, then leave', (
+      tester,
+    ) async {
+      final engine = FakeMediaEngine();
+      await pump(tester, routes: mediaRoutes(), engine: engine);
+      await openRoom(tester);
+      // media/join is the join: no separate `join` request.
+      expect(posts('/api/v1/client/meetings/41/media/join'), 1);
+      expect(posts('/api/v1/client/meetings/41/join'), 0);
+      final join = http.requests.lastWhere(
+        (r) => r.uri.path.endsWith('/media/join'),
+      );
+      expect(
+        (join.data as Map)['device_id'],
+        matches(r'^[A-Za-z0-9_-]{8,64}$'),
+      );
+      final room = engine.rooms.single;
+      expect(room.connectedWith, ('wss://media.example.test', 'lk-test-token'));
+      expect(find.byKey(const Key('room-status')), findsOneWidget);
+      expect(find.byKey(const Key('room-tile-me')), findsOneWidget);
+      expect(find.byKey(const Key('my-video')), findsOneWidget);
+      // The token is never on screen.
+      expect(find.textContaining('lk-test-token'), findsNothing);
+
+      // A second person arrives.
+      room
+        ..remote = const [
+          MediaParticipant(
+            id: 'p2',
+            name: 'Hana Host',
+            isLocal: false,
+            microphone: false,
+            camera: false,
+          ),
+        ]
+        ..emit(const MediaParticipantsChanged());
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('room-tile-p2')), findsOneWidget);
+      expect(find.byKey(const Key('room-muted-p2')), findsOneWidget);
+      expect(find.text('2 people'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('room-mic')));
+      await tester.pumpAndSettle();
+      expect(room.microphone, isFalse);
+      expect(find.byKey(const Key('room-muted-me')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('room-camera')));
+      await tester.pumpAndSettle();
+      expect(room.camera, isFalse);
+      expect(find.byKey(const Key('my-video')), findsNothing);
+      expect(posts('/api/v1/client/meetings/41/media/state'), 2);
+
+      await tester.tap(find.byKey(const Key('room-leave')));
+      await tester.pumpAndSettle();
+      expect(room.disconnected, isTrue, reason: 'camera and mic released');
+      expect(posts('/api/v1/client/meetings/41/media/leave'), 1);
+      expect(find.byKey(const Key('room-leave')), findsNothing);
+      expect(find.byKey(const Key('participants')), findsOneWidget);
+    });
+
+    testWidgets('room: Back also releases media and closes the session', (
+      tester,
+    ) async {
+      final engine = FakeMediaEngine();
+      await pump(tester, routes: mediaRoutes(), engine: engine);
+      await openRoom(tester);
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      // The leave request is sent as the room closes, without waiting.
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(engine.rooms.single.disconnected, isTrue);
+      expect(posts('/api/v1/client/meetings/41/media/leave'), 1);
+    });
+
+    testWidgets('room: camera refused joins audio only', (tester) async {
+      final engine = FakeMediaEngine()..camera = MediaPermission.denied;
+      await pump(tester, routes: mediaRoutes(), engine: engine);
+      await openRoom(tester);
+      expect(engine.rooms.single.camera, isFalse);
+      expect(find.byKey(const Key('my-video')), findsNothing);
+      // Turning the camera on asks again; still refused, it says so.
+      await tester.tap(find.byKey(const Key('room-camera')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('room-camera-denied')), findsOneWidget);
+      expect(engine.rooms.single.camera, isFalse);
+      await tester.tap(find.byKey(const Key('room-leave')));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('room: microphone refused sends nothing; settings offered', (
+      tester,
+    ) async {
+      final engine = FakeMediaEngine()
+        ..microphone = MediaPermission.permanentlyDenied;
+      await pump(tester, routes: mediaRoutes(), engine: engine);
+      await openRoom(tester);
+      expect(find.byKey(const Key('room-permission-denied')), findsOneWidget);
+      expect(posts('/api/v1/client/meetings/41/media/join'), 0);
+      await tester.tap(find.byKey(const Key('room-open-settings')));
+      await tester.pumpAndSettle();
+      expect(engine.settingsOpened, 1);
+    });
+
+    testWidgets('room: 202 waits for the host, no room until admitted', (
+      tester,
+    ) async {
+      final engine = FakeMediaEngine();
+      await pump(tester, routes: mediaRoutes(joinStatus: 202), engine: engine);
+      await openRoom(tester);
+      expect(find.byKey(const Key('room-waiting')), findsOneWidget);
+      expect(engine.rooms, isEmpty);
+      expect(find.byKey(const Key('room-leave')), findsNothing);
+    });
+
+    testWidgets('room: a server refusal and a failed connection offer Retry', (
+      tester,
+    ) async {
+      final engine = FakeMediaEngine()..failConnect = true;
+      await pump(tester, routes: {...mediaRoutes()}, engine: engine);
+      await openRoom(tester);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.byKey(const Key('room-error')), findsOneWidget);
+      expect(
+        find.text("Couldn't connect to the meeting's audio and video."),
+        findsOneWidget,
+      );
+      // The server had counted this device in: it is told it left.
+      expect(posts('/api/v1/client/meetings/41/media/leave'), 1);
+      engine.failConnect = false;
+      await tester.tap(find.byKey(const Key('room-retry')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('room-leave')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('room-leave')));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('room: LiveKit not configured shows the server reason', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        routes: {
+          ...mediaRoutes(),
+          'POST /api/v1/client/meetings/41/media/join': (
+            500,
+            failure('LiveKit is not configured.'),
+          ),
+        },
+        engine: FakeMediaEngine(),
+      );
+      await openRoom(tester);
+      expect(find.byKey(const Key('room-error')), findsOneWidget);
+      expect(find.byKey(const Key('room-retry')), findsOneWidget);
+    });
+
+    testWidgets('room: reconnecting banner, then a dropped room ends', (
+      tester,
+    ) async {
+      final engine = FakeMediaEngine();
+      await pump(tester, routes: mediaRoutes(), engine: engine);
+      await openRoom(tester);
+      final room = engine.rooms.single..emit(const MediaReconnecting());
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('room-reconnecting')), findsOneWidget);
+      room.emit(const MediaReconnected());
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('room-reconnecting')), findsNothing);
+      room.emit(const MediaDisconnected());
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('room-ended')), findsOneWidget);
+      expect(room.disconnected, isTrue);
     });
 
     testWidgets('meeting: an ended meeting offers no Join', (tester) async {
