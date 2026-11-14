@@ -33,12 +33,17 @@ later milestone · **Resolved** = closed by the new collection.
 - Both collections' safety gate names `workflow.aliservice.site` as the
   production host; it does not recognise `api.workflownets.com`, so the
   collection's own "never run destructive requests on production" guard does
-  not fire there. **Backend team should update the gate.**
+  not fire there. **Backend team should update the gate.** Until they confirm
+  otherwise, **`api.workflownets.com` is treated as production**: no
+  Collection Runner, no request trusted because it is labelled safe, and
+  every write needs the owner's explicit approval
+  (see `docs/m03-live-auth-test-plan.md`).
 
 ## M03 — Authentication & session
 
 | # | Gap | Status | Evidence / app behaviour | Needed to close |
 |---|---|---|---|---|
+| A0 | Login credentials travel in the JSON body; the session's secure credential handling injects headers only. | Handled | Live login/logout is a device step for the owner; Claude verifies with injected bearer tokens (`docs/m03-live-auth-test-plan.md`). | — |
 | A1 | `POST /api/v1/login` documents only `data.token`, `data.token_type`, `data.user.id`, `data.user.company_id`. No role. Unchanged in WorkFlow. | Handled | The app confirms the chosen portal with `GET /api/v1/{portal}/account` before opening a session. **Live:** an employee token gets 200 on `/employee/account` and **403** "You are not authorized to access this resource" on `/client/account`. On 403 the token is revoked and nothing is stored. | The live profile returns undocumented `roles[].name`, `roles[].permissions`, `must_set_password`, `is_active`, `employee`, `client`. If the collection documented `roles[].name` (or a role on the login user), the app could route without the extra request. |
 | A2 | Login 403 for deactivated / unverified / no-password accounts differs only by `message`. | Open | The server message is shown as given. | A machine-readable reason (e.g. `errors.reason`). The live profile's `must_set_password` / `is_active` / `email_verified_at` suggest the data exists. |
 | A3 | OTP length undocumented (`verify-email-otp`: `otp` string; `verify-otp-forgot-password`: `otp` numeric). | Open | 4 boxes per Figma (137:26665). | Code length and alphabet. |
@@ -87,7 +92,7 @@ read-only GETs inside the QA employee's own company only.
 
 | # | Issue | Result |
 |---|---|---|
-| S1 | **Task cost exposed to employees in sprint details.** The collection says employee task rows never carry `cost`/`currency` (planning page) and that an employee reaches only sprints of projects they are on. | **Still present.** `GET /employee/sprints/{id}` returns `data.tasks[].cost` with non-null values (4 of 4 tasks). The planning page (`GET /employee/sprints`) and the task list carry no cost. The app never reads `cost`; hiding it in Flutter is not a fix. **Release blocker.** |
+| S1 | **HIGH PRIORITY — task cost exposed to employees in sprint details.** The collection says employee task rows never carry `cost`/`currency` (planning page) and that an employee reaches only sprints of projects they are on. | **Still present.** `GET /employee/sprints/{id}` returns `data.tasks[].cost` with non-null values (4 of 4 tasks). The planning page (`GET /employee/sprints`) and the task list carry no cost. The app never reads `cost`; hiding it in Flutter is not a fix. **Release blocker.** |
 | S2 | **Employee access to projects they are not on.** | **Not verifiable with this account.** The list returns only the one project the QA user belongs to, and no `budget` key (list and detail), as documented. Proving direct access is refused needs an in-company project the user is not on; IDs were not guessed. **Remains a release blocker until retested.** |
 | S3 | Role-specific restrictions. | The `role:` prefix gate holds live (employee → 403 on `/client/account`). Permission-boundary routes were not exercised (they are writes). |
 
