@@ -81,6 +81,21 @@ later milestone · **Resolved** = closed by the new collection.
 | C7 | Client join may now answer **202** `{join_request}` in an `approval` meeting (2026-11-04). | Deferred (meetings milestone) | The app does not call `POST /meetings/{id}/join` in API mode today; the join flow must handle 202 when it does. |
 | C8 | Attachment upload | Unchanged | Upload exists only for conversation messages (multipart), conversation image and account image. Meeting attachments are download-only for client and employee. |
 
+## M06 — Client communication (2026-11-14)
+
+| # | Item | Status | Evidence / app behaviour | Needed to close |
+|---|---|---|---|---|
+| M1 | Conversation history | Handled | `GET /client/conversations/{id}/messages` (`limit`, `before_id`, `after_id`; `{data[], meta {has_more, oldest_id, newest_id}}`, "static audit; not yet executed against a server"). The chat loads the latest page, "Load earlier messages" pages back, and an open chat polls `after_id` every 10 s; messages merge by id. **Message row fields are undocumented**; the app reads the same fields as the conversation detail (live on the employee account). | A documented message row; live check with a QA conversation. |
+| M2 | Create conversation | Handled (mocked) | `POST /client/conversations` `{users[], type, title?}` → 201 `data.id`. People and the type come from `GET …/available-users`, **response undocumented**; live shape (client): `{role, default_type: client_chat, can_create_group: false, users[{id, name, image}]}`. Groups are offered only when `can_create_group`. Never sent live. | Documented `available-users` response. |
+| M3 | Conversation refresh | Handled | No realtime channel for conversations in the app: the list refreshes every 30 s, an open chat polls every 10 s; neither replaces the screen with a spinner. | A realtime channel, if wanted. |
+| M4 | Conversation attachments, image, members, rename, delete | Deferred | Routes exist (`files[]` upload, image, members, role, rename, delete-for-me ⚠️). Uploads need a file-picker dependency; member/rename/delete flows are not in this milestone. | Owner decision + Figma for each. |
+| M5 | Meeting join | Handled (mocked) | `POST /client/meetings/{id}/join`: 200 participant (`id`, `connection_status`) or **202** `{join_request}` in an approval meeting. Join is offered for waiting/live meetings; 202 shows "The host must admit you"; leave via `POST /client/meeting-participants/{id}/leave`. The client has **no** join-request status route, so a pending request cannot be followed up in the app. Never sent live. | Client route to read/cancel its own join request. |
+| M6 | Meeting media | Open | LiveKit (`media-token`, `media/join`…) is not integrated (no SDK): joining says audio/video are not available in the app. | Product decision + SDK. |
+| M7 | Per-meeting invitations | Handled | `GET /{role}/meetings/{id}/invitations` exists for employees only; **live:** the client route does not exist. The app calls it only for employees. | — |
+| M8 | Join by code (client) | Open | Employees have `GET /meetings/by-code/{code}`; clients do not. The client "Join by code" chip explains it is unavailable. | Client by-code route. |
+| M9 | Notifications | Handled | `GET /client/notifications` (`status`, `per_page`, `page`), `unread-count`, `POST {id}/read`, `POST read-all`. `meta` counts, `is_read` and `unread_count` are now required (no guessed page or 0). The collection's §7 "no Notifications API" line is outdated. | — |
+| M10 | Navigation from a notification | Open | Every item has `subject` and `data`, but their shape is undocumented, so a notification cannot be routed to its record; tapping marks it read. | Documented `subject {type, id}` (or a route). |
+
 ## Design / API clarifications
 
 | # | Item | Decision |
