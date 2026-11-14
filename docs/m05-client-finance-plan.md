@@ -118,9 +118,7 @@ Implemented (read-only, no new dependencies, no payment calls):
   missing value is an invalid response with Retry — no 0, full balance,
   `false` or empty currency is invented.
 - **Invoices:** server-side status chips, search, date range, **sort**
-  (newest, oldest, due date, highest amount), **project filter** (options
-  and card names from `GET /client/projects?per_page=100`, first 100
-  projects), paging; **details from `GET /client/invoices/{id}`** (row first
+  (newest, oldest, due date, highest amount), **project filter**, paging; **details from `GET /client/invoices/{id}`** (row first
   with a loading bar, then the server record; 403/404/5xx/network show the
   error with Retry and no stale amounts).
 - **Payments:** rows from the documented example of the same controller
@@ -139,9 +137,23 @@ Still limited by the API (not invented):
 |---|---|
 | Payment row status | No status field in the documented row (the `status` filter works server-side). |
 | Payment row currency | No currency on rows; with several currencies in `totals` amounts show without a symbol. |
-| Payment details | `GET /client/payments/{id}` documents only `data.id`; not called. |
+| Payment details | `GET /client/payments/{id}` documents only `data.id` (no example in any role; no QA payment to check live). Not called; the row is shown in a view titled **"Payment summary"** with a note that full details are not documented. |
 | Invoice details shape | Documented only by `data.id`; parsed with the list row fields (the collection says "every invoice carries" them). Not yet seen live (no QA invoices). |
 | Payment `type` and `payment_method` filters | `type` is for staff payments; `facets.methods` element shape is undocumented (empty live). |
-| Project filter beyond 100 projects | `per_page` maximum is 100. |
 | CSV export | Deferred (needs a file-saving dependency). |
+
+## 7. M05a cleanup (2026-11-14)
+
+- **Project filter — resolved.** A searchable picker uses the documented
+  server-side `search` and `page` of `GET /client/projects`, 20 projects per
+  page with "Load more", so every project is reachable (tested with 105)
+  and nothing is downloaded up front. Selecting a project returns the
+  invoice list to page 1; a slower answer for a superseded project never
+  replaces the current one. Project names on invoice cards come from
+  `GET /client/projects/{id}` for the projects on the current page (one
+  request per distinct project; `#id` until known or if unreadable). The
+  picker and the lookups are keyed to the account and company.
+- **Payment details — backend-dependent.** Still no documented response for
+  `GET /client/payments/{id}`; the view is labelled "Payment summary" and
+  shows only verified list fields. No details request is made.
 
