@@ -31,9 +31,17 @@ class AppNotification {
         message: 'Notification without id.',
       );
     }
+    // `is_read` is part of the documented contract of every item.
+    final isRead = json['is_read'];
+    if (isRead is! bool) {
+      throw const ApiException(
+        kind: ApiFailureKind.invalidResponse,
+        message: 'Notification without a boolean is_read.',
+      );
+    }
     return AppNotification(
       id: id.toString(),
-      isRead: json['is_read'] == true,
+      isRead: isRead,
       type: json['type'] as String?,
       category: json['category'] as String?,
       title: json['title'] as String?,

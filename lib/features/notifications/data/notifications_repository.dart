@@ -1,5 +1,6 @@
 import 'package:workflow_app/core/network/api_client.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
+import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/network/api_response.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/notifications/domain/app_notification.dart';
@@ -53,10 +54,14 @@ class ApiNotificationsRepository implements NotificationsRepository {
           .whereType<Map<String, dynamic>>()
           .map(AppNotification.fromJson)
           .toList(),
-      currentPage: _int(meta['current_page']) ?? page,
-      lastPage: _int(meta['last_page']) ?? page,
-      total: _int(meta['total']) ?? items.length,
-      unreadCount: _int(meta['unread_count']) ?? 0,
+      // Every `meta` count is asserted by the collection's test; a missing
+      // one is an invalid response, never a guessed page or 0.
+      currentPage:
+          _int(meta['current_page']) ?? missingField('meta.current_page'),
+      lastPage: _int(meta['last_page']) ?? missingField('meta.last_page'),
+      total: _int(meta['total']) ?? missingField('meta.total'),
+      unreadCount:
+          _int(meta['unread_count']) ?? missingField('meta.unread_count'),
     );
   }
 
@@ -65,7 +70,7 @@ class ApiNotificationsRepository implements NotificationsRepository {
     final data = ApiEnvelope.unwrapObject(
       await _client.get('$_base/unread-count'),
     );
-    return _int(data['unread_count']) ?? 0;
+    return _int(data['unread_count']) ?? missingField('unread_count');
   }
 
   @override
@@ -81,7 +86,7 @@ class ApiNotificationsRepository implements NotificationsRepository {
     final data = ApiEnvelope.unwrapObject(
       await _client.post('$_base/read-all'),
     );
-    return _int(data['unread_count']) ?? 0;
+    return _int(data['unread_count']) ?? missingField('unread_count');
   }
 }
 
