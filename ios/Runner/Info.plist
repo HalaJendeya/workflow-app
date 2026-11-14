@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>WorkFlow uses the camera when you turn on video in a meeting.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>WorkFlow uses the microphone so others can hear you in a meeting.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>WorkFlow lets you choose photos to send in a conversation.</string>
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>en</string>

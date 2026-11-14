@@ -8,6 +8,7 @@ environment:
 
 dependencies:
   dio: ^5.11.1
+  file_picker: ^13.3.3
   flutter:
     sdk: flutter
   flutter_localizations:
@@ -17,6 +18,8 @@ dependencies:
   flutter_svg: ^2.3.2
   go_router: ^18.1.2
   intl: ^0.20.3
+  livekit_client: ^2.13.2
+  permission_handler: ^13.0.2
 
 dev_dependencies:
   flutter_test:
