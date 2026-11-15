@@ -106,3 +106,35 @@ Build as in `docs/m06b-android-acceptance.md` (BUILD_SHA marker).
   languages by design.
 - The dark palette is derived from the light Figma roles; the Figma file has
   no mobile dark frames to compare against.
+
+## 8. Task cards
+
+`TaskCard` (`work_widgets.dart`) replaces the stacked label-over-value card
+in the Tasks list (demo and API); the Kanban cards (demo and API) are
+compacted the same way.
+
+| Card | Layout | Height at 390 px | Whole cards on a 390×844 screen |
+|---|---|---:|---:|
+| Tasks list | before: 7 labelled rows + 2 tinted 44 px buttons | 431 | 1 |
+| Tasks list | after: title + status badge · code · sprint · project · icon metadata with 40 px edit/delete icons | 143 | 4 |
+| Kanban | before: code / title / subtasks bar / divider / priority + duration | 144 | 1 |
+| Kanban | after: code + priority + points tags / title / subtasks bar inline with duration and avatar | 106 | 1 (column header and tabs take the rest) |
+| Dashboard focus | unchanged (already compact) | 116 | 3 |
+
+- Padding 14/12/6/6 (was 20 all round); gap between cards 12 (was 20).
+- Title up to 3 lines, identifier line up to 2, metadata values up to 2:
+  long content wraps, nothing is cut off at 320 px with 130 % text.
+- Each metadata item is announced as "Label: value"; the card itself is one
+  button opening the details; edit/delete keep their keys and tooltips and
+  are hidden without permission.
+- Dates and times are a left-to-right isolate, so they keep their order in
+  Arabic; a range like `09:30–11:30` never breaks in the middle.
+- Kanban: tap still opens the move sheet; `canMove`/pending rules unchanged;
+  high priority uses the danger colour.
+
+Checks: `test/features/task_card_layout_test.dart` (light/dark × English/
+Arabic at 320×640 ×1.3, 360×800, 390×844; `TASK_REPORT=…` for the figures).
+
+Redmi 8: open Tasks, Sprints → Kanban and Dashboard in English and Arabic,
+light and dark: badges at the top end, no cut-off dates or names, edit and
+delete easy to hit, tapping a card opens its details.

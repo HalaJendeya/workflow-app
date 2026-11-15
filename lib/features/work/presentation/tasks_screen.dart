@@ -31,6 +31,47 @@ String taskStatusLabel(AppLocalizations l10n, TaskStatus s) => switch (s) {
 
 String durationLabel(Duration d) => '${d.inHours}h ${d.inMinutes % 60}m';
 
+BadgeTone taskStatusTone(TaskStatus s) => switch (s) {
+  TaskStatus.backlog => BadgeTone.neutral,
+  TaskStatus.todo => BadgeTone.info,
+  TaskStatus.inProgress => BadgeTone.warning,
+  TaskStatus.completed => BadgeTone.success,
+};
+
+BadgeTone apiTaskStatusTone(ApiTaskStatus s) => switch (s) {
+  ApiTaskStatus.inProgress || ApiTaskStatus.inReview => BadgeTone.warning,
+  ApiTaskStatus.completed => BadgeTone.success,
+  ApiTaskStatus.todo || ApiTaskStatus.pending => BadgeTone.info,
+  _ => BadgeTone.neutral,
+};
+
+/// One line for a task's time: `2026/11/14 09:00–11:30`, or both dates when
+/// it spans days.
+String scheduleLabel(DateTime start, DateTime end) {
+  final day = DateFormat('yyyy/MM/dd', 'en');
+  final time = DateFormat('HH:mm', 'en');
+  final sameDay =
+      start.year == end.year &&
+      start.month == end.month &&
+      start.day == end.day;
+  // Left-to-right isolate: the figures keep their order inside Arabic
+  // text. Word joiners keep a range together, so a narrow card breaks
+  // between the date and the times, never inside "09:30–11:30".
+  final from = '${day.format(start)} ${time.format(start)}';
+  final range = sameDay
+      ? '$from$_joinedDash${time.format(end)}'
+      : '$from – ${day.format(end)} ${time.format(end)}';
+  return '$_lri$range$_pdi';
+}
+
+/// Left-to-right isolate around figures, and an en dash that never breaks.
+const _lri = '\u2066';
+const _pdi = '\u2069';
+const _joinedDash = '\u2060–\u2060';
+
+/// [text] as figures that keep their order in Arabic (see [scheduleLabel]).
+String _isolate(String text) => '$_lri$text$_pdi';
+
 final _dt = DateFormat('yyyy/MM/dd - HH:mm', 'en');
 
 /// Add/edit task. Demo only for now: the API accepts new tasks only from a
@@ -285,36 +326,50 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           ),
           if (visible.isEmpty) EmptyNotice(text: l10n.noRecords),
           for (final t in visible)
-            StackedRecordCard(
+            TaskCard(
               key: Key('task-${t.id}'),
               title: t.title,
-              subtitle: '${t.code} • ${t.sprint}',
-              amount: money(t.amount),
-              rows: [
-                (l10n.fieldProject, t.project),
-                (l10n.fieldEmployee, t.assignee),
-                (l10n.startDate, _dt.format(t.start)),
-                (l10n.endDate, _dt.format(t.end)),
-                (l10n.duration, durationLabel(t.duration)),
-              ],
-              actions: TintedActions(
-                onView: () => showTaskDetails(context, t),
-                onEdit: () => openTaskForm(context, existing: t),
-                onDelete: () async {
-                  if (await confirmDelete(context, t.code)) {
-                    final removed = ref
-                        .read(workTasksProvider.notifier)
-                        .remove(t.id);
-                    if (context.mounted) {
-                      showLocalOutcome(
-                        context,
-                        applied: removed,
-                        deleted: true,
-                      );
-                    }
-                  }
-                },
+              subtitle: [t.code, t.sprint, t.project].join(' · '),
+              badge: StatusBadge(
+                label: taskStatusLabel(l10n, t.status),
+                tone: taskStatusTone(t.status),
               ),
+              meta: [
+                TaskMeta(Icons.person_outline, l10n.fieldEmployee, t.assignee),
+                TaskMeta(
+                  Icons.event_outlined,
+                  l10n.startDate,
+                  scheduleLabel(t.start, t.end),
+                ),
+                TaskMeta(
+                  Icons.timer_outlined,
+                  l10n.duration,
+                  durationLabel(t.duration),
+                ),
+                TaskMeta(
+                  Icons.flag_outlined,
+                  l10n.priority,
+                  priorityLabel(l10n, t.priority),
+                ),
+                TaskMeta(
+                  Icons.payments_outlined,
+                  l10n.fieldAmount,
+                  money(t.amount),
+                  strong: true,
+                ),
+              ],
+              onView: () => showTaskDetails(context, t),
+              onEdit: () => openTaskForm(context, existing: t),
+              onDelete: () async {
+                if (await confirmDelete(context, t.code)) {
+                  final removed = ref
+                      .read(workTasksProvider.notifier)
+                      .remove(t.id);
+                  if (context.mounted) {
+                    showLocalOutcome(context, applied: removed, deleted: true);
+                  }
+                }
+              },
             ),
           Pager(
             page: page,
@@ -514,54 +569,79 @@ class _ApiTaskRows extends ConsumerWidget {
             children: [
               if (page.items.isEmpty) EmptyNotice(text: l10n.noRecords),
               for (final t in page.items) ...[
-                StackedRecordCard(
+                TaskCard(
                   key: Key('api-task-${t.id}'),
                   title: t.title,
                   subtitle: [
                     '#${t.id}',
-                    apiTaskStatusLabel(l10n, t.status),
                     ?t.sprintName,
-                  ].join(' • '),
+                    ?t.projectTitle,
+                  ].join(' · '),
+                  badge: StatusBadge(
+                    label: apiTaskStatusLabel(l10n, t.status),
+                    tone: apiTaskStatusTone(t.status),
+                  ),
+                  // Only what the server sent: no empty fields, no guesses.
                   // The employee role receives no task cost.
-                  amount: t.storyPoints == null
-                      ? '—'
-                      : l10n.points(t.storyPoints!),
-                  rows: [
-                    (l10n.fieldProject, t.projectTitle ?? '—'),
-                    (l10n.fieldEmployee, t.assigneeName ?? '—'),
-                    (
-                      l10n.startDate,
-                      [
-                        if (t.taskDate != null) date.format(t.taskDate!),
-                        if (t.start != null) time.format(t.start!),
-                      ].join(' - '),
-                    ),
-                    (l10n.endDate, t.end == null ? '—' : time.format(t.end!)),
-                    (
-                      l10n.duration,
-                      t.duration == null ? '—' : durationLabel(t.duration!),
-                    ),
-                  ],
-                  actions: TintedActions(
-                    onView: () => showRecordDetails(
-                      context,
-                      title: t.title,
-                      status: apiTaskStatusLabel(l10n, t.status),
-                      tone: BadgeTone.info,
-                      fields: [
-                        DetailField(l10n.fieldProject, t.projectTitle ?? '—'),
-                        DetailField(
-                          l10n.priority,
-                          t.priority == null
-                              ? '—'
-                              : priorityLabel(l10n, t.priority!),
+                  meta: [
+                    if (t.assigneeName != null)
+                      TaskMeta(
+                        Icons.person_outline,
+                        l10n.fieldEmployee,
+                        t.assigneeName!,
+                      ),
+                    if (t.taskDate != null || t.start != null)
+                      TaskMeta(
+                        Icons.event_outlined,
+                        l10n.startDate,
+                        _isolate(
+                          [
+                            if (t.taskDate != null) date.format(t.taskDate!),
+                            [
+                              if (t.start != null) time.format(t.start!),
+                              if (t.end != null) time.format(t.end!),
+                            ].join(_joinedDash),
+                          ].where((x) => x.isNotEmpty).join(' '),
                         ),
-                        DetailField(l10n.fieldEmployee, t.assigneeName ?? '—'),
-                      ],
-                    ),
+                      ),
+                    if (t.duration != null)
+                      TaskMeta(
+                        Icons.timer_outlined,
+                        l10n.duration,
+                        durationLabel(t.duration!),
+                      ),
+                    if (t.priority != null)
+                      TaskMeta(
+                        Icons.flag_outlined,
+                        l10n.priority,
+                        priorityLabel(l10n, t.priority!),
+                      ),
+                    if (t.storyPoints != null)
+                      TaskMeta(
+                        Icons.star_outline,
+                        l10n.storyPoints,
+                        l10n.points(t.storyPoints!),
+                        strong: true,
+                      ),
+                  ],
+                  onView: () => showRecordDetails(
+                    context,
+                    title: t.title,
+                    status: apiTaskStatusLabel(l10n, t.status),
+                    tone: BadgeTone.info,
+                    fields: [
+                      DetailField(l10n.fieldProject, t.projectTitle ?? '—'),
+                      DetailField(
+                        l10n.priority,
+                        t.priority == null
+                            ? '—'
+                            : priorityLabel(l10n, t.priority!),
+                      ),
+                      DetailField(l10n.fieldEmployee, t.assigneeName ?? '—'),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
               ],
               if (page.lastPage > 1)
                 Pager(

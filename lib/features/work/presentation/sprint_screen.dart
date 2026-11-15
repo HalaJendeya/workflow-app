@@ -35,7 +35,7 @@ const List<TaskStatus> _columns = [
 
 (Color, Color) _priorityColors(TaskPriority p) => switch (p) {
   TaskPriority.urgent => (ModuleColors.dangerBg, ModuleColors.dangerFg),
-  TaskPriority.high => (ModuleColors.warningBg, const Color(0xFFAD3026)),
+  TaskPriority.high => (ModuleColors.warningBg, ModuleColors.dangerFg),
   TaskPriority.medium => (AppColors.surfaceSubtle, AppColors.textPrimary),
   TaskPriority.low => (AppColors.primary50, AppColors.primary),
 };
@@ -417,10 +417,11 @@ class _KanbanCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: () => _move(context, ref),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Identifier, priority and points on one line.
               Row(
                 children: [
                   Icon(
@@ -428,7 +429,7 @@ class _KanbanCard extends ConsumerWidget {
                     size: 16,
                     color: ModuleColors.muted,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       t.code,
@@ -439,82 +440,52 @@ class _KanbanCard extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary50,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      l10n.points(t.points),
-                      style: AppTextStyles.mobileXsSemiBold.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
+                  _Tag(priorityLabel(l10n, t.priority), pbg, pfg),
+                  const SizedBox(width: 6),
+                  _Tag(
+                    l10n.points(t.points),
+                    AppColors.primary50,
+                    AppColors.primary,
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 t.title,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.mobileBaseSemiBold.copyWith(
                   color: _kanbanTitle,
                 ),
               ),
-              if (t.subtasksTotal > 0) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        l10n.subtasksDone(t.subtasksDone, t.subtasksTotal),
-                        style: AppTextStyles.mobileXsRegular.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+              const SizedBox(height: 8),
+              // Progress, time and assignee on one line.
+              Row(
+                children: [
+                  if (t.subtasksTotal > 0) ...[
+                    Text(
+                      '${t.subtasksDone}/${t.subtasksTotal}',
+                      semanticsLabel: l10n.subtasksDone(
+                        t.subtasksDone,
+                        t.subtasksTotal,
+                      ),
+                      style: AppTextStyles.mobileXsSemiBold.copyWith(
+                        color: AppColors.textSecondary,
                       ),
                     ),
-                    Text(
-                      '${(t.progress * 100).round()}%',
-                      style: AppTextStyles.mobileXsSemiBold.copyWith(
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: LinearProgressIndicator(
+                        value: t.progress,
+                        minHeight: 4,
+                        borderRadius: BorderRadius.circular(99),
+                        backgroundColor: AppColors.surfaceSubtle,
                         color: AppColors.primary,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                LinearProgressIndicator(
-                  value: t.progress,
-                  minHeight: 5,
-                  borderRadius: BorderRadius.circular(99),
-                  backgroundColor: AppColors.surfaceSubtle,
-                  color: AppColors.primary,
-                ),
-              ],
-              const SizedBox(height: 8),
-              Divider(height: 1, color: ModuleColors.chipBorder),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: pbg,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      priorityLabel(l10n, t.priority).toUpperCase(),
-                      style: AppTextStyles.mobileXsSemiBold.copyWith(
-                        color: pfg,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 7),
+                    const SizedBox(width: 10),
+                  ] else
+                    const Spacer(),
                   Icon(
                     Icons.schedule,
                     size: 14,
@@ -527,7 +498,7 @@ class _KanbanCard extends ConsumerWidget {
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   WfAvatar(initials: t.initials, size: 24),
                 ],
               ),
@@ -576,3 +547,25 @@ Color get _kanbanBody =>
 /// A column accent: the Figma tint in light mode, a muted [dark] in dark.
 Color _tone(int light, Color dark) =>
     AppColors.isDark ? dark.withValues(alpha: 0.35) : Color(light);
+
+/// A small tinted tag (priority, points) on Kanban cards.
+class _Tag extends StatelessWidget {
+  const new(this.label, this.background, this.foreground);
+
+  final String label;
+  final Color background;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    decoration: BoxDecoration(
+      color: background,
+      borderRadius: BorderRadius.circular(4),
+    ),
+    child: Text(
+      label,
+      style: AppTextStyles.mobileXsSemiBold.copyWith(color: foreground),
+    ),
+  );
+}

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
+import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 /// View / Edit / Delete tinted actions used by task and timesheet records.
@@ -62,73 +63,189 @@ class TintedActions extends StatelessWidget {
   }
 }
 
-/// "Record card" with title, subtitle, amount and stacked label/value rows.
-class StackedRecordCard extends StatelessWidget {
+/// One piece of task metadata: an icon and a short value. [label] names
+/// it for screen readers (the icon stands in for it on screen).
+class TaskMeta {
+  const new(this.icon, this.label, this.value, {this.strong = false});
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  /// The figure the reader looks for first (cost, points).
+  final bool strong;
+}
+
+/// A task in a list, content first: the title with its badge at the top
+/// end, then identifier · sprint · project on one line, then icon-labelled
+/// metadata that wraps only when it must, with compact edit/delete icons at
+/// the end. Tapping the card opens the details.
+///
+/// Typically two or three rows (~110 px) instead of a label above every
+/// value (~430 px).
+class TaskCard extends StatelessWidget {
   const new({
     required this.title,
     required this.subtitle,
-    required this.amount,
-    required this.rows,
-    required this.actions,
+    required this.meta,
+    required this.onView,
     this.badge,
+    this.onEdit,
+    this.onDelete,
     super.key,
   });
 
   final String title;
   final String subtitle;
-  final String amount;
-  final List<(String, String)> rows;
-  final Widget actions;
+  final List<TaskMeta> meta;
   final Widget? badge;
+  final VoidCallback onView;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   @override
-  Widget build(BuildContext context) => ModuleCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final secondary = AppTextStyles.mobileXsRegular.copyWith(
+      color: AppColors.textSecondary,
+    );
+    Widget icon(IconData i, String tip, VoidCallback onTap, Key key, Color c) =>
+        IconButton(
+          key: key,
+          tooltip: tip,
+          onPressed: onTap,
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+          padding: EdgeInsets.zero,
+          icon: Icon(i, size: 20, color: c),
+        );
+    return Material(
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.button + 4),
+        side: BorderSide(color: ModuleColors.chipBorder),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: const Key('action-view'),
+        onTap: onView,
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 6, 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.mobileBaseSemiBold.copyWith(
+                          color: AppColors.neutral900,
+                        ),
+                      ),
+                    ),
+                    if (badge != null) ...[const SizedBox(width: 8), badge!],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 2),
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 8),
+                child: Text(
+                  subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: secondary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Wrap(
+                        spacing: 12,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [for (final m in meta) _MetaItem(m)],
+                      ),
+                    ),
+                  ),
+                  if (onEdit != null)
+                    icon(
+                      Icons.edit_outlined,
+                      l10n.edit,
+                      onEdit!,
+                      const Key('action-edit'),
+                      AppColors.textSecondary,
+                    ),
+                  if (onDelete != null)
+                    icon(
+                      Icons.delete_outline,
+                      l10n.delete,
+                      onDelete!,
+                      const Key('action-delete'),
+                      ModuleColors.dangerFg,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MetaItem extends StatelessWidget {
+  const new(this.meta);
+
+  final TaskMeta meta;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: '${meta.label}: ${meta.value}',
+    excludeSemantics: true,
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          title,
-          style: AppTextStyles.mobileLgSemiBold.copyWith(
-            color: AppColors.neutral900,
+        Icon(meta.icon, size: 14, color: AppColors.textSecondary),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            meta.value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style:
+                (meta.strong
+                        ? AppTextStyles.mobileXsSemiBold
+                        : AppTextStyles.mobileXsRegular)
+                    .copyWith(
+                      color: meta.strong
+                          ? AppColors.neutral900
+                          : AppColors.textPrimary,
+                    ),
           ),
         ),
-        const SizedBox(height: 5),
-        Text(
-          subtitle,
-          style: AppTextStyles.mobileBaseRegular.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-        if (badge != null) ...[const SizedBox(height: 14), badge!],
-        const SizedBox(height: 14),
-        Text(
-          amount,
-          style: AppTextStyles.mobile2xlSemiBold.copyWith(
-            color: AppColors.neutral900,
-          ),
-        ),
-        const SizedBox(height: 14),
-        for (final (label, value) in rows) ...[
-          Text(
-            label,
-            style: AppTextStyles.mobileBaseRegular.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
-          Text(
-            value,
-            style: AppTextStyles.mobileBaseRegular.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-        const SizedBox(height: 6),
-        actions,
       ],
     ),
   );
 }
+
+/// Priority as a small badge (shared by task cards and Kanban cards).
+BadgeTone priorityTone(TaskPriority p) => switch (p) {
+  TaskPriority.urgent => BadgeTone.danger,
+  TaskPriority.high => BadgeTone.warning,
+  TaskPriority.medium => BadgeTone.neutral,
+  TaskPriority.low => BadgeTone.info,
+};
 
 /// "Showing x–y of n" with numbered pages.
 class Pager extends StatelessWidget {

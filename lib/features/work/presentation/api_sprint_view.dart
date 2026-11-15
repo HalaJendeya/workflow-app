@@ -46,7 +46,7 @@ String apiTaskStatusLabel(AppLocalizations l10n, ApiTaskStatus s) =>
 
 (Color, Color) _priorityColors(TaskPriority p) => switch (p) {
   TaskPriority.urgent => (ModuleColors.dangerBg, ModuleColors.dangerFg),
-  TaskPriority.high => (ModuleColors.warningBg, const Color(0xFFAD3026)),
+  TaskPriority.high => (ModuleColors.warningBg, ModuleColors.dangerFg),
   TaskPriority.medium => (AppColors.surfaceSubtle, AppColors.textPrimary),
   TaskPriority.low => (AppColors.primary50, AppColors.primary),
 };
@@ -646,10 +646,11 @@ class ApiTaskCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: pending || !canMove ? null : onTap,
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Identifier, priority and points on one line.
               Row(
                 children: [
                   Icon(
@@ -657,7 +658,7 @@ class ApiTaskCard extends StatelessWidget {
                     size: 16,
                     color: ModuleColors.muted,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       [
@@ -671,81 +672,62 @@ class ApiTaskCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (t.priority case final p?) ...[
+                    _Tag(
+                      priorityLabel(l10n, p),
+                      _priorityColors(p).$1,
+                      _priorityColors(p).$2,
+                    ),
+                    const SizedBox(width: 6),
+                  ],
                   if (t.storyPoints != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary50,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        l10n.points(t.storyPoints!),
-                        style: AppTextStyles.mobileXsSemiBold.copyWith(
-                          color: AppColors.primary,
-                        ),
-                      ),
+                    _Tag(
+                      l10n.points(t.storyPoints!),
+                      AppColors.primary50,
+                      AppColors.primary,
                     ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 t.title,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.mobileBaseSemiBold.copyWith(
                   color: _kanbanTitle,
                 ),
               ),
-              const SizedBox(height: 8),
-              Divider(height: 1, color: ModuleColors.chipBorder),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  if (t.priority case final p?) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _priorityColors(p).$1,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        priorityLabel(l10n, p).toUpperCase(),
-                        style: AppTextStyles.mobileXsSemiBold.copyWith(
-                          color: _priorityColors(p).$2,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 7),
-                  ],
-                  if (d != null) ...[
-                    Icon(
-                      Icons.schedule,
-                      size: 14,
-                      color: AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      '${(d.inMinutes / 60).toStringAsFixed(1)}h',
-                      style: AppTextStyles.mobileXsRegular.copyWith(
+              // Time and assignee (or the move in progress) on one line.
+              if (d != null || pending || t.initials.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    if (d != null) ...[
+                      Icon(
+                        Icons.schedule,
+                        size: 14,
                         color: AppColors.textSecondary,
                       ),
-                    ),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${(d.inMinutes / 60).toStringAsFixed(1)}h',
+                        style: AppTextStyles.mobileXsRegular.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                    const Spacer(),
+                    if (pending)
+                      const SizedBox.square(
+                        key: Key('kanban-pending'),
+                        dimension: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    else if (t.initials.isNotEmpty)
+                      WfAvatar(initials: t.initials, size: 24),
                   ],
-                  const Spacer(),
-                  if (pending)
-                    const SizedBox.square(
-                      key: Key('kanban-pending'),
-                      dimension: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  else if (t.initials.isNotEmpty)
-                    WfAvatar(initials: t.initials, size: 24),
-                ],
-              ),
+                ),
+              ],
             ],
           ),
         ),
@@ -764,3 +746,25 @@ Color get _kanbanBody =>
 /// A column accent: the Figma tint in light mode, a muted [dark] in dark.
 Color _tone(int light, Color dark) =>
     AppColors.isDark ? dark.withValues(alpha: 0.35) : Color(light);
+
+/// A small tinted tag (priority, points) on Kanban cards.
+class _Tag extends StatelessWidget {
+  const new(this.label, this.background, this.foreground);
+
+  final String label;
+  final Color background;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    decoration: BoxDecoration(
+      color: background,
+      borderRadius: BorderRadius.circular(4),
+    ),
+    child: Text(
+      label,
+      style: AppTextStyles.mobileXsSemiBold.copyWith(color: foreground),
+    ),
+  );
+}
