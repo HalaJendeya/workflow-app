@@ -108,7 +108,7 @@ class _BellButtonState extends ConsumerState<_BellButton> {
       button: true,
       label: AppLocalizations.of(context).notificationsTitle,
       child: Material(
-        color: AppColors.white,
+        color: AppColors.surface,
         shape: const CircleBorder(),
         child: InkWell(
           customBorder: const CircleBorder(),
@@ -159,7 +159,7 @@ Future<void> _showAccountMenu(
           ),
           ListTile(
             key: const Key('logout'),
-            leading: const Icon(Icons.logout, color: AppColors.textPrimary),
+            leading: Icon(Icons.logout, color: AppColors.textPrimary),
             title: Text(l10n.logout, style: style),
             onTap: () {
               Navigator.of(sheet).pop();

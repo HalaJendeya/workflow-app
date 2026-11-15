@@ -502,7 +502,7 @@ class _HoursCard extends StatelessWidget {
                 ),
             ],
           ),
-          const Divider(height: 28, color: ModuleColors.sectionDivider),
+          Divider(height: 28, color: ModuleColors.sectionDivider),
           Row(
             children: [
               stat(
@@ -609,7 +609,7 @@ class _HoursPainter extends CustomPainter {
       );
     for (final p in pts) {
       canvas
-        ..drawCircle(p, 3.5, Paint()..color = AppColors.white)
+        ..drawCircle(p, 3.5, Paint()..color = AppColors.surface)
         ..drawCircle(
           p,
           3.5,
@@ -760,7 +760,7 @@ class _DistributionCard extends StatelessWidget {
             ],
           ),
           if (d != null) ...[
-            const Divider(height: 28, color: ModuleColors.sectionDivider),
+            Divider(height: 28, color: ModuleColors.sectionDivider),
             Row(
               children: [
                 const WfSvg('edash_sprint', size: 14),

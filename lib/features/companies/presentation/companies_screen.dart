@@ -12,7 +12,7 @@ enum JoinStatus { available, pending }
 
 /// Presentation model for "Available Companies" cards (673:14300).
 class CompanyCardData implements Identified {
-  const new({
+  new({
     required this.id,
     required this.name,
     required this.domain,
@@ -39,14 +39,14 @@ class CompanyCardData implements Identified {
   );
 }
 
-const _info50 = Color(0xFFE6F6FE);
-const _warning50 = Color(0xFFFFFDEB);
-const _success50 = Color(0xFFEDF7EE);
+Color get _info50 => AppColors.statusInfoBackground;
+Color get _warning50 => ModuleColors.warningBg;
+Color get _success50 => ModuleColors.successBg;
 
 final companiesProvider =
     NotifierProvider<LocalCollection<CompanyCardData>, List<CompanyCardData>>(
       () => LocalCollection<CompanyCardData>(
-        () => const [
+        () => [
           CompanyCardData(
             id: 'c1',
             name: 'Gaza',
@@ -197,7 +197,7 @@ class _CompanyCard extends ConsumerWidget {
       key: Key('company-${company.id}'),
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ModuleColors.sectionDivider),
         boxShadow: const [
@@ -232,12 +232,12 @@ class _CompanyCard extends ConsumerWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: _jakarta,
               fontSize: 14,
               height: 17.5 / 14,
               fontWeight: FontWeight.w700,
-              color: AppColors.black,
+              color: AppColors.ink,
             ),
           ),
           const SizedBox(height: 2),
@@ -246,12 +246,12 @@ class _CompanyCard extends ConsumerWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: _jakarta,
               fontSize: 11,
               height: 16.5 / 11,
               fontWeight: FontWeight.w500,
-              color: Color(0xFFB1B1B1),
+              color: ModuleColors.muted,
             ),
           ),
           if (actions) const SizedBox(height: 16),
@@ -271,7 +271,7 @@ class _CompanyCard extends ConsumerWidget {
                   Container(
                     width: 6,
                     height: 6,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.primaryStrong,
                       shape: BoxShape.circle,
                     ),
@@ -281,7 +281,7 @@ class _CompanyCard extends ConsumerWidget {
                     child: FitText(
                       l10n.joinPending,
                       minScale: 0.6,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: _jakarta,
                         fontSize: 12,
                         height: 16 / 12,

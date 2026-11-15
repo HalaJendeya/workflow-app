@@ -130,7 +130,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
 
   Widget _card(BuildContext context, Invoice i) {
     final l10n = AppLocalizations.of(context);
-    final date = DateFormat('MMM d, y', 'en').format(i.issueDate);
+    final date = DateFormat('MMM d, y').format(i.issueDate);
     final fields = [
       DetailField(l10n.fieldClient, i.client),
       DetailField(l10n.fieldProject, i.project),
@@ -154,7 +154,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
           ...fields,
           DetailField(
             l10n.fieldDueDate,
-            DateFormat('MMM d, y', 'en').format(i.dueDate),
+            DateFormat('MMM d, y').format(i.dueDate),
           ),
         ],
       ),

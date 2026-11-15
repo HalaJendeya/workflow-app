@@ -256,7 +256,7 @@ class _ApiMeetingsViewState extends ConsumerState<ApiMeetingsView> {
                 Text(
                   isSameDay(_day, now)
                       ? l10n.todaysMeetings
-                      : DateFormat.yMMMMd('en').format(_day),
+                      : DateFormat.yMMMMd().format(_day),
                   style: h16,
                 ),
                 const SizedBox(height: 20),
@@ -613,7 +613,7 @@ class ApiMeetingDetailsScreen extends ConsumerWidget {
     final secondary = AppTextStyles.mobileXsRegular.copyWith(
       color: AppColors.textSecondary,
     );
-    final fmt = DateFormat('M/d/y, h:mm:ss a', 'en');
+    final fmt = DateFormat('M/d/y, h:mm:ss a');
     String at(DateTime? t) => t == null ? '—' : fmt.format(t);
     Widget field(String label, String value) => Padding(
       padding: const EdgeInsets.only(top: 16),

@@ -86,7 +86,7 @@ class FormPage extends StatelessWidget {
                       backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadii.button),
-                        side: const BorderSide(color: AppColors.borderDefault),
+                        side: BorderSide(color: AppColors.borderDefault),
                       ),
                       textStyle: AppTextStyles.mobileBaseSemiBold,
                     ),
@@ -99,9 +99,9 @@ class FormPage extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(context).maybePop(),
                     style: OutlinedButton.styleFrom(
-                      backgroundColor: AppColors.white,
+                      backgroundColor: AppColors.surface,
                       foregroundColor: AppColors.textPrimary,
-                      side: const BorderSide(color: ModuleColors.chipBorder),
+                      side: BorderSide(color: ModuleColors.chipBorder),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadii.button),
                       ),
@@ -175,7 +175,7 @@ InputDecoration _decoration({String? hint, Widget? suffix}) {
   );
   return InputDecoration(
     filled: true,
-    fillColor: AppColors.white,
+    fillColor: AppColors.surface,
     hintText: hint,
     hintStyle: AppTextStyles.mobileBaseRegular.copyWith(
       color: AppColors.textPrimary,

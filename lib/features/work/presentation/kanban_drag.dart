@@ -127,7 +127,7 @@ class KanbanDropBar<T extends Object, S> extends StatelessWidget {
       right: 20,
       child: Material(
         key: const Key('kanban-drop-bar'),
-        color: AppColors.white,
+        color: AppColors.surface,
         elevation: 6,
         shadowColor: AppColors.navShadow,
         borderRadius: BorderRadius.circular(16),

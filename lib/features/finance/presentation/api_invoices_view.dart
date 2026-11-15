@@ -275,7 +275,7 @@ List<({DetailField field, bool summary})> invoiceFields(
   CurrencyRef? currency,
   String? projectTitle,
 ) {
-  final fmt = DateFormat('MMM d, y', 'en');
+  final fmt = DateFormat('MMM d, y');
   return [
     (
       field: DetailField(l10n.fieldAmount, invoiceMoney(i.amount, currency)),

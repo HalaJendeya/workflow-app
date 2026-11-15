@@ -536,7 +536,7 @@ class _MeetingRoomScreenState extends ConsumerState<MeetingRoomScreen> {
           children: [
             Center(
               child: Text(
-                l10n.meetingStartedAt(DateFormat.jm('en').format(_started)),
+                l10n.meetingStartedAt(DateFormat.jm().format(_started)),
                 style: _t(10, RoomColors.faint),
               ),
             ),
@@ -553,7 +553,7 @@ class _MeetingRoomScreenState extends ConsumerState<MeetingRoomScreen> {
                   children: [
                     Text(
                       '${msg.mine ? l10n.you : msg.author}  '
-                      '${DateFormat.jm('en').format(msg.at)}',
+                      '${DateFormat.jm().format(msg.at)}',
                       style: _t(11, RoomColors.sub),
                     ),
                     const SizedBox(height: 6),

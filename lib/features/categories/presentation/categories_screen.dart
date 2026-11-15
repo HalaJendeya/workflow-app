@@ -159,11 +159,11 @@ class _Pill extends StatelessWidget {
       selected: selected,
       button: true,
       child: Material(
-        color: selected ? ModuleColors.activePill : AppColors.white,
+        color: selected ? ModuleColors.activePill : AppColors.surface,
         shape: StadiumBorder(
           side: selected
               ? BorderSide.none
-              : const BorderSide(color: ModuleColors.pillBorder),
+              : BorderSide(color: ModuleColors.pillBorder),
         ),
         child: InkWell(
           customBorder: const StadiumBorder(),
@@ -231,7 +231,7 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: AppColors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(24),
       border: Border.all(color: ModuleColors.sectionDivider),
     ),
@@ -240,7 +240,7 @@ class _SectionCard extends StatelessWidget {
       children: [
         Container(
           padding: const EdgeInsets.only(bottom: 14),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(color: ModuleColors.sectionDivider),
             ),
@@ -265,7 +265,7 @@ class _SectionCard extends StatelessWidget {
                     Text(
                       section.title,
                       style: AppTextStyles.desktopBaseBold.copyWith(
-                        color: AppColors.black,
+                        color: AppColors.ink,
                       ),
                     ),
                     Text(
@@ -294,9 +294,11 @@ class _SectionCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: i < items.length - 1
-                    ? const BoxDecoration(
+                    ? BoxDecoration(
                         border: Border(
-                          bottom: BorderSide(color: Color(0xFFF8FAFC)),
+                          bottom: BorderSide(
+                            color: ModuleColors.sectionDivider,
+                          ),
                         ),
                       )
                     : null,
@@ -320,7 +322,7 @@ class _SectionCard extends StatelessWidget {
                       child: Text(
                         items[i].label,
                         style: AppTextStyles.desktopXsSemiBold.copyWith(
-                          color: AppColors.black,
+                          color: AppColors.ink,
                         ),
                       ),
                     ),

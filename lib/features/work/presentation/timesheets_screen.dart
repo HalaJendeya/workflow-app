@@ -68,7 +68,7 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
     final months = {
       for (final e in all) DateTime(e.start.year, e.start.month),
     }.toList()..sort((a, b) => b.compareTo(a));
-    final monthLabel = DateFormat('MMM yyyy', 'en').format;
+    final monthLabel = DateFormat('MMM yyyy').format;
     // API mode: `stats` and per-currency `totals` of GET /employee/timesheets.
     final api = demo ? null : ref.watch(employeeTimesheetSummaryProvider);
     final sum = api?.value;

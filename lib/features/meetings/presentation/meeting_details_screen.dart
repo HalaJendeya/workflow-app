@@ -22,7 +22,7 @@ class MeetingDetailsScreen extends ConsumerWidget {
     if (m == null) {
       return Scaffold(body: EmptyNotice(text: l10n.noRecords));
     }
-    final fmt = DateFormat('M/d/y, h:mm:ss a', 'en');
+    final fmt = DateFormat('M/d/y, h:mm:ss a');
     final h16 = AppTextStyles.mobileLgSemiBold.copyWith(
       color: AppColors.textPrimary,
     );

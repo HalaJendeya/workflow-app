@@ -215,9 +215,7 @@ String _stamp(BuildContext context, DateTime t) {
   final now = DateTime.now();
   final sameDay =
       t.year == now.year && t.month == now.month && t.day == now.day;
-  return sameDay
-      ? DateFormat.jm('en').format(t)
-      : DateFormat('MMM d', 'en').format(t);
+  return sameDay ? DateFormat.jm().format(t) : DateFormat('MMM d').format(t);
 }
 
 enum _Filter { all, direct, groups, unread }
@@ -776,9 +774,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         children: [
           Container(
             width: double.infinity,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.primary,
-              borderRadius: BorderRadius.vertical(
+              borderRadius: const BorderRadius.vertical(
                 bottom: Radius.circular(AppRadii.masthead),
               ),
             ),
@@ -949,7 +947,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             ),
           Container(
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: AppColors.surface,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
@@ -1124,8 +1122,8 @@ class _Bubble extends ConsumerWidget {
       width: 40,
       height: 40,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: AppColors.white,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
         shape: BoxShape.circle,
       ),
       child: Text(
@@ -1140,7 +1138,7 @@ class _Bubble extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: m.mine ? AppColors.primary50 : AppColors.white,
+          color: m.mine ? AppColors.primary50 : AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadii.card),
           border: m.mine ? null : Border.all(color: ModuleColors.chipBorder),
         ),
@@ -1149,7 +1147,7 @@ class _Bubble extends ConsumerWidget {
           children: [
             Text(
               '${m.mine ? l10n.you : m.author} · '
-              '${DateFormat.jm('en').format(m.at)}',
+              '${DateFormat.jm().format(m.at)}',
               style: AppTextStyles.mobileBaseSemiBold.copyWith(
                 color: AppColors.textPrimary,
               ),
@@ -1430,7 +1428,7 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             alignment: AlignmentDirectional.centerStart,
                             decoration: BoxDecoration(
-                              color: AppColors.white,
+                              color: AppColors.surface,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: ModuleColors.chipBorder,
@@ -1488,7 +1486,7 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.white,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: ModuleColors.chipBorder),
                         ),
@@ -1525,7 +1523,7 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
                       backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadii.button),
-                        side: const BorderSide(color: AppColors.borderDefault),
+                        side: BorderSide(color: AppColors.borderDefault),
                       ),
                       textStyle: AppTextStyles.mobileBaseSemiBold,
                     ),
@@ -1542,9 +1540,9 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(context).maybePop(),
                     style: OutlinedButton.styleFrom(
-                      backgroundColor: AppColors.white,
+                      backgroundColor: AppColors.surface,
                       foregroundColor: AppColors.textPrimary,
-                      side: const BorderSide(color: ModuleColors.chipBorder),
+                      side: BorderSide(color: ModuleColors.chipBorder),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadii.button),
                       ),

@@ -176,7 +176,7 @@ class _SearchField extends ConsumerWidget {
       constraints: const BoxConstraints(minHeight: 48),
       padding: const EdgeInsetsDirectional.only(start: 14, end: 4),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadii.input),
         border: Border.all(color: AppColors.borderSubtle),
       ),
@@ -557,7 +557,7 @@ class _NotificationsCard extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.borderSubtle),
       ),
@@ -681,7 +681,7 @@ class _RecordCard extends StatelessWidget {
                 width: 8,
                 height: 8,
                 margin: const EdgeInsetsDirectional.only(start: 8),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.primary,
                   shape: BoxShape.circle,
                 ),

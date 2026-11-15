@@ -77,7 +77,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final v = AuthValidators(l10n);
     final small = AppTextStyles.mobileXsRegular.copyWith(
       fontSize: 11,
-      color: AppColors.black,
+      color: AppColors.ink,
     );
     final link = small.copyWith(color: AppColors.primary);
     return AuthScaffold(

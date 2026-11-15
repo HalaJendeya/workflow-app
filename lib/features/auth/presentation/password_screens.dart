@@ -292,7 +292,7 @@ class _OtpBox extends StatelessWidget {
     height: 64,
     alignment: Alignment.center,
     decoration: BoxDecoration(
-      color: AppColors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(16),
       border: Border.all(
         color: active ? AppColors.primary : AppColors.surfaceSubtle,
@@ -307,7 +307,7 @@ class _OtpBox extends StatelessWidget {
     ),
     child: Text(
       digit ?? '',
-      style: AppTextStyles.authTitle.copyWith(color: AppColors.black),
+      style: AppTextStyles.authTitle.copyWith(color: AppColors.ink),
     ),
   );
 }
@@ -435,11 +435,11 @@ class AuthSuccessScreen extends StatelessWidget {
           child: Container(
             width: 112,
             height: 112,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.primary50,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check, size: 56, color: AppColors.primary),
+            child: Icon(Icons.check, size: 56, color: AppColors.primary),
           ),
         ),
         AuthHeading(

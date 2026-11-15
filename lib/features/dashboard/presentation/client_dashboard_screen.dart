@@ -391,12 +391,12 @@ class _MilestonesCard extends StatelessWidget {
                 if (done > 0)
                   Expanded(
                     flex: done,
-                    child: const ColoredBox(color: ModuleColors.successFg),
+                    child: ColoredBox(color: ModuleColors.successFg),
                   ),
                 if (progress > 0)
                   Expanded(
                     flex: progress,
-                    child: const ColoredBox(color: AppColors.primary),
+                    child: ColoredBox(color: AppColors.primary),
                   ),
                 if (review > 0)
                   Expanded(

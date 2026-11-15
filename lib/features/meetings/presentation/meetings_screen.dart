@@ -174,7 +174,7 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
         Text(
           _isToday(_day)
               ? l10n.todaysMeetings
-              : DateFormat.yMMMMd('en').format(_day),
+              : DateFormat.yMMMMd().format(_day),
           style: h16,
         ),
         if (today.isEmpty) EmptyNotice(text: l10n.noMeetingsThisDay),
@@ -434,7 +434,7 @@ class MeetingMonthCalendar extends StatelessWidget {
                 child: Container(
                   width: 4,
                   height: 4,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),

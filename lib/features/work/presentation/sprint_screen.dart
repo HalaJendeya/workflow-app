@@ -22,8 +22,14 @@ const List<TaskStatus> _columns = [
 /// Column tints: in progress uses the Figma #FFFDEB/#FFF9C2 pair; the other
 /// columns reuse the same pattern with the neutral and success tokens.
 (Color, Color) _columnColors(TaskStatus s) => switch (s) {
-  TaskStatus.inProgress => (ModuleColors.warningBg, const Color(0xFFFFF9C2)),
-  TaskStatus.completed => (ModuleColors.successBg, const Color(0xFFD5EED7)),
+  TaskStatus.inProgress => (
+    ModuleColors.warningBg,
+    _tone(0xFFFFF9C2, ModuleColors.warningFg),
+  ),
+  TaskStatus.completed => (
+    ModuleColors.successBg,
+    _tone(0xFFD5EED7, ModuleColors.successFg),
+  ),
   _ => (AppColors.surfaceSubtle, AppColors.borderSubtle),
 };
 
@@ -177,7 +183,7 @@ class _SprintScreenState extends ConsumerState<SprintScreen>
           Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -239,8 +245,8 @@ class _SprintScreenState extends ConsumerState<SprintScreen>
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFA5B4C3),
+                          decoration: BoxDecoration(
+                            color: ModuleColors.muted,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -249,7 +255,7 @@ class _SprintScreenState extends ConsumerState<SprintScreen>
                           taskStatusLabel(l10n, _column).toUpperCase(),
                           style: AppTextStyles.mobileXsSemiBold.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF233242),
+                            color: _kanbanTitle,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -259,13 +265,13 @@ class _SprintScreenState extends ConsumerState<SprintScreen>
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(99),
                           ),
                           child: Text(
                             '${inColumn.length}',
                             style: AppTextStyles.mobileXsMedium.copyWith(
-                              color: const Color(0xFF3D4E60),
+                              color: _kanbanBody,
                             ),
                           ),
                         ),
@@ -279,10 +285,10 @@ class _SprintScreenState extends ConsumerState<SprintScreen>
                                       TaskFormScreen(initialStatus: _column),
                                 ),
                               ),
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.add,
                             size: 16,
-                            color: Color(0xFFA5B4C3),
+                            color: ModuleColors.muted,
                           ),
                         ),
                       ],
@@ -402,10 +408,10 @@ class _KanbanCard extends ConsumerWidget {
     final (pbg, pfg) = _priorityColors(t.priority);
     return Material(
       key: Key('kanban-${t.id}'),
-      color: AppColors.white,
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: ModuleColors.chipBorder, width: 0.5),
+        side: BorderSide(color: ModuleColors.chipBorder, width: 0.5),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -417,10 +423,10 @@ class _KanbanCard extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.drag_indicator,
                     size: 16,
-                    color: Color(0xFFA5B4C3),
+                    color: ModuleColors.muted,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
@@ -455,7 +461,7 @@ class _KanbanCard extends ConsumerWidget {
               Text(
                 t.title,
                 style: AppTextStyles.mobileBaseSemiBold.copyWith(
-                  color: const Color(0xFF233242),
+                  color: _kanbanTitle,
                 ),
               ),
               if (t.subtasksTotal > 0) ...[
@@ -488,7 +494,7 @@ class _KanbanCard extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: 8),
-              const Divider(height: 1, color: ModuleColors.chipBorder),
+              Divider(height: 1, color: ModuleColors.chipBorder),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -509,7 +515,7 @@ class _KanbanCard extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 7),
-                  const Icon(
+                  Icon(
                     Icons.schedule,
                     size: 14,
                     color: AppColors.textSecondary,
@@ -559,3 +565,14 @@ class _KanbanCard extends ConsumerWidget {
     }
   }
 }
+
+/// Kanban card text: the Figma navy on light cards, the palette's strong
+/// text on dark ones.
+Color get _kanbanTitle =>
+    AppColors.isDark ? AppColors.neutral900 : const Color(0xFF233242);
+Color get _kanbanBody =>
+    AppColors.isDark ? AppColors.textPrimary : const Color(0xFF3D4E60);
+
+/// A column accent: the Figma tint in light mode, a muted [dark] in dark.
+Color _tone(int light, Color dark) =>
+    AppColors.isDark ? dark.withValues(alpha: 0.35) : Color(light);

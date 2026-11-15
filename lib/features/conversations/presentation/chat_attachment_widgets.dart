@@ -52,7 +52,7 @@ class AttachmentChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: AppColors.white,
+    color: AppColors.surface,
     borderRadius: BorderRadius.circular(12),
     child: InkWell(
       borderRadius: BorderRadius.circular(12),

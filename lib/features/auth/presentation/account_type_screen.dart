@@ -41,7 +41,7 @@ class AccountTypeScreen extends ConsumerWidget {
                       vertical: 32,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(AppRadii.authCard),
                       border: Border.all(color: AppColors.borderSubtle),
                     ),
@@ -52,7 +52,7 @@ class AccountTypeScreen extends ConsumerWidget {
                           l10n.accountTypeTitle,
                           textAlign: TextAlign.center,
                           style: AppTextStyles.accountTypeTitle.copyWith(
-                            color: AppColors.black,
+                            color: AppColors.ink,
                           ),
                         ),
                         const SizedBox(height: AppSpacing.lg),
@@ -89,7 +89,7 @@ class AccountTypeScreen extends ConsumerWidget {
                               '${l10n.noAccountPrompt} ',
                               style: AppTextStyles.mobileXsRegular.copyWith(
                                 fontSize: 11,
-                                color: AppColors.black,
+                                color: AppColors.ink,
                               ),
                             ),
                             InkWell(
@@ -142,17 +142,17 @@ class _ChoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = selected ? AppColors.white : AppColors.black;
+    final fg = selected ? AppColors.white : AppColors.ink;
     return Semantics(
       selected: selected,
       button: true,
       child: Material(
-        color: selected ? AppColors.primaryStrong : AppColors.white,
+        color: selected ? AppColors.primaryStrong : AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.button),
           side: selected
               ? BorderSide.none
-              : const BorderSide(color: AppColors.borderSubtle),
+              : BorderSide(color: AppColors.borderSubtle),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(

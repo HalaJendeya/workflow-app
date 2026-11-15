@@ -26,30 +26,32 @@ class WfSvg extends StatelessWidget {
   );
 }
 
-/// Extra tokens used by the module frames (Payments, Invoices, Projects…).
+/// Extra tokens used by the module frames (Payments, Invoices, Projects…),
+/// read from the active palette like [AppColors]. Chart hues stay fixed:
+/// they read on both light and dark cards.
 abstract final class ModuleColors {
-  static const successBg = Color(0xFFEDF7EE);
-  static const successFg = Color(0xFF367C39);
-  static const warningBg = Color(0xFFFFFDEB);
-  static const warningFg = Color(0xFF8C8120);
-  static const dangerBg = Color(0xFFFEECEB);
-  static const dangerFg = Color(0xFFAD3026);
-  static const selectedChipBorder = Color(0xFFB0D3FE);
-  static const chipBorder = Color(0xB3E1E1E1);
-  static const muted = Color(0xFF9E9E9E);
-  static const sectionDivider = Color(0xFFF1F5F9);
-  static const pillBorder = Color(0xCCE2E8F0);
-  static const activePill = Color(0xFF0166E6);
-  static const activePillCount = Color(0xFF559FFE);
+  static Color get successBg => AppColors.palette.successBg;
+  static Color get successFg => AppColors.palette.successFg;
+  static Color get warningBg => AppColors.palette.warningBg;
+  static Color get warningFg => AppColors.palette.warningFg;
+  static Color get dangerBg => AppColors.palette.dangerBg;
+  static Color get dangerFg => AppColors.palette.dangerFg;
+  static Color get selectedChipBorder => AppColors.palette.selectedChipBorder;
+  static Color get chipBorder => AppColors.palette.chipBorder;
+  static Color get muted => AppColors.palette.muted;
+  static Color get sectionDivider => AppColors.palette.sectionDivider;
+  static Color get pillBorder => AppColors.palette.pillBorder;
+  static Color get activePill => AppColors.palette.activePill;
+  static Color get activePillCount => AppColors.palette.activePillCount;
   static const chartYellow = Color(0xFFE8D636);
 
   // Employee dashboard (731:47939) icon tiles and accents.
-  static const tintTeal = Color(0xFFF0FDFA);
-  static const tintPurple = Color(0xFFFAF5FF);
+  static Color get tintTeal => AppColors.palette.tintTeal;
+  static Color get tintPurple => AppColors.palette.tintPurple;
   static const chartCyan = Color(0xFF38BDF8);
   static const chartAmber = Color(0xFFFBBF24);
-  static const chartMuted = Color(0xFFCBD5E1);
-  static const chartTrack = Color(0xFFE2E8F0);
+  static Color get chartMuted => AppColors.palette.chartMuted;
+  static Color get chartTrack => AppColors.palette.chartTrack;
 }
 
 /// Scrollable page under a solid `action/primary` masthead (Figma
@@ -101,9 +103,9 @@ class ModulePage extends StatelessWidget {
           start: 0,
           end: 0,
           height: MediaQuery.paddingOf(context).top,
-          child: const IgnorePointer(
+          child: IgnorePointer(
             child: ColoredBox(
-              key: Key('status-bar-backdrop'),
+              key: const Key('status-bar-backdrop'),
               color: AppColors.primary,
             ),
           ),
@@ -171,9 +173,9 @@ class ModuleMasthead extends StatelessWidget {
     const white = AppColors.white;
     final canPop = Navigator.of(context).canPop();
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.primary,
-        borderRadius: BorderRadius.vertical(
+        borderRadius: const BorderRadius.vertical(
           bottom: Radius.circular(AppRadii.masthead),
         ),
       ),
@@ -267,7 +269,7 @@ class WfSearchBox extends StatelessWidget {
     height: 48,
     padding: const EdgeInsets.symmetric(horizontal: 14),
     decoration: BoxDecoration(
-      color: AppColors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(color: ModuleColors.chipBorder),
     ),
@@ -354,7 +356,7 @@ class MetricGroup extends StatelessWidget {
         // A Table per row: each row is as tall as its tallest cell and the
         // inner dividers run full height, without intrinsic measuring
         // (which a shrinking value cannot answer).
-        const line = BorderSide(color: ModuleColors.sectionDivider);
+        final line = BorderSide(color: ModuleColors.sectionDivider);
         return Column(
           children: [
             for (var r = 0; r < rows.length; r++)
@@ -453,10 +455,10 @@ class ModuleCard extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     button: onTap != null,
     child: Material(
-      color: AppColors.white,
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadii.card),
-        side: const BorderSide(color: ModuleColors.chipBorder),
+        side: BorderSide(color: ModuleColors.chipBorder),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -545,7 +547,7 @@ class FilterChipBox extends StatelessWidget {
     button: true,
     selected: selected,
     child: Material(
-      color: selected ? AppColors.primary50 : AppColors.white,
+      color: selected ? AppColors.primary50 : AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
@@ -636,7 +638,7 @@ Future<T?> showOptionSheet<T>(
             key: keyOf?.call(o),
             title: Text(labelOf(o), style: AppTextStyles.mobileBaseRegular),
             trailing: o == selected
-                ? const Icon(Icons.check, color: AppColors.primary)
+                ? Icon(Icons.check, color: AppColors.primary)
                 : null,
             onTap: () => Navigator.of(sheet).pop(o),
           ),
@@ -840,8 +842,8 @@ class CreateFab extends StatelessWidget {
     label: label ?? AppLocalizations.of(context).create,
     child: Container(
       padding: const EdgeInsets.all(6),
-      decoration: const BoxDecoration(
-        color: AppColors.white,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
         shape: BoxShape.circle,
       ),
       child: Material(

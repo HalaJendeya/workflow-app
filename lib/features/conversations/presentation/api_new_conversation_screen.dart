@@ -113,9 +113,9 @@ class _ApiNewConversationScreenState
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(context).maybePop(),
                     style: OutlinedButton.styleFrom(
-                      backgroundColor: AppColors.white,
+                      backgroundColor: AppColors.surface,
                       foregroundColor: AppColors.textPrimary,
-                      side: const BorderSide(color: ModuleColors.chipBorder),
+                      side: BorderSide(color: ModuleColors.chipBorder),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadii.button),
                       ),
@@ -218,7 +218,7 @@ class _ApiNewConversationScreenState
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: ModuleColors.chipBorder),
               ),
@@ -254,7 +254,7 @@ class _ApiNewConversationScreenState
               backgroundColor: AppColors.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadii.button),
-                side: const BorderSide(color: AppColors.borderDefault),
+                side: BorderSide(color: AppColors.borderDefault),
               ),
               textStyle: AppTextStyles.mobileBaseSemiBold,
             ),

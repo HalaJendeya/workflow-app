@@ -13,13 +13,26 @@ class WfLogo extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     label: 'WorkFlow',
     image: true,
-    child: Image.asset(
-      'assets/brand/workflow_logo.png',
-      width: width,
-      height: height,
-      fit: BoxFit.contain,
-    ),
+    child: AppColors.isDark
+        // Dark pages: the black wordmark turns white and the blue mark
+        // stays blue (R' = R − B + 255, G' = G − B + 255, B' = 255).
+        ? ColorFiltered(colorFilter: _onDark, child: _image)
+        : _image,
   );
+
+  Widget get _image => Image.asset(
+    'assets/brand/workflow_logo.png',
+    width: width,
+    height: height,
+    fit: BoxFit.contain,
+  );
+
+  static const _onDark = ColorFilter.matrix(<double>[
+    1, 0, -1, 0, 255, //
+    0, 1, -1, 0, 255, //
+    0, 0, 0, 0, 255, //
+    0, 0, 0, 1, 0, //
+  ]);
 }
 
 /// "Mobile / Light / Primary Button" (Figma 114:18788): 52 px tall, radius 12,
@@ -30,7 +43,7 @@ class WfPrimaryButton extends StatelessWidget {
     required this.onPressed,
     this.loading = false,
     this.height = 52,
-    this.color = AppColors.primary,
+    this.color,
     this.textStyle,
     super.key,
   });
@@ -39,7 +52,9 @@ class WfPrimaryButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool loading;
   final double height;
-  final Color color;
+
+  /// Defaults to `action/primary`.
+  final Color? color;
   final TextStyle? textStyle;
 
   @override
@@ -51,10 +66,10 @@ class WfPrimaryButton extends StatelessWidget {
       child: Opacity(
         opacity: onPressed == null ? 0.6 : 1,
         child: Material(
-          color: color,
+          color: color ?? AppColors.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadii.button),
-            side: const BorderSide(color: AppColors.borderDefault),
+            side: BorderSide(color: AppColors.borderDefault),
           ),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
@@ -165,7 +180,7 @@ class _WfTextFieldState extends State<WfTextField> {
             ),
             decoration: InputDecoration(
               filled: true,
-              fillColor: AppColors.white,
+              fillColor: AppColors.surface,
               hintText: widget.hint,
               hintStyle: AppTextStyles.desktopBaseMedium.copyWith(
                 color: AppColors.textSecondary,
@@ -190,7 +205,7 @@ class _WfTextFieldState extends State<WfTextField> {
                       onPressed: () => setState(() => _hidden = !_hidden),
                       icon: _hidden
                           ? const SvgIcon(AppIcon.hide)
-                          : const Icon(
+                          : Icon(
                               Icons.visibility_outlined,
                               color: AppColors.textSecondary,
                             ),
@@ -228,7 +243,7 @@ class WfCheckbox extends StatelessWidget {
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: AppColors.borderDefault),
               ),
@@ -256,7 +271,7 @@ class WfFilterPill extends StatelessWidget {
     selected: selected,
     button: true,
     child: Material(
-      color: selected ? AppColors.primary : AppColors.white,
+      color: selected ? AppColors.primary : AppColors.surface,
       shape: StadiumBorder(
         side: BorderSide(
           color: selected ? AppColors.primary : AppColors.borderSubtle,
@@ -294,10 +309,10 @@ class WfCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: AppColors.white,
+    color: AppColors.surface,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(AppRadii.card),
-      side: const BorderSide(color: AppColors.borderSubtle),
+      side: BorderSide(color: AppColors.borderSubtle),
     ),
     clipBehavior: Clip.antiAlias,
     child: InkWell(
@@ -309,22 +324,21 @@ class WfCard extends StatelessWidget {
 
 /// Info status chip ("Status" in Figma): 5 px dot, Inter SemiBold 12.
 class WfStatusChip extends StatelessWidget {
-  const new({
-    required this.label,
-    this.foreground = AppColors.statusInfo,
-    this.background = AppColors.statusInfoBackground,
-    super.key,
-  });
+  const new({required this.label, this.foreground, this.background, super.key});
 
   final String label;
-  final Color foreground;
-  final Color background;
+
+  /// Default `status/info`.
+  final Color? foreground;
+
+  /// Default `status/info-background`.
+  final Color? background;
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
     decoration: BoxDecoration(
-      color: background,
+      color: background ?? AppColors.statusInfoBackground,
       borderRadius: BorderRadius.circular(AppRadii.pill),
     ),
     child: Row(
@@ -333,12 +347,17 @@ class WfStatusChip extends StatelessWidget {
         Container(
           width: 5,
           height: 5,
-          decoration: BoxDecoration(color: foreground, shape: BoxShape.circle),
+          decoration: BoxDecoration(
+            color: foreground ?? AppColors.statusInfo,
+            shape: BoxShape.circle,
+          ),
         ),
         const SizedBox(width: 5),
         Text(
           label,
-          style: AppTextStyles.mobileXsSemiBold.copyWith(color: foreground),
+          style: AppTextStyles.mobileXsSemiBold.copyWith(
+            color: foreground ?? AppColors.statusInfo,
+          ),
         ),
       ],
     ),
@@ -357,7 +376,7 @@ class WfAvatar extends StatelessWidget {
     width: size,
     height: size,
     alignment: Alignment.center,
-    decoration: const BoxDecoration(
+    decoration: BoxDecoration(
       color: AppColors.surfaceSubtle,
       shape: BoxShape.circle,
     ),
@@ -404,7 +423,7 @@ class WfPromptLink extends StatelessWidget {
         '$prompt ',
         style:
             promptStyle ??
-            AppTextStyles.desktopXsRegular.copyWith(color: AppColors.black),
+            AppTextStyles.desktopXsRegular.copyWith(color: AppColors.ink),
       ),
       InkWell(
         onTap: onTap,

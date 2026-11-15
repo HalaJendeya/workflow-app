@@ -33,8 +33,14 @@ String apiTaskStatusLabel(AppLocalizations l10n, ApiTaskStatus s) =>
     };
 
 (Color, Color) _columnColors(ApiTaskStatus s) => switch (s) {
-  ApiTaskStatus.inProgress => (ModuleColors.warningBg, const Color(0xFFFFF9C2)),
-  ApiTaskStatus.completed => (ModuleColors.successBg, const Color(0xFFD5EED7)),
+  ApiTaskStatus.inProgress => (
+    ModuleColors.warningBg,
+    _tone(0xFFFFF9C2, ModuleColors.warningFg),
+  ),
+  ApiTaskStatus.completed => (
+    ModuleColors.successBg,
+    _tone(0xFFD5EED7, ModuleColors.successFg),
+  ),
   _ => (AppColors.surfaceSubtle, AppColors.borderSubtle),
 };
 
@@ -384,7 +390,7 @@ class _Board extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -449,8 +455,8 @@ class _Board extends StatelessWidget {
                       Container(
                         width: 8,
                         height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFA5B4C3),
+                        decoration: BoxDecoration(
+                          color: ModuleColors.muted,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -461,7 +467,7 @@ class _Board extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.mobileXsSemiBold.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF233242),
+                            color: _kanbanTitle,
                           ),
                         ),
                       ),
@@ -473,7 +479,7 @@ class _Board extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.white,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(99),
                         ),
                         // The whole-sprint count from stats, which can be
@@ -481,7 +487,7 @@ class _Board extends StatelessWidget {
                         child: Text(
                           '${_count(column)}',
                           style: AppTextStyles.mobileXsMedium.copyWith(
-                            color: const Color(0xFF3D4E60),
+                            color: _kanbanBody,
                           ),
                         ),
                       ),
@@ -631,10 +637,10 @@ class ApiTaskCard extends StatelessWidget {
     final d = t.duration;
     return Material(
       key: Key('kanban-${t.id}'),
-      color: AppColors.white,
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: ModuleColors.chipBorder, width: 0.5),
+        side: BorderSide(color: ModuleColors.chipBorder, width: 0.5),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -646,10 +652,10 @@ class ApiTaskCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.drag_indicator,
                     size: 16,
-                    color: Color(0xFFA5B4C3),
+                    color: ModuleColors.muted,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
@@ -688,11 +694,11 @@ class ApiTaskCard extends StatelessWidget {
               Text(
                 t.title,
                 style: AppTextStyles.mobileBaseSemiBold.copyWith(
-                  color: const Color(0xFF233242),
+                  color: _kanbanTitle,
                 ),
               ),
               const SizedBox(height: 8),
-              const Divider(height: 1, color: ModuleColors.chipBorder),
+              Divider(height: 1, color: ModuleColors.chipBorder),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -716,7 +722,7 @@ class ApiTaskCard extends StatelessWidget {
                     const SizedBox(width: 7),
                   ],
                   if (d != null) ...[
-                    const Icon(
+                    Icon(
                       Icons.schedule,
                       size: 14,
                       color: AppColors.textSecondary,
@@ -747,3 +753,14 @@ class ApiTaskCard extends StatelessWidget {
     );
   }
 }
+
+/// Kanban card text: the Figma navy on light cards, the palette's strong
+/// text on dark ones.
+Color get _kanbanTitle =>
+    AppColors.isDark ? AppColors.neutral900 : const Color(0xFF233242);
+Color get _kanbanBody =>
+    AppColors.isDark ? AppColors.textPrimary : const Color(0xFF3D4E60);
+
+/// A column accent: the Figma tint in light mode, a muted [dark] in dark.
+Color _tone(int light, Color dark) =>
+    AppColors.isDark ? dark.withValues(alpha: 0.35) : Color(light);

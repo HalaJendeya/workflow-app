@@ -45,7 +45,7 @@ class AuthScaffold extends StatelessWidget {
                     vertical: 32,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(AppRadii.authCard),
                     border: Border.all(color: AppColors.authCardBorder),
                   ),
@@ -90,7 +90,7 @@ class AuthHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = AppTextStyles.authTitle.copyWith(color: AppColors.black);
+    final style = AppTextStyles.authTitle.copyWith(color: AppColors.ink);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -104,7 +104,7 @@ class AuthHeading extends StatelessWidget {
                 if (accent != null)
                   TextSpan(
                     text: accent,
-                    style: const TextStyle(color: AppColors.primary),
+                    style: TextStyle(color: AppColors.primary),
                   ),
               ],
             ),

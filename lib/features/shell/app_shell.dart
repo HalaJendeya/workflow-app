@@ -58,12 +58,12 @@ class WfNavigationSurface extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: bottomInset),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadii.navSurface),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: AppColors.navShadow,
-            offset: Offset(0, -4),
+            offset: const Offset(0, -4),
             blurRadius: 20,
           ),
         ],

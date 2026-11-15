@@ -108,7 +108,7 @@ class _ActionButtons extends StatelessWidget {
     required this.onSave,
     required this.onCancel,
     this.busy = false,
-    this.saveColor = AppColors.primary,
+    this.saveColor,
     this.saveKey,
   });
 
@@ -116,7 +116,7 @@ class _ActionButtons extends StatelessWidget {
   final VoidCallback? onSave;
   final VoidCallback onCancel;
   final bool busy;
-  final Color saveColor;
+  final Color? saveColor;
   final Key? saveKey;
 
   @override
@@ -128,7 +128,7 @@ class _ActionButtons extends StatelessWidget {
         label: saveLabel,
         loading: busy,
         height: 44,
-        color: saveColor,
+        color: saveColor ?? AppColors.primary,
         onPressed: onSave,
       ),
       const SizedBox(height: 8),
@@ -138,7 +138,7 @@ class _ActionButtons extends StatelessWidget {
           onPressed: onCancel,
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.textPrimary,
-            side: const BorderSide(color: ModuleColors.chipBorder),
+            side: BorderSide(color: ModuleColors.chipBorder),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadii.button),
             ),

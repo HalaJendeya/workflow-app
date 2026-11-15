@@ -326,9 +326,7 @@ class _ProjectCard extends ConsumerWidget {
                           ListTile(
                             title: Text(
                               l10n.delete,
-                              style: const TextStyle(
-                                color: ModuleColors.dangerFg,
-                              ),
+                              style: TextStyle(color: ModuleColors.dangerFg),
                             ),
                             onTap: () {
                               Navigator.pop(sheet);
@@ -547,7 +545,7 @@ class _DashedBorderPainter extends CustomPainter {
       Offset.zero & size,
       const Radius.circular(AppRadii.card),
     );
-    canvas.drawRRect(rrect, Paint()..color = AppColors.white);
+    canvas.drawRRect(rrect, Paint()..color = AppColors.surface);
     final paint = Paint()
       ..color = ModuleColors.chipBorder
       ..style = PaintingStyle.stroke

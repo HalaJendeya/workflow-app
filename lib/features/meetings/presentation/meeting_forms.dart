@@ -340,7 +340,7 @@ class _ScheduleMeetingScreenState extends ConsumerState<ScheduleMeetingScreen> {
                               dense: true,
                               contentPadding: EdgeInsets.zero,
                               title: Text(p),
-                              trailing: const Icon(
+                              trailing: Icon(
                                 Icons.add,
                                 color: AppColors.primary,
                               ),
@@ -441,10 +441,8 @@ class _ScheduleMeetingScreenState extends ConsumerState<ScheduleMeetingScreen> {
                         onPressed: () => Navigator.of(context).maybePop(),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.textPrimary,
-                          backgroundColor: AppColors.white,
-                          side: const BorderSide(
-                            color: ModuleColors.chipBorder,
-                          ),
+                          backgroundColor: AppColors.surface,
+                          side: BorderSide(color: ModuleColors.chipBorder),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
                               AppRadii.button,
