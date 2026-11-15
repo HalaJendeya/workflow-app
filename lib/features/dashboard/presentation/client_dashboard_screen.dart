@@ -87,12 +87,12 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
             title: l10n.overviewMetrics,
             badge: l10n.activeHub,
             caption: l10n.kpisTracked(8),
-            children: [for (final line in data.overview) _Line(line)],
+            children: [for (final line in data.overview) _line(line)],
           ),
           _RevenueCard(data: data),
           DashboardSection(
             title: l10n.workOverview,
-            children: [for (final line in data.work) _Line(line)],
+            children: [for (final line in data.work) _line(line)],
           ),
           _TrendCard(
             points: data.trends[_period]!,
@@ -111,7 +111,7 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
             title: l10n.financialSummary,
             badge: l10n.verifiedClientAccount,
             tone: BadgeTone.success,
-            children: [for (final line in data.finance) _Line(line)],
+            children: [for (final line in data.finance) _line(line)],
           ),
         ],
         DashboardGroupHeader(
@@ -163,17 +163,11 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
       .push(MaterialPageRoute<void>(builder: (_) => const ProjectsScreen()));
 }
 
-class _Line extends StatelessWidget {
-  const new(this.line);
-
-  final DashboardLine line;
-
-  @override
-  Widget build(BuildContext context) => LabelValue(
-    label: line.tag.isEmpty ? line.label : '${line.label} · ${line.tag}',
-    value: line.value,
-  );
-}
+/// A plain [LabelValue], so the section can put short figures side by side.
+LabelValue _line(DashboardLine line) => LabelValue(
+  label: line.tag.isEmpty ? line.label : '${line.label} · ${line.tag}',
+  value: line.value,
+);
 
 class _RevenueCard extends StatelessWidget {
   const new({required this.data});
@@ -508,15 +502,12 @@ class _ApiClientDashboard extends ConsumerWidget {
       ),
     );
     // Each figure opens Projects filtered to what it counts.
-    Widget figure(Key key, String title, int value, ApiProjectStatus? s) =>
-        Semantics(
-          button: true,
-          child: GestureDetector(
-            key: key,
-            behavior: HitTestBehavior.opaque,
-            onTap: () => openProjects(s),
-            child: MetricCard(title: title, value: count(value), delta: '—'),
-          ),
+    Metric figure(Key key, String title, int value, ApiProjectStatus? s) =>
+        Metric(
+          key: key,
+          label: title,
+          value: count(value),
+          onTap: () => openProjects(s),
         );
     // Counts appear only once the server has sent them; a loading or failed
     // list never reads "0".
@@ -532,27 +523,29 @@ class _ApiClientDashboard extends ConsumerWidget {
           builder: (s) => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              figure(
-                const Key('dash-projects-count'),
-                l10n.dashProjects,
-                s.projects,
-                null,
+              MetricGroup(
+                metrics: [
+                  figure(
+                    const Key('dash-projects-count'),
+                    l10n.dashProjects,
+                    s.projects,
+                    null,
+                  ),
+                  figure(
+                    const Key('dash-in-progress'),
+                    l10n.dashInProgress,
+                    s.inProgress,
+                    ApiProjectStatus.inProgress,
+                  ),
+                  figure(
+                    const Key('dash-completed'),
+                    l10n.dashCompleted,
+                    s.completed,
+                    ApiProjectStatus.completed,
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              figure(
-                const Key('dash-in-progress'),
-                l10n.dashInProgress,
-                s.inProgress,
-                ApiProjectStatus.inProgress,
-              ),
-              const SizedBox(height: 16),
-              figure(
-                const Key('dash-completed'),
-                l10n.dashCompleted,
-                s.completed,
-                ApiProjectStatus.completed,
-              ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(l10n.dashLiveOnly, style: dashCaption),
             ],
           ),

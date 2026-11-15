@@ -52,21 +52,25 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
       createLabel: l10n.createInvoice,
       children: [
         const ExportReportChip(),
-        MetricCard(
-          title: l10n.metricTotalInvoices,
-          value: count(all.length),
-          delta: demo ? '+12.5% ${l10n.vsLastMonth}' : '—',
-        ),
-        MetricCard(
-          title: l10n.metricPaid,
-          value: count(n(InvoiceStatus.paid)),
-          delta: demo ? '+8.4% ${l10n.vsLastMonth}' : '—',
-        ),
-        MetricCard(
-          title: l10n.metricOverdue,
-          value: count(n(InvoiceStatus.overdue)),
-          delta: demo ? '-5.2% ${l10n.vsLastMonth}' : '—',
-          negative: true,
+        MetricGroup(
+          metrics: [
+            Metric(
+              label: l10n.metricTotalInvoices,
+              value: count(all.length),
+              delta: demo ? '+12.5% ${l10n.vsLastMonth}' : '—',
+            ),
+            Metric(
+              label: l10n.metricPaid,
+              value: count(n(InvoiceStatus.paid)),
+              delta: demo ? '+8.4% ${l10n.vsLastMonth}' : '—',
+            ),
+            Metric(
+              label: l10n.metricOverdue,
+              value: count(n(InvoiceStatus.overdue)),
+              delta: demo ? '-5.2% ${l10n.vsLastMonth}' : '—',
+              negative: true,
+            ),
+          ],
         ),
         WfSearchBox(
           fieldKey: const Key('invoices-search'),

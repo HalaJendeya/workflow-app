@@ -106,17 +106,21 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
       createLabel: l10n.createInvoice,
       children: [
         const ExportReportChip(),
-        MetricCard(
-          title: l10n.metricTotalInvoices,
-          value: n((s) => s.total),
-          delta: '—',
-        ),
-        MetricCard(title: l10n.metricPaid, value: n((s) => s.paid), delta: '—'),
-        MetricCard(
-          title: l10n.metricOverdue,
-          value: n((s) => s.overdue),
-          delta: '—',
-          negative: true,
+        MetricGroup(
+          metrics: [
+            Metric(
+              label: l10n.metricTotalInvoices,
+              value: n((s) => s.total),
+              delta: '—',
+            ),
+            Metric(label: l10n.metricPaid, value: n((s) => s.paid), delta: '—'),
+            Metric(
+              label: l10n.metricOverdue,
+              value: n((s) => s.overdue),
+              delta: '—',
+              negative: true,
+            ),
+          ],
         ),
         WfSearchBox(
           fieldKey: const Key('invoices-search'),

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:workflow_app/core/data/local_collection.dart';
-import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
@@ -190,30 +189,26 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             error: error,
             onRetry: () => ref.invalidate(employeeTaskStatsProvider),
           ),
-        IconMetricCard(
-          icon: 'metric_task_0',
-          tint: AppColors.primary50,
-          title: l10n.activeTasks,
-          value: demo ? '$active' : '${stats?.active ?? '—'}',
-          caption: l10n.completionVelocity,
-        ),
-        IconMetricCard(
-          icon: 'metric_task_1',
-          tint: AppColors.surfaceSubtle,
-          title: l10n.totalBudgetUtilization,
-          value: demo ? money(budget) : '—',
-          caption: l10n.budgetAllocations,
-        ),
-        IconMetricCard(
-          icon: 'metric_task_2',
-          tint: ModuleColors.warningBg,
-          title: l10n.loggedHours,
-          value: demo
-              ? '$hours'
-              : stats == null
-              ? '—'
-              : (stats.loggedMinutes / 60).toStringAsFixed(1),
-          caption: l10n.hoursThisPeriod,
+        MetricGroup(
+          metrics: [
+            Metric(
+              label: l10n.activeTasks,
+              value: demo ? '$active' : '${stats?.active ?? '—'}',
+            ),
+            if (demo)
+              Metric(
+                label: l10n.totalBudgetUtilization,
+                value: demo ? money(budget) : '—',
+              ),
+            Metric(
+              label: l10n.loggedHours,
+              value: demo
+                  ? '$hours'
+                  : stats == null
+                  ? '—'
+                  : (stats.loggedMinutes / 60).toStringAsFixed(1),
+            ),
+          ],
         ),
         ChipRow(
           children: [

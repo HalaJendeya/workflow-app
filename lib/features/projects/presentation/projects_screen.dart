@@ -150,20 +150,24 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       onCreate: widget.canManage ? () => openProjectForm(context) : null,
       createLabel: l10n.addProject,
       children: [
-        MetricCard(
-          title: l10n.metricTotalProjects,
-          value: count(all.length),
-          delta: demo ? '16% ${l10n.vsLastMonth}' : '—',
-        ),
-        MetricCard(
-          title: l10n.statusInProgress,
-          value: count(n(ProjectStatus.inProgress)),
-          delta: demo ? '12% ${l10n.vsLastMonth}' : '—',
-        ),
-        MetricCard(
-          title: l10n.statusCompleted,
-          value: count(n(ProjectStatus.completed)),
-          delta: demo ? '4% ${l10n.vsLastMonth}' : '—',
+        MetricGroup(
+          metrics: [
+            Metric(
+              label: l10n.metricTotalProjects,
+              value: count(all.length),
+              delta: demo ? '16% ${l10n.vsLastMonth}' : '—',
+            ),
+            Metric(
+              label: l10n.statusInProgress,
+              value: count(n(ProjectStatus.inProgress)),
+              delta: demo ? '12% ${l10n.vsLastMonth}' : '—',
+            ),
+            Metric(
+              label: l10n.statusCompleted,
+              value: count(n(ProjectStatus.completed)),
+              delta: demo ? '4% ${l10n.vsLastMonth}' : '—',
+            ),
+          ],
         ),
         WfSearchBox(
           fieldKey: const Key('projects-search'),

@@ -81,20 +81,24 @@ class _ApiProjectsViewState extends ConsumerState<ApiProjectsView> {
       onCreate: widget.onCreate,
       createLabel: l10n.addProject,
       children: [
-        MetricCard(
-          title: l10n.metricTotalProjects,
-          value: n((s) => s.total),
-          delta: '—',
-        ),
-        MetricCard(
-          title: l10n.statusInProgress,
-          value: n((s) => s.inProgress),
-          delta: '—',
-        ),
-        MetricCard(
-          title: l10n.statusCompleted,
-          value: n((s) => s.done),
-          delta: '—',
+        MetricGroup(
+          metrics: [
+            Metric(
+              label: l10n.metricTotalProjects,
+              value: n((s) => s.total),
+              delta: '—',
+            ),
+            Metric(
+              label: l10n.statusInProgress,
+              value: n((s) => s.inProgress),
+              delta: '—',
+            ),
+            Metric(
+              label: l10n.statusCompleted,
+              value: n((s) => s.done),
+              delta: '—',
+            ),
+          ],
         ),
         WfSearchBox(
           fieldKey: const Key('projects-search'),

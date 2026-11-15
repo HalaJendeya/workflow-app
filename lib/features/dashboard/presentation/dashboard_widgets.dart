@@ -45,16 +45,69 @@ class DashboardSection extends StatelessWidget {
       children: [
         Text(title, style: dashTitle),
         if (badge != null) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           StatusBadge(label: badge!, tone: tone),
         ],
         if (caption != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(caption!, style: dashCaption),
         ],
-        for (final c in children) ...[const SizedBox(height: 16), c],
+        for (final c in _compact(children)) ...[const SizedBox(height: 12), c],
       ],
     ),
+  );
+
+  /// Short figures side by side: a run of [LabelValue]s whose values are
+  /// all short becomes a two-column grid; sentences stay full width.
+  static List<Widget> _compact(List<Widget> children) {
+    final out = <Widget>[];
+    var run = <LabelValue>[];
+    void flush() {
+      if (run.length >= 2 && run.every((v) => v.value.length <= 22)) {
+        out.add(LabelValueGrid(items: run));
+      } else {
+        out.addAll(run);
+      }
+      run = [];
+    }
+
+    for (final c in children) {
+      if (c is LabelValue) {
+        run.add(c);
+      } else {
+        flush();
+        out.add(c);
+      }
+    }
+    flush();
+    return out;
+  }
+}
+
+/// Two short figures per row; an odd last one takes the full row.
+class LabelValueGrid extends StatelessWidget {
+  const new({required this.items, super.key});
+
+  final List<LabelValue> items;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      for (var i = 0; i < items.length; i += 2) ...[
+        if (i > 0) const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: items[i]),
+            if (i + 1 < items.length) ...[
+              const SizedBox(width: 12),
+              Expanded(child: items[i + 1]),
+            ],
+          ],
+        ),
+      ],
+    ],
   );
 }
 
@@ -94,41 +147,80 @@ class AllocationCard extends StatelessWidget {
       tone: BadgeTone.success,
       caption: l10n.deliverableBreakdown,
       children: [
-        Center(
-          child: SizedBox.square(
-            dimension: 160,
-            child: CustomPaint(
-              painter: DonutPainter([
-                (done.toDouble(), ModuleColors.successFg),
-                (active.toDouble(), AppColors.primary),
-                (review.toDouble(), ModuleColors.chartYellow),
-              ]),
-              child: Center(
-                child: Text(
-                  '${pct(done) + pct(active)}%',
-                  style: AppTextStyles.choiceTitle.copyWith(
-                    color: AppColors.textPrimary,
+        // The ring beside its legend: one block instead of a 160 px ring
+        // above three stacked figures.
+        Row(
+          children: [
+            SizedBox.square(
+              dimension: 112,
+              child: CustomPaint(
+                painter: DonutPainter([
+                  (done.toDouble(), ModuleColors.successFg),
+                  (active.toDouble(), AppColors.primary),
+                  (review.toDouble(), ModuleColors.chartYellow),
+                ], thickness: 18),
+                child: Center(
+                  child: Text(
+                    '${pct(done) + pct(active)}%',
+                    style: dashValue.copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
             ),
-          ),
-        ),
-        LabelValue(
-          label: l10n.completedMilestones,
-          value: l10n.percentItems(pct(done), done),
-        ),
-        LabelValue(
-          label: l10n.activeInSprint,
-          value: l10n.percentItems(pct(active), active),
-        ),
-        LabelValue(
-          label: l10n.reviewQa,
-          value: l10n.percentItems(pct(review), review),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _Legend(
+                    ModuleColors.successFg,
+                    l10n.completedMilestones,
+                    l10n.percentItems(pct(done), done),
+                  ),
+                  const SizedBox(height: 10),
+                  _Legend(
+                    AppColors.primary,
+                    l10n.activeInSprint,
+                    l10n.percentItems(pct(active), active),
+                  ),
+                  const SizedBox(height: 10),
+                  _Legend(
+                    ModuleColors.chartYellow,
+                    l10n.reviewQa,
+                    l10n.percentItems(pct(review), review),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
+}
+
+class _Legend extends StatelessWidget {
+  const new(this.color, this.label, this.value);
+
+  final Color color;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Container(
+        width: 10,
+        height: 10,
+        margin: const EdgeInsetsDirectional.only(top: 4, end: 8),
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      ),
+      Expanded(
+        child: LabelValue(label: label, value: value),
+      ),
+    ],
+  );
 }
 
 /// Ring chart: one arc per (value, color) segment, clockwise from 12 o'clock.
@@ -196,20 +288,34 @@ class DashboardProjectCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(p.name, style: dashTitle),
-          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: Text(p.name, style: dashTitle)),
+              const SizedBox(width: 8),
+              StatusBadge(
+                label: projectStatusLabel(l10n, p.status),
+                tone: projectTone(p.status),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
           Text('${p.client} • ${p.company}', style: dashCaption),
-          const SizedBox(height: 16),
-          StatusBadge(
-            label: projectStatusLabel(l10n, p.status),
-            tone: projectTone(p.status),
+          const SizedBox(height: 12),
+          // Budget and delivery date side by side.
+          LabelValueGrid(
+            items: [
+              LabelValue(
+                label: l10n.contractBudget,
+                value: money(p.budget, currency: p.currency),
+              ),
+              LabelValue(
+                label: l10n.targetDelivery,
+                value: DateFormat.yMMMd(l10n.localeName).format(target),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          LabelValue(
-            label: l10n.contractBudget,
-            value: money(p.budget, currency: p.currency),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(child: Text(l10n.fieldProgress, style: dashCaption)),
@@ -231,12 +337,7 @@ class DashboardProjectCard extends ConsumerWidget {
               backgroundColor: ModuleColors.sectionDivider,
             ),
           ),
-          const SizedBox(height: 16),
-          LabelValue(
-            label: l10n.targetDelivery,
-            value: DateFormat.yMMMd(l10n.localeName).format(target),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Row(
             children: [
               TextButton(

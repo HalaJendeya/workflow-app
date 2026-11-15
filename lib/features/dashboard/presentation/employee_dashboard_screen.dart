@@ -1025,36 +1025,31 @@ class _ApiEmployeeDashboard extends ConsumerWidget {
           builder: (s) => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              MetricCard(
-                key: const Key('emp-dash-tasks'),
-                title: l10n.activeTasks,
-                value: count(s.tasks),
-                delta: '—',
+              // Work, then pay: two compact groups instead of five cards.
+              MetricGroup(
+                metrics: [
+                  Metric(
+                    key: const Key('emp-dash-tasks'),
+                    label: l10n.activeTasks,
+                    value: count(s.tasks),
+                  ),
+                  Metric(
+                    label: l10n.loggedHours,
+                    value: (s.loggedMinutes / 60).toStringAsFixed(1),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              MetricCard(
-                title: l10n.loggedHours,
-                value: (s.loggedMinutes / 60).toStringAsFixed(1),
-                delta: '—',
-              ),
-              const SizedBox(height: 16),
-              MetricCard(
-                title: l10n.totalEarned,
-                value: amount(s.earned),
-                delta: '—',
-              ),
-              const SizedBox(height: 16),
-              MetricCard(
-                title: l10n.paidSalary,
-                value: amount(s.paid),
-                delta: '—',
-              ),
-              const SizedBox(height: 16),
-              MetricCard(
-                title: l10n.unpaidSalary,
-                value: amount(s.unpaid),
-                delta: '—',
-                negative: true,
+              const SizedBox(height: 12),
+              MetricGroup(
+                metrics: [
+                  Metric(label: l10n.totalEarned, value: amount(s.earned)),
+                  Metric(label: l10n.paidSalary, value: amount(s.paid)),
+                  Metric(
+                    label: l10n.unpaidSalary,
+                    value: amount(s.unpaid),
+                    negative: true,
+                  ),
+                ],
               ),
             ],
           ),

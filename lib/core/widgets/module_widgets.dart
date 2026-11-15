@@ -297,51 +297,143 @@ class WfSearchBox extends StatelessWidget {
   );
 }
 
-/// "Metric card": title 14 SemiBold, value 20 Bold, green/red delta label.
-class MetricCard extends StatelessWidget {
+/// One statistic in a [MetricGroup].
+class Metric {
   const new({
-    required this.title,
+    required this.label,
     required this.value,
-    required this.delta,
+    this.delta,
     this.negative = false,
-    super.key,
+    this.onTap,
+    this.key,
   });
 
-  final String title;
+  final String label;
+
+  /// Already formatted; `—` while the server has not answered (never a
+  /// guessed 0).
   final String value;
-  final String delta;
+
+  /// Comparison text. Not drawn when null, empty or `—`: no badge without
+  /// data behind it.
+  final String? delta;
   final bool negative;
+  final VoidCallback? onTap;
+  final Key? key;
+}
+
+/// Related statistics in one compact card: two or three cells per row
+/// (three when each still gets 96 px × text scale), an odd last cell
+/// spanning the row, hairline dividers instead of a border per number.
+/// Replaces a stack of full-width cards holding one number each.
+class MetricGroup extends StatelessWidget {
+  const new({required this.metrics, this.maxColumns = 3, super.key});
+
+  final List<Metric> metrics;
+  final int maxColumns;
 
   @override
   Widget build(BuildContext context) => ModuleCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: AppTextStyles.mobileBaseSemiBold.copyWith(
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 16),
-        // Large sums shrink rather than break across lines.
-        WordFitText(
-          value,
-          style: AppTextStyles.mobile2xlSemiBold.copyWith(
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 16),
-        StatusBadge(
-          label: delta,
-          tone: negative ? BadgeTone.danger : BadgeTone.success,
-          radius: 6,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        ),
-      ],
+    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+    child: LayoutBuilder(
+      builder: (context, box) {
+        final scale = MediaQuery.textScalerOf(context).scale(1);
+        // Three across only for short figures (counts, hours); long sums
+        // ("\$9,876,543,210.75") get half the width each.
+        final longest = metrics.fold(0, (w, m) => math.max(w, m.value.length));
+        final fits3 = box.maxWidth / 3 >= 96 * scale && longest <= 10;
+        final columns = metrics.length <= 1
+            ? 1
+            : (maxColumns >= 3 && fits3 && metrics.length % 3 != 1)
+            ? 3
+            : 2;
+        final rows = <List<Metric>>[
+          for (var i = 0; i < metrics.length; i += columns)
+            metrics.sublist(i, (i + columns).clamp(0, metrics.length)),
+        ];
+        // A Table per row: each row is as tall as its tallest cell and the
+        // inner dividers run full height, without intrinsic measuring
+        // (which a shrinking value cannot answer).
+        const line = BorderSide(color: ModuleColors.sectionDivider);
+        return Column(
+          children: [
+            for (var r = 0; r < rows.length; r++)
+              Table(
+                border: TableBorder(
+                  verticalInside: line,
+                  top: r > 0 ? line : BorderSide.none,
+                ),
+                children: [
+                  TableRow(children: [for (final m in rows[r]) _MetricCell(m)]),
+                ],
+              ),
+          ],
+        );
+      },
     ),
   );
+}
+
+class _MetricCell extends StatelessWidget {
+  const new(this.metric);
+
+  final Metric metric;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = metric;
+    final delta = m.delta;
+    final showDelta = delta != null && delta.isNotEmpty && delta != '—';
+    final cell = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            m.label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.mobileXsRegular.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          WordFitText(
+            m.value,
+            minScale: 0.55,
+            style: AppTextStyles.mobileLgSemiBold.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          if (showDelta) ...[
+            const SizedBox(height: 2),
+            Text(
+              delta,
+              maxLines: 2,
+              style: AppTextStyles.mobileXsRegular.copyWith(
+                fontSize: 11,
+                color: m.negative
+                    ? ModuleColors.dangerFg
+                    : ModuleColors.successFg,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+    if (m.onTap == null) return KeyedSubtree(key: m.key, child: cell);
+    return Semantics(
+      button: true,
+      child: InkWell(
+        key: m.key,
+        onTap: m.onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: cell,
+      ),
+    );
+  }
 }
 
 /// White card with 20 px radius and the 70 % #E1E1E1 stroke.

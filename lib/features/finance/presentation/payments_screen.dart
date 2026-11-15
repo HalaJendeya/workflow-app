@@ -83,20 +83,24 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
       children: [
         const ExportReportChip(),
         if (demo) ...[
-          MetricCard(
-            title: l10n.metricTotalRevenue,
-            value: money(revenue),
-            delta: '12.5% ${l10n.vsLastMonth}',
-          ),
-          MetricCard(
-            title: l10n.metricPendingPayments,
-            value: money(pending.fold<double>(0, (s, p) => s + p.amount)),
-            delta: l10n.invoicesAwaiting(pending.length),
-          ),
-          MetricCard(
-            title: l10n.metricTransactionVolume,
-            value: count(all.length),
-            delta: '5.2% ${l10n.vsLastMonth}',
+          MetricGroup(
+            metrics: [
+              Metric(
+                label: l10n.metricTotalRevenue,
+                value: money(revenue),
+                delta: '12.5% ${l10n.vsLastMonth}',
+              ),
+              Metric(
+                label: l10n.metricPendingPayments,
+                value: money(pending.fold<double>(0, (s, p) => s + p.amount)),
+                delta: l10n.invoicesAwaiting(pending.length),
+              ),
+              Metric(
+                label: l10n.metricTransactionVolume,
+                value: count(all.length),
+                delta: '5.2% ${l10n.vsLastMonth}',
+              ),
+            ],
           ),
         ] else
           ..._apiChildren(context),
@@ -456,25 +460,27 @@ class _ApiPaymentMetrics extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        MetricCard(
-          key: const Key('api-payments-received'),
-          title: l10n.metricTotalRevenue,
-          value: sum((t) => t.received),
-          delta: '—',
-        ),
-        const SizedBox(height: 16),
-        MetricCard(
-          title: l10n.metricPendingPayments,
-          value: sum((t) => t.pending),
-          delta: '—',
-          negative: true,
-        ),
-        const SizedBox(height: 16),
-        MetricCard(
-          key: const Key('api-payments-count'),
-          title: l10n.metricTransactionVolume,
-          value: s == null ? '—' : count(s.count),
-          delta: '—',
+        MetricGroup(
+          metrics: [
+            Metric(
+              key: const Key('api-payments-received'),
+              label: l10n.metricTotalRevenue,
+              value: sum((t) => t.received),
+              delta: '—',
+            ),
+            Metric(
+              label: l10n.metricPendingPayments,
+              value: sum((t) => t.pending),
+              delta: '—',
+              negative: true,
+            ),
+            Metric(
+              key: const Key('api-payments-count'),
+              label: l10n.metricTransactionVolume,
+              value: s == null ? '—' : count(s.count),
+              delta: '—',
+            ),
+          ],
         ),
       ],
     );

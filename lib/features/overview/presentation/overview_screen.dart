@@ -715,8 +715,8 @@ class _RecordCard extends StatelessWidget {
             child: WfStatusChip(label: status!),
           ),
         ],
-        // The Figma record card ends with two empty 12 px paragraphs.
-        const SizedBox(height: 44),
+        // Figma ends the card with two empty 12 px paragraphs; on a phone
+        // that was 44 px of nothing under every record, so it is dropped.
       ],
     ),
   );

@@ -387,7 +387,7 @@ void _expectWhole(WidgetTester tester, Finder texts) {
 /// ("\$98,765,432 / .10" was split at its decimal point).
 void _expectNoBrokenWords(WidgetTester tester) {
   final cards = find.byWidgetPredicate(
-    (w) => w is ModuleCard || w is MetricCard || w is RecordCard,
+    (w) => w is ModuleCard || w is MetricGroup || w is RecordCard,
   );
   for (final e
       in find

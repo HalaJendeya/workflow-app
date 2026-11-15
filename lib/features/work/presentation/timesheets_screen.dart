@@ -97,45 +97,37 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
             error: error,
             onRetry: () => ref.invalidate(employeeTimesheetSummaryProvider),
           ),
-        IconMetricCard(
-          icon: 'metric_ts_0',
-          tint: ModuleColors.successBg,
-          iconSize: 20,
-          title: l10n.approved,
-          value: demo
-              ? '${n(TimesheetStatus.approved)}'
-              : '${sum?.approved ?? '—'}',
-        ),
-        IconMetricCard(
-          icon: 'metric_ts_1',
-          tint: ModuleColors.warningBg,
-          iconSize: 20,
-          title: l10n.statusPending,
-          value: demo
-              ? '${n(TimesheetStatus.pending)}'
-              : '${sum?.pending ?? '—'}',
-        ),
-        IconMetricCard(
-          icon: 'metric_ts_2',
-          tint: AppColors.primary50,
-          iconSize: 20,
-          title: l10n.totalHours,
-          value: demo
-              ? hours.toStringAsFixed(1)
-              : sum == null
-              ? '—'
-              : (sum.totalMinutes / 60).toStringAsFixed(1),
-        ),
-        IconMetricCard(
-          icon: 'metric_ts_3',
-          tint: AppColors.surfaceSubtle,
-          iconSize: 20,
-          title: l10n.totalSalaries,
-          value: demo
-              ? money(salaries)
-              : sum == null
-              ? '—'
-              : apiMoney(sum),
+        MetricGroup(
+          metrics: [
+            Metric(
+              label: l10n.approved,
+              value: demo
+                  ? '${n(TimesheetStatus.approved)}'
+                  : '${sum?.approved ?? '—'}',
+            ),
+            Metric(
+              label: l10n.statusPending,
+              value: demo
+                  ? '${n(TimesheetStatus.pending)}'
+                  : '${sum?.pending ?? '—'}',
+            ),
+            Metric(
+              label: l10n.totalHours,
+              value: demo
+                  ? hours.toStringAsFixed(1)
+                  : sum == null
+                  ? '—'
+                  : (sum.totalMinutes / 60).toStringAsFixed(1),
+            ),
+            Metric(
+              label: l10n.totalSalaries,
+              value: demo
+                  ? money(salaries)
+                  : sum == null
+                  ? '—'
+                  : apiMoney(sum),
+            ),
+          ],
         ),
         if (demo) ...[
           WfSearchBox(
