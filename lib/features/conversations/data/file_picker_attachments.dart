@@ -50,3 +50,20 @@ Future<bool> saveAttachment(DownloadedFile file, String fallbackName) async {
   );
   return uri != null;
 }
+
+/// One image for the profile picture. Larger than 2048 KB is refused
+/// before it is read ([AttachmentRejected] with `tooLarge`).
+Future<OutgoingFile?> pickProfileImage() async {
+  final picked = await FilePicker.pickFiles(type: FileType.image);
+  if (picked.isEmpty) return null;
+  try {
+    final f = picked.first;
+    final size = await f.length();
+    if (size != null && size > 2048 * 1024) {
+      throw const AttachmentRejected(AttachmentProblem.tooLarge);
+    }
+    return OutgoingFile(name: f.name, bytes: await f.readAsBytes());
+  } finally {
+    if (!kIsWeb) await FilePicker.clearTemporaryFiles();
+  }
+}

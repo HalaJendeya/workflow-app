@@ -1,11 +1,14 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart' show StringCharacters;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/core/network/api_client.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
+import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/network/api_response.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
+import 'package:workflow_app/features/conversations/data/chat_attachments.dart';
 
 /// Signed-in user's profile. `GET /api/v1/{client|employee}/account`
 /// documents `data.id` and `data.email`; `data.name` and `data.image_url`
@@ -65,7 +68,19 @@ abstract interface class ProfileRepository {
 
   /// `DELETE …/account/delete` (marked destructive in the collection).
   Future<void> deleteAccount();
+
+  /// `POST …/account/image`, multipart `image`: a decodable JPG, PNG or
+  /// WebP of at most 2048 KB. 200 with `data.id`, `data.image`,
+  /// `data.image_url`; returns `image_url`.
+  Future<String> uploadImage(OutgoingFile image);
 }
+
+/// The route's rules, checked before upload: JPG, PNG or WebP by content,
+/// at most 2048 KB.
+bool isValidProfileImage(OutgoingFile f) =>
+    f.bytes.isNotEmpty &&
+    f.bytes.length <= 2048 * 1024 &&
+    const {'image/jpeg', 'image/png', 'image/webp'}.contains(f.mime);
 
 class ApiProfileRepository implements ProfileRepository {
   new(this._client, Portal portal) : _path = '/api/v1/${portal.name}/account';
@@ -106,6 +121,29 @@ class ApiProfileRepository implements ProfileRepository {
   Future<void> deleteAccount() async {
     ApiEnvelope.unwrapData(await _client.delete('$_path/delete'));
   }
+
+  @override
+  Future<String> uploadImage(OutgoingFile image) async {
+    final form = FormData()
+      ..files.add(
+        MapEntry(
+          'image',
+          MultipartFile.fromBytes(
+            image.bytes,
+            filename: image.name,
+            contentType: image.mime == null
+                ? null
+                : DioMediaType.parse(image.mime!),
+          ),
+        ),
+      );
+    final data = ApiEnvelope.unwrapObject(
+      await _client.post('$_path/image', body: form),
+    );
+    final url = data['image_url'];
+    if (url is! String || url.isEmpty) missingField('image_url');
+    return url;
+  }
 }
 
 /// Demo profile kept in memory for the lifetime of the repository.
@@ -136,6 +174,10 @@ class MockProfileRepository implements ProfileRepository {
 
   @override
   Future<void> deleteAccount() async {}
+
+  /// Demo: nothing is uploaded; the caller says so.
+  @override
+  Future<String> uploadImage(OutgoingFile image) async => '';
 }
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {

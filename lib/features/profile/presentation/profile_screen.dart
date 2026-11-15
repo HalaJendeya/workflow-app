@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/core/design_system/app_icons.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
@@ -9,6 +12,8 @@ import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
+import 'package:workflow_app/features/conversations/data/chat_attachments.dart';
+import 'package:workflow_app/features/conversations/data/file_picker_attachments.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/profile/data/profile_repository.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -146,13 +151,61 @@ class _ActionButtons extends StatelessWidget {
   );
 }
 
-class _IdentityCard extends ConsumerWidget {
+/// Picks one image for the profile picture (the system picker); tests
+/// replace it.
+final profileImagePickerProvider = Provider<Future<OutgoingFile?> Function()>(
+  (_) => pickProfileImage,
+);
+
+class _IdentityCard extends ConsumerStatefulWidget {
   const new({required this.profile});
 
   final UserProfile profile;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_IdentityCard> createState() => _IdentityCardState();
+}
+
+class _IdentityCardState extends ConsumerState<_IdentityCard> {
+  bool _uploading = false;
+
+  /// Picks an image, checks the route's rules (JPG/PNG/WebP by content,
+  /// ≤ 2048 KB) and uploads it with `POST …/account/image`.
+  Future<void> _upload() async {
+    if (_uploading) return;
+    final l10n = AppLocalizations.of(context);
+    final OutgoingFile? image;
+    try {
+      image = await ref.read(profileImagePickerProvider)();
+    } on AttachmentRejected {
+      if (mounted) showSnack(context, l10n.profileImageInvalid);
+      return;
+    }
+    if (image == null || !mounted) return;
+    if (!isValidProfileImage(image)) {
+      showSnack(context, l10n.profileImageInvalid);
+      return;
+    }
+    setState(() => _uploading = true);
+    try {
+      await ref.read(profileRepositoryProvider).uploadImage(image);
+      if (!mounted) return;
+      if (ref.read(demoModeProvider)) {
+        showLocalOutcome(context, applied: true);
+      } else {
+        ref.invalidate(profileProvider);
+        showSnack(context, l10n.profileImageUpdated);
+      }
+    } on ApiException catch (e) {
+      if (mounted) showSnack(context, localizedError(l10n, e));
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final profile = widget.profile;
     final l10n = AppLocalizations.of(context);
     final portal =
         ref.watch(sessionControllerProvider).value?.portal ?? Portal.client;
@@ -191,12 +244,17 @@ class _IdentityCard extends ConsumerWidget {
                   color: AppColors.primary50,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  profile.initials,
-                  style: AppTextStyles.choiceTitle.copyWith(
-                    color: AppColors.primary,
-                  ),
-                ),
+                clipBehavior: Clip.antiAlias,
+                child: profile.imageUrl?.isNotEmpty ?? false
+                    ? Image.network(
+                        profile.imageUrl!,
+                        key: const Key('profile-image'),
+                        width: 92,
+                        height: 92,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => _initials(profile),
+                      )
+                    : _initials(profile),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -228,9 +286,7 @@ class _IdentityCard extends ConsumerWidget {
             key: const Key('upload-image'),
             label: l10n.uploadNewImage,
             height: 44,
-            // The multipart endpoint is documented; the app has no image
-            // picker yet, and the message says exactly that.
-            onPressed: () => showSnack(context, l10n.imagePickerPending),
+            onPressed: _uploading ? null : () => unawaited(_upload()),
           ),
           field(l10n.accountId, '#${profile.id}'),
           field(l10n.emailLabel, profile.email),
@@ -667,3 +723,10 @@ class _DangerZoneCardState extends ConsumerState<_DangerZoneCard> {
     );
   }
 }
+
+Widget _initials(UserProfile profile) => Center(
+  child: Text(
+    profile.initials,
+    style: AppTextStyles.choiceTitle.copyWith(color: AppColors.primary),
+  ),
+);
