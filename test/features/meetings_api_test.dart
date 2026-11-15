@@ -432,10 +432,15 @@ void main() {
       isEmpty,
     );
 
-    // Join by code is reported as unavailable instead of failing silently.
+    // Join by code says why it does not join here: employees have a
+    // by-code route the app does not call yet (clients have none).
     await tester.tap(find.text('join by code').first);
     await tester.pump();
-    expect(find.textContaining('no meeting lookup by code'), findsOneWidget);
+    expect(
+      find.textContaining("Joining by code isn't connected"),
+      findsOneWidget,
+    );
+    expect(find.textContaining('LiveKit'), findsNothing);
 
     await tester.ensureVisible(find.byKey(const Key('meeting-41')));
     await tester.tap(

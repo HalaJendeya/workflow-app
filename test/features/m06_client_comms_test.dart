@@ -921,7 +921,10 @@ void main() {
       await openChat(tester);
       await tester.tap(find.byKey(const Key('chat-attach')));
       await tester.pump();
-      expect(find.textContaining('needs a file picker'), findsOneWidget);
+      expect(
+        find.textContaining("can't be chosen on this device"),
+        findsOneWidget,
+      );
       expect(sends(), 0);
     });
 

@@ -26,13 +26,28 @@ on the owner's machine and Redmi 8.
 3. `flutter doctor` shows the Android toolchain ✓.
 
 ```bash
+git checkout feat/m01-batch2-emulator-fixes && git pull
 flutter clean
 flutter pub get
-flutter build apk --debug --dart-define=APP_MODE=api --dart-define=API_BASE_URL=https://api.workflownets.com
-flutter build apk --release --dart-define=APP_MODE=api --dart-define=API_BASE_URL=https://api.workflownets.com
+flutter build apk --debug --dart-define=APP_MODE=api --dart-define=API_BASE_URL=https://api.workflownets.com --dart-define=BUILD_SHA=$(git rev-parse --short HEAD)
+flutter build apk --release --dart-define=APP_MODE=api --dart-define=API_BASE_URL=https://api.workflownets.com --dart-define=BUILD_SHA=$(git rev-parse --short HEAD)
+adb uninstall app.workflow.workflow_app
+adb install build/app/outputs/flutter-apk/app-release.apk
 ```
 
 Report the first failing line of either build if one fails.
+
+### Confirm the installed build before testing
+
+- **No "Demo data" banner** at the top: a banner means the build is in mock
+  mode (`APP_MODE=mock`), where meetings, chat attachments and
+  notifications are demo-only by design.
+- Tap your avatar (top left): the last line reads
+  `API · api.workflownets.com · build <commit>`. `<commit>` must equal
+  `git rev-parse --short HEAD` of the source you built; `local` means
+  `BUILD_SHA` was not passed.
+- Application id `app.workflow.workflow_app`, launch activity
+  `.MainActivity` (`adb shell pm list packages | grep workflow`).
 
 ## 2. Redmi 8 tests — no backend writes
 
@@ -51,6 +66,10 @@ send only reads (GET) or nothing at all.
 | A8 | Rename a `.zip` to `.png` on the phone and pick it. | "Only JPEG, PNG, GIF, WebP, PDF and plain-text files…". |
 | A9 | Remove every chip without sending. | Nothing was sent (no message appears). |
 | A10 | Put WorkFlow in the background for more than 1 minute, reopen. | The bell badge reloads (one notifications GET). |
+| A11 | Tap the bell on Home, then on Chat and More. | The **Notifications panel** opens every time (not a filter-only sheet, no jump to Home). The QA client has no notifications, so it reads "No notifications yet…" and "0 unread"; All / Unread / Read re-ask the server. |
+| A12 | More → Meetings → "join by code". | "Client accounts can't join by code: the WorkFlow API has no meeting lookup by code for clients…" (no claim about LiveKit). |
+| A13 | Chat → a conversation → the phone or video icon (needs a conversation). | "Calls aren't part of conversations… open Meetings and join one." |
+| A14 | Avatar → Profile details → **Upload New Image** → pick a GIF, then a photo larger than 2 MB. | Both refused before upload ("Choose a JPG, PNG or WebP image of 2 MB or less."). Picking a valid photo uploads it — that is a live write (§3, B13). |
 
 ## 3. Redmi 8 tests — need approval and QA resources
 
@@ -71,6 +90,7 @@ owner approves the live operation and the QA resources exist (§5).
 | B10 | Airplane mode → send a file. | "Not sent" with Retry/Discard; airplane off → Retry → sent once. |
 | B11 | Open a received image and a text file. | In-app preview. |
 | B12 | Open a received PDF → **Save to device** → choose Downloads. | "Saved."; the PDF opens from the Files app. |
+| B13 | Profile → Upload New Image → a JPG/PNG/WebP ≤ 2 MB. | "Profile picture updated."; the picture replaces the initials. |
 
 ## 4. Backend verification (2026-11-14)
 
@@ -115,3 +135,15 @@ Attachments:
   second device; a live meeting the client may join.
 - Owner approval for the live writes in §3 on `api.workflownets.com`, or a
   staging host with LiveKit configured.
+
+## 7. Runtime repair after the failed acceptance (2026-11-15)
+
+| Reported on the Redmi 8 | Root cause | Fix |
+|---|---|---|
+| The bell opens a dialog with filters but no notifications | On Home the bell called `_showNotificationOptions` (status filter + mark all, no list); on other tabs it only navigated to Home. The list lived as a card further down Home. | The bell opens `showNotificationsPanel` on every tab: the inbox with loading, error/Retry, empty ("No notifications yet…") and populated states, server-side All/Unread/Read, mark one/all read, load more. |
+| Meetings say the feature is not supported | "Join by code" (meetings list chip and More → Join by code) showed `meetingJoinUnavailable`: "…the app does not include the LiveKit media client" — stale since LiveKit was added. The API room's idle state said media awaits the backend. | Portal-accurate text (clients: no by-code route; employees: route not connected) with no LiveKit claim; the room's idle state is just Join. Joining a meeting from its details opens the LiveKit room. |
+| Chat actions say unsupported | The call/video icons said "Calls will be available when the meetings backend is ready". | "Calls aren't part of conversations… open Meetings and join one." Emoji and voice keep their accurate notes (keyboard emoji; the API accepts no audio). |
+| File picker says not supported | Profile → Upload New Image still said "needs an image picker", though `file_picker` is in and `POST …/account/image` is documented. Chat attach/image already open the picker in API mode; in mock mode they say the demo has no server. | Profile upload implemented (JPG/PNG/WebP ≤ 2048 KB checked before upload, multipart `image`, profile reloaded). |
+
+If the phone showed the "Demo data" banner, the installed build was in mock
+mode, where these features are demo-only by design.
