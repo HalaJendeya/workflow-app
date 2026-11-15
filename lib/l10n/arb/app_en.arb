@@ -1107,5 +1107,17 @@
         "type": "String"
       }
     }
-  }
+  },
+  "preferences": "Preferences",
+  "language": "Language",
+  "appearance": "Appearance",
+  "systemDefault": "System default",
+  "followsDevice": "Follows your device",
+  "languageEnglish": "English",
+  "languageArabic": "العربية",
+  "appearanceLight": "Light",
+  "appearanceDark": "Dark",
+  "changeLanguage": "Change language",
+  "changeAppearance": "Change appearance",
+  "appearanceAuto": "Auto"
 }

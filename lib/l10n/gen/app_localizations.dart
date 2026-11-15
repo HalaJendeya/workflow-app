@@ -3901,6 +3901,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{mode} · {host} · build {build}'**
   String buildInfo(String mode, String host, String build);
+
+  /// No description provided for @preferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get preferences;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @appearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get appearance;
+
+  /// No description provided for @systemDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'System default'**
+  String get systemDefault;
+
+  /// No description provided for @followsDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Follows your device'**
+  String get followsDevice;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @languageArabic.
+  ///
+  /// In en, this message translates to:
+  /// **'العربية'**
+  String get languageArabic;
+
+  /// No description provided for @appearanceLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get appearanceLight;
+
+  /// No description provided for @appearanceDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get appearanceDark;
+
+  /// No description provided for @changeLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Change language'**
+  String get changeLanguage;
+
+  /// No description provided for @changeAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Change appearance'**
+  String get changeAppearance;
+
+  /// No description provided for @appearanceAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get appearanceAuto;
 }
 
 class _AppLocalizationsDelegate

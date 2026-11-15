@@ -2130,4 +2130,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String buildInfo(String mode, String host, String build) {
     return '$mode · $host · build $build';
   }
+
+  @override
+  String get preferences => 'Preferences';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get appearance => 'Appearance';
+
+  @override
+  String get systemDefault => 'System default';
+
+  @override
+  String get followsDevice => 'Follows your device';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageArabic => 'العربية';
+
+  @override
+  String get appearanceLight => 'Light';
+
+  @override
+  String get appearanceDark => 'Dark';
+
+  @override
+  String get changeLanguage => 'Change language';
+
+  @override
+  String get changeAppearance => 'Change appearance';
+
+  @override
+  String get appearanceAuto => 'Auto';
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/preferences/preference_controls.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -103,6 +104,8 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
           ),
         ),
         if (cards.isEmpty) EmptyNotice(text: l10n.noResults) else ...cards,
+        // Settings for both portals: language and appearance.
+        if (_section == null && q.isEmpty) const PreferencesCard(),
       ],
     );
   }

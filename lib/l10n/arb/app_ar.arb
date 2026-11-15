@@ -633,5 +633,17 @@
   "demoRoomMedia": "غرفة تجريبية: يعمل الصوت والفيديو في التطبيق الفعلي حيث تتصل الاجتماعات عبر LiveKit.",
   "profileImageInvalid": "اختر صورة JPG أو PNG أو WebP بحجم 2 ميغابايت أو أقل.",
   "profileImageUpdated": "تم تحديث صورة الملف الشخصي.",
-  "buildInfo": "{mode} · {host} · إصدار {build}"
+  "buildInfo": "{mode} · {host} · إصدار {build}",
+  "preferences": "التفضيلات",
+  "language": "اللغة",
+  "appearance": "المظهر",
+  "systemDefault": "افتراضي النظام",
+  "followsDevice": "يتبع إعدادات جهازك",
+  "languageEnglish": "English",
+  "languageArabic": "العربية",
+  "appearanceLight": "فاتح",
+  "appearanceDark": "داكن",
+  "changeLanguage": "تغيير اللغة",
+  "changeAppearance": "تغيير المظهر",
+  "appearanceAuto": "تلقائي"
 }

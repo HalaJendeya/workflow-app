@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
+import 'package:workflow_app/core/preferences/preference_controls.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
@@ -28,15 +29,18 @@ class AuthScaffold extends StatelessWidget {
       child: Align(
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: Column(
               children: [
+                // Language and appearance before sign-in.
+                const PreferenceChips(),
+                const SizedBox(height: AppSpacing.sm),
                 if (topSpacing > 0) SizedBox(height: topSpacing),
                 if (showLogo) ...[
-                  const SizedBox(height: 88, child: Center(child: WfLogo())),
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: 72, child: Center(child: WfLogo())),
+                  const SizedBox(height: AppSpacing.md),
                 ],
                 Container(
                   width: double.infinity,

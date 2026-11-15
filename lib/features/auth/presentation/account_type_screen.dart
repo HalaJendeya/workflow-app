@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:workflow_app/app/routes.dart';
 import 'package:workflow_app/core/design_system/app_icons.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/preferences/preference_controls.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/auth/application/auth_flow.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
@@ -28,17 +29,19 @@ class AccountTypeScreen extends ConsumerWidget {
         child: Align(
           alignment: Alignment.topCenter,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 40),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480),
               child: Column(
                 children: [
-                  const WfLogo(height: 89.7),
+                  const PreferenceChips(),
+                  const SizedBox(height: AppSpacing.sm),
+                  const WfLogo(height: 72),
                   const SizedBox(height: AppSpacing.md),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 32,
+                      horizontal: 20,
+                      vertical: 24,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
@@ -157,26 +160,40 @@ class _ChoiceCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 190),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+          // Icon beside the text: one row per choice instead of a 190 px
+          // centred stack, so Next stays on screen on a 640 px phone.
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
               children: [
-                SvgIcon(icon, size: 48, color: fg),
-                const SizedBox(height: 9),
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.choiceTitle.copyWith(color: fg),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  body,
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.desktopBaseRegular.copyWith(
-                    color: selected ? AppColors.white : AppColors.textPrimary,
+                SvgIcon(icon, size: 36, color: fg),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTextStyles.choiceTitle.copyWith(color: fg),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        body,
+                        style: AppTextStyles.desktopBaseRegular.copyWith(
+                          color: selected
+                              ? AppColors.white
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  selected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: selected ? AppColors.white : AppColors.borderDefault,
                 ),
               ],
             ),

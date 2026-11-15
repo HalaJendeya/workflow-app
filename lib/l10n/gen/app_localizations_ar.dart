@@ -2125,4 +2125,40 @@ class AppLocalizationsAr extends AppLocalizations {
   String buildInfo(String mode, String host, String build) {
     return '$mode · $host · إصدار $build';
   }
+
+  @override
+  String get preferences => 'التفضيلات';
+
+  @override
+  String get language => 'اللغة';
+
+  @override
+  String get appearance => 'المظهر';
+
+  @override
+  String get systemDefault => 'افتراضي النظام';
+
+  @override
+  String get followsDevice => 'يتبع إعدادات جهازك';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageArabic => 'العربية';
+
+  @override
+  String get appearanceLight => 'فاتح';
+
+  @override
+  String get appearanceDark => 'داكن';
+
+  @override
+  String get changeLanguage => 'تغيير اللغة';
+
+  @override
+  String get changeAppearance => 'تغيير المظهر';
+
+  @override
+  String get appearanceAuto => 'تلقائي';
 }
