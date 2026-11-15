@@ -1107,9 +1107,5 @@
         "type": "String"
       }
     }
-  },
-  "meetingJoinUnavailable": "Joining a meeting from the app isn’t available yet — the WorkFlow API has no meeting lookup by code, and the app does not include the LiveKit media client.",
-  "callsPending": "Calls will be available when the meetings backend is ready.",
-  "mediaPending": "Audio and video connect once the meetings backend is available.",
-  "imagePickerPending": "Changing your photo isn’t available in the app yet — it needs an image picker. The WorkFlow API already accepts the upload."
+  }
 }

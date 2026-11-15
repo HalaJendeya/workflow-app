@@ -2130,20 +2130,4 @@ class AppLocalizationsEn extends AppLocalizations {
   String buildInfo(String mode, String host, String build) {
     return '$mode · $host · build $build';
   }
-
-  @override
-  String get meetingJoinUnavailable =>
-      'Joining a meeting from the app isn’t available yet — the WorkFlow API has no meeting lookup by code, and the app does not include the LiveKit media client.';
-
-  @override
-  String get callsPending =>
-      'Calls will be available when the meetings backend is ready.';
-
-  @override
-  String get mediaPending =>
-      'Audio and video connect once the meetings backend is available.';
-
-  @override
-  String get imagePickerPending =>
-      'Changing your photo isn’t available in the app yet — it needs an image picker. The WorkFlow API already accepts the upload.';
 }

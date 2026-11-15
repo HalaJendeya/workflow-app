@@ -3901,30 +3901,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{mode} · {host} · build {build}'**
   String buildInfo(String mode, String host, String build);
-
-  /// No description provided for @meetingJoinUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Joining a meeting from the app isn’t available yet — the WorkFlow API has no meeting lookup by code, and the app does not include the LiveKit media client.'**
-  String get meetingJoinUnavailable;
-
-  /// No description provided for @callsPending.
-  ///
-  /// In en, this message translates to:
-  /// **'Calls will be available when the meetings backend is ready.'**
-  String get callsPending;
-
-  /// No description provided for @mediaPending.
-  ///
-  /// In en, this message translates to:
-  /// **'Audio and video connect once the meetings backend is available.'**
-  String get mediaPending;
-
-  /// No description provided for @imagePickerPending.
-  ///
-  /// In en, this message translates to:
-  /// **'Changing your photo isn’t available in the app yet — it needs an image picker. The WorkFlow API already accepts the upload.'**
-  String get imagePickerPending;
 }
 
 class _AppLocalizationsDelegate

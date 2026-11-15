@@ -2125,18 +2125,4 @@ class AppLocalizationsAr extends AppLocalizations {
   String buildInfo(String mode, String host, String build) {
     return '$mode · $host · إصدار $build';
   }
-
-  @override
-  String get meetingJoinUnavailable =>
-      'الانضمام إلى اجتماع من التطبيق غير متاح بعد — لا توفر واجهة WorkFlow بحثاً عن الاجتماع برمزه، والتطبيق لا يتضمن عميل الوسائط LiveKit.';
-
-  @override
-  String get callsPending => 'ستتوفر المكالمات عندما تجهز خدمة الاجتماعات.';
-
-  @override
-  String get mediaPending => 'يتصل الصوت والفيديو عند توفر خدمة الاجتماعات.';
-
-  @override
-  String get imagePickerPending =>
-      'تغيير الصورة غير متاح في التطبيق بعد — يحتاج أداة لاختيار الصور. واجهة WorkFlow تقبل الرفع.';
 }
