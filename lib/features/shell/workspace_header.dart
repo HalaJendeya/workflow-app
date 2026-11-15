@@ -2,14 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:workflow_app/app/routes.dart';
+import 'package:workflow_app/app/providers.dart';
+import 'package:workflow_app/core/config/app_config.dart';
 import 'package:workflow_app/core/design_system/app_icons.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/notifications/application/notifications_controller.dart';
+import 'package:workflow_app/features/overview/presentation/overview_screen.dart';
 import 'package:workflow_app/features/profile/data/profile_repository.dart';
 import 'package:workflow_app/features/profile/presentation/profile_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -19,7 +20,7 @@ import 'package:workflow_app/l10n/gen/app_localizations.dart';
 class WorkspaceHeader extends ConsumerWidget {
   const new({this.onBellTap, super.key});
 
-  /// Defaults to opening the portal home, where the notification inbox lives.
+  /// Defaults to opening the notifications panel.
   final VoidCallback? onBellTap;
 
   @override
@@ -61,9 +62,7 @@ class WorkspaceHeader extends ConsumerWidget {
             ],
           ),
         ),
-        _BellButton(
-          onTap: onBellTap ?? () => context.go(Routes.homeFor(portal)),
-        ),
+        _BellButton(onTap: onBellTap ?? () => showNotificationsPanel(context)),
       ],
     );
   }
@@ -166,6 +165,28 @@ Future<void> _showAccountMenu(
               Navigator.of(sheet).pop();
               unawaited(ref.read(sessionControllerProvider.notifier).logout());
             },
+          ),
+          // Which build is installed: mode, server and source commit.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: Builder(
+              builder: (_) {
+                final config = ref.read(appConfigProvider);
+                return Text(
+                  l10n.buildInfo(
+                    config.mode.name.toUpperCase(),
+                    config.isMock
+                        ? '—'
+                        : Uri.tryParse(config.apiBaseUrl)?.host ?? '—',
+                    buildSha,
+                  ),
+                  key: const Key('build-info'),
+                  style: AppTextStyles.mobileXsRegular.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),

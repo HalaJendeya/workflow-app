@@ -47,6 +47,12 @@ class AppConfig {
   }
 }
 
+/// The source commit this build was made from, passed at build time
+/// (`--dart-define=BUILD_SHA=$(git rev-parse --short HEAD)`); `local` when
+/// not given. Shown in the account menu so a tester can tell which build
+/// is installed.
+const buildSha = String.fromEnvironment('BUILD_SHA', defaultValue: 'local');
+
 class ConfigException implements Exception {
   const new(this.message);
   final String message;

@@ -1406,12 +1406,6 @@ abstract class AppLocalizations {
   /// **'You'**
   String get you;
 
-  /// No description provided for @callsPending.
-  ///
-  /// In en, this message translates to:
-  /// **'Calls will be available when the meetings backend is ready.'**
-  String get callsPending;
-
   /// No description provided for @call.
   ///
   /// In en, this message translates to:
@@ -1469,7 +1463,7 @@ abstract class AppLocalizations {
   /// No description provided for @attachmentsPending.
   ///
   /// In en, this message translates to:
-  /// **'Attachments aren’t available in the app yet — it needs a file picker. The WorkFlow API already accepts images, PDF and text files.'**
+  /// **'Files can\'t be chosen on this device.'**
   String get attachmentsPending;
 
   /// No description provided for @delivered.
@@ -2113,12 +2107,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Speaker muted'**
   String get micMuted;
-
-  /// No description provided for @mediaPending.
-  ///
-  /// In en, this message translates to:
-  /// **'Audio and video connect once the meetings backend is available.'**
-  String get mediaPending;
 
   /// No description provided for @meetingStartedAt.
   ///
@@ -3290,12 +3278,6 @@ abstract class AppLocalizations {
   /// **'Invited by {name}'**
   String invitedBy(String name);
 
-  /// No description provided for @meetingJoinUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Joining a meeting from the app isn’t available yet — the WorkFlow API has no meeting lookup by code, and the app does not include the LiveKit media client.'**
-  String get meetingJoinUnavailable;
-
   /// No description provided for @meetingCreateUnavailable.
   ///
   /// In en, this message translates to:
@@ -3403,12 +3385,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Voice messages aren’t supported — the WorkFlow API accepts images, PDF and text files only.'**
   String get voiceNotSupported;
-
-  /// No description provided for @imagePickerPending.
-  ///
-  /// In en, this message translates to:
-  /// **'Changing your photo isn’t available in the app yet — it needs an image picker. The WorkFlow API already accepts the upload.'**
-  String get imagePickerPending;
 
   /// No description provided for @conversationCreateUnavailable.
   ///
@@ -3865,6 +3841,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove {name}'**
   String removeAttachment(String name);
+
+  /// No description provided for @noNotificationsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet. They appear here when something in your workspace needs you.'**
+  String get noNotificationsYet;
+
+  /// No description provided for @noUnreadNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'No unread notifications.'**
+  String get noUnreadNotifications;
+
+  /// No description provided for @noReadNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'No read notifications.'**
+  String get noReadNotifications;
+
+  /// No description provided for @joinByCodeNoClientRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Client accounts can\'t join by code: the WorkFlow API has no meeting lookup by code for clients. Open the meeting from Meetings and tap Join.'**
+  String get joinByCodeNoClientRoute;
+
+  /// No description provided for @joinByCodeNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Joining by code isn\'t connected in the app yet. Open the meeting from Meetings and tap Join.'**
+  String get joinByCodeNotConnected;
+
+  /// No description provided for @callsInMeetings.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls aren\'t part of conversations in the WorkFlow API. Voice and video happen in meetings: open Meetings and join one.'**
+  String get callsInMeetings;
+
+  /// No description provided for @demoRoomMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo room: audio and video run in the live app, where meetings connect through LiveKit.'**
+  String get demoRoomMedia;
+
+  /// No description provided for @profileImageInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a JPG, PNG or WebP image of 2 MB or less.'**
+  String get profileImageInvalid;
+
+  /// No description provided for @profileImageUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile picture updated.'**
+  String get profileImageUpdated;
+
+  /// No description provided for @buildInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'{mode} · {host} · build {build}'**
+  String buildInfo(String mode, String host, String build);
+
+  /// No description provided for @meetingJoinUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Joining a meeting from the app isn’t available yet — the WorkFlow API has no meeting lookup by code, and the app does not include the LiveKit media client.'**
+  String get meetingJoinUnavailable;
+
+  /// No description provided for @callsPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls will be available when the meetings backend is ready.'**
+  String get callsPending;
+
+  /// No description provided for @mediaPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio and video connect once the meetings backend is available.'**
+  String get mediaPending;
+
+  /// No description provided for @imagePickerPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing your photo isn’t available in the app yet — it needs an image picker. The WorkFlow API already accepts the upload.'**
+  String get imagePickerPending;
 }
 
 class _AppLocalizationsDelegate

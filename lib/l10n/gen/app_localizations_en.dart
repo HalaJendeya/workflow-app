@@ -727,10 +727,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get you => 'You';
 
   @override
-  String get callsPending =>
-      'Calls will be available when the meetings backend is ready.';
-
-  @override
   String get call => 'Call';
 
   @override
@@ -760,8 +756,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messageHint => 'Type a message or press \'/\' for commands...';
 
   @override
-  String get attachmentsPending =>
-      'Attachments aren’t available in the app yet — it needs a file picker. The WorkFlow API already accepts images, PDF and text files.';
+  String get attachmentsPending => 'Files can\'t be chosen on this device.';
 
   @override
   String get delivered => 'Delivered';
@@ -1102,10 +1097,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get micMuted => 'Speaker muted';
-
-  @override
-  String get mediaPending =>
-      'Audio and video connect once the meetings backend is available.';
 
   @override
   String meetingStartedAt(String time) {
@@ -1770,10 +1761,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get meetingJoinUnavailable =>
-      'Joining a meeting from the app isn’t available yet — the WorkFlow API has no meeting lookup by code, and the app does not include the LiveKit media client.';
-
-  @override
   String get meetingCreateUnavailable =>
       'Meetings can’t be created from this account — the WorkFlow API has no create route for your role.';
 
@@ -1845,10 +1832,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get voiceNotSupported =>
       'Voice messages aren’t supported — the WorkFlow API accepts images, PDF and text files only.';
-
-  @override
-  String get imagePickerPending =>
-      'Changing your photo isn’t available in the app yet — it needs an image picker. The WorkFlow API already accepts the upload.';
 
   @override
   String get conversationCreateUnavailable =>
@@ -2109,4 +2092,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String removeAttachment(String name) {
     return 'Remove $name';
   }
+
+  @override
+  String get noNotificationsYet =>
+      'No notifications yet. They appear here when something in your workspace needs you.';
+
+  @override
+  String get noUnreadNotifications => 'No unread notifications.';
+
+  @override
+  String get noReadNotifications => 'No read notifications.';
+
+  @override
+  String get joinByCodeNoClientRoute =>
+      'Client accounts can\'t join by code: the WorkFlow API has no meeting lookup by code for clients. Open the meeting from Meetings and tap Join.';
+
+  @override
+  String get joinByCodeNotConnected =>
+      'Joining by code isn\'t connected in the app yet. Open the meeting from Meetings and tap Join.';
+
+  @override
+  String get callsInMeetings =>
+      'Calls aren\'t part of conversations in the WorkFlow API. Voice and video happen in meetings: open Meetings and join one.';
+
+  @override
+  String get demoRoomMedia =>
+      'Demo room: audio and video run in the live app, where meetings connect through LiveKit.';
+
+  @override
+  String get profileImageInvalid =>
+      'Choose a JPG, PNG or WebP image of 2 MB or less.';
+
+  @override
+  String get profileImageUpdated => 'Profile picture updated.';
+
+  @override
+  String buildInfo(String mode, String host, String build) {
+    return '$mode · $host · build $build';
+  }
+
+  @override
+  String get meetingJoinUnavailable =>
+      'Joining a meeting from the app isn’t available yet — the WorkFlow API has no meeting lookup by code, and the app does not include the LiveKit media client.';
+
+  @override
+  String get callsPending =>
+      'Calls will be available when the meetings backend is ready.';
+
+  @override
+  String get mediaPending =>
+      'Audio and video connect once the meetings backend is available.';
+
+  @override
+  String get imagePickerPending =>
+      'Changing your photo isn’t available in the app yet — it needs an image picker. The WorkFlow API already accepts the upload.';
 }

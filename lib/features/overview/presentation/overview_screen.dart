@@ -135,9 +135,9 @@ class _Masthead extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                WorkspaceHeader(
-                  onBellTap: () => _showNotificationOptions(context, ref),
-                ),
+                // The bell opens the notifications themselves (as on every
+                // other tab); status and mark-all live in that panel too.
+                const WorkspaceHeader(),
                 const SizedBox(height: 20),
                 Text(
                   l10n.overviewBreadcrumb,
@@ -277,6 +277,174 @@ Future<void> _showNotificationOptions(BuildContext context, WidgetRef ref) =>
         },
       ),
     );
+
+/// The notifications panel the bell opens on every tab: the inbox from
+/// `GET /{role}/notifications` with the server-side `status` filter, mark
+/// one read (tap), mark all read and "Load more". An empty inbox says so;
+/// nothing is invented and no target is guessed (tapping only marks read).
+Future<void> showNotificationsPanel(BuildContext context) =>
+    showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.appBackground,
+      builder: (_) => const _NotificationsPanel(),
+    );
+
+class _NotificationsPanel extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final inbox = ref.watch(notificationsControllerProvider);
+    final filter = ref.watch(notificationFilterProvider);
+    final data = inbox.value;
+    final unread = data?.unreadCount ?? 0;
+    final controller = ref.read(notificationsControllerProvider.notifier);
+
+    Widget body(NotificationInbox d) {
+      if (d.items.isEmpty) {
+        return _InlineNotice(
+          key: const Key('notifications-empty'),
+          text: switch (filter) {
+            NotificationFilter.all => l10n.noNotificationsYet,
+            NotificationFilter.unread => l10n.noUnreadNotifications,
+            NotificationFilter.read => l10n.noReadNotifications,
+          },
+        );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final n in d.items) ...[
+            _RecordCard(
+              key: Key('notification-${n.id}'),
+              title: n.title ?? '',
+              meta: n.createdAt == null
+                  ? null
+                  : relativeTime(l10n, n.createdAt!),
+              body: n.message,
+              unread: !n.isRead,
+              onTap: n.isRead
+                  ? null
+                  : () async {
+                      try {
+                        await controller.markRead(n.id);
+                      } on Object catch (e) {
+                        if (context.mounted) _snack(context, e);
+                      }
+                    },
+            ),
+            const SizedBox(height: 14),
+          ],
+          if (d.hasMore)
+            TextButton(
+              key: const Key('notifications-load-more'),
+              onPressed: () async {
+                try {
+                  await controller.loadMore();
+                } on Object catch (e) {
+                  if (context.mounted) _snack(context, e);
+                }
+              },
+              child: Text(l10n.loadMore),
+            ),
+        ],
+      );
+    }
+
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.75,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      builder: (context, scroll) => ListView(
+        key: const Key('notifications-panel'),
+        controller: scroll,
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        children: [
+          Row(
+            children: [
+              Expanded(child: _CardTitle(l10n.notificationsTitle)),
+              if (data != null)
+                Text(
+                  l10n.unreadCount(unread),
+                  key: const Key('notifications-unread'),
+                  style: AppTextStyles.mobileBaseRegular.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final f in NotificationFilter.values)
+                WfFilterPill(
+                  key: Key('notifications-filter-${f.name}'),
+                  label: switch (f) {
+                    NotificationFilter.all => l10n.filterAll,
+                    NotificationFilter.unread => l10n.filterUnread,
+                    NotificationFilter.read => l10n.filterRead,
+                  },
+                  selected: f == filter,
+                  onTap: () =>
+                      ref.read(notificationFilterProvider.notifier).select(f),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          if (unread > 0) ...[
+            WfPrimaryButton(
+              key: const Key('notifications-mark-all'),
+              label: l10n.markAllRead,
+              height: 44,
+              textStyle: AppTextStyles.mobileBaseSemiBold,
+              onPressed: () async {
+                try {
+                  await controller.markAllRead();
+                } on Object catch (e) {
+                  if (context.mounted) _snack(context, e);
+                }
+              },
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
+          // A refresh keeps the list; only a first load shows the spinner
+          // and only a failure with nothing to show replaces it.
+          if (data != null)
+            body(data)
+          else if (inbox case AsyncError(:final error))
+            Column(
+              key: const Key('notifications-error'),
+              children: [
+                Text(localizedError(l10n, error), textAlign: TextAlign.center),
+                const SizedBox(height: AppSpacing.md),
+                FilledButton(
+                  onPressed: () =>
+                      ref.invalidate(notificationsControllerProvider),
+                  child: Text(l10n.retry),
+                ),
+              ],
+            )
+          else
+            const Padding(
+              padding: EdgeInsets.all(AppSpacing.lg),
+              child: Center(
+                child: CircularProgressIndicator(
+                  key: Key('notifications-loading'),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
 
 /// Shows the server's reason (expired session, no access, rate limit…),
 /// not a generic "something went wrong".
@@ -478,6 +646,7 @@ class _RecordCard extends StatelessWidget {
     this.status,
     this.unread = false,
     this.onTap,
+    super.key,
   });
 
   final String title;
@@ -554,7 +723,7 @@ class _RecordCard extends StatelessWidget {
 }
 
 class _InlineNotice extends StatelessWidget {
-  const new({required this.text});
+  const new({required this.text, super.key});
   final String text;
 
   @override

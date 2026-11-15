@@ -729,9 +729,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get you => 'أنت';
 
   @override
-  String get callsPending => 'ستتوفر المكالمات عندما تجهز خدمة الاجتماعات.';
-
-  @override
   String get call => 'اتصال';
 
   @override
@@ -761,8 +758,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get messageHint => 'اكتب رسالة أو اضغط \'/\' للأوامر...';
 
   @override
-  String get attachmentsPending =>
-      'المرفقات غير متاحة في التطبيق بعد — تحتاج أداة لاختيار الملفات. واجهة WorkFlow تقبل الصور وملفات PDF والنصوص.';
+  String get attachmentsPending => 'لا يمكن اختيار الملفات على هذا الجهاز.';
 
   @override
   String get delivered => 'تم التسليم';
@@ -1101,9 +1097,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get micMuted => 'الميكروفون مكتوم';
-
-  @override
-  String get mediaPending => 'يتصل الصوت والفيديو عند توفر خدمة الاجتماعات.';
 
   @override
   String meetingStartedAt(String time) {
@@ -1765,10 +1758,6 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get meetingJoinUnavailable =>
-      'الانضمام إلى اجتماع من التطبيق غير متاح بعد — لا توفر واجهة WorkFlow بحثاً عن الاجتماع برمزه، والتطبيق لا يتضمن عميل الوسائط LiveKit.';
-
-  @override
   String get meetingCreateUnavailable =>
       'لا يمكن إنشاء اجتماعات من هذا الحساب — لا توفر واجهة WorkFlow مسار إنشاء لدورك.';
 
@@ -1840,10 +1829,6 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get voiceNotSupported =>
       'الرسائل الصوتية غير مدعومة — تقبل واجهة WorkFlow الصور وملفات PDF والنصوص فقط.';
-
-  @override
-  String get imagePickerPending =>
-      'تغيير الصورة غير متاح في التطبيق بعد — يحتاج أداة لاختيار الصور. واجهة WorkFlow تقبل الرفع.';
 
   @override
   String get conversationCreateUnavailable =>
@@ -2102,4 +2087,56 @@ class AppLocalizationsAr extends AppLocalizations {
   String removeAttachment(String name) {
     return 'إزالة $name';
   }
+
+  @override
+  String get noNotificationsYet =>
+      'لا توجد إشعارات بعد. ستظهر هنا عندما يحتاجك شيء في مساحة عملك.';
+
+  @override
+  String get noUnreadNotifications => 'لا توجد إشعارات غير مقروءة.';
+
+  @override
+  String get noReadNotifications => 'لا توجد إشعارات مقروءة.';
+
+  @override
+  String get joinByCodeNoClientRoute =>
+      'لا يمكن لحسابات العملاء الانضمام بالرمز: لا تتيح واجهة WorkFlow البحث عن الاجتماع بالرمز للعملاء. افتح الاجتماع من قائمة الاجتماعات واضغط انضمام.';
+
+  @override
+  String get joinByCodeNotConnected =>
+      'الانضمام بالرمز غير متصل في التطبيق بعد. افتح الاجتماع من قائمة الاجتماعات واضغط انضمام.';
+
+  @override
+  String get callsInMeetings =>
+      'المكالمات ليست جزءًا من المحادثات في واجهة WorkFlow. الصوت والفيديو يتمّان في الاجتماعات: افتح الاجتماعات وانضم إلى أحدها.';
+
+  @override
+  String get demoRoomMedia =>
+      'غرفة تجريبية: يعمل الصوت والفيديو في التطبيق الفعلي حيث تتصل الاجتماعات عبر LiveKit.';
+
+  @override
+  String get profileImageInvalid =>
+      'اختر صورة JPG أو PNG أو WebP بحجم 2 ميغابايت أو أقل.';
+
+  @override
+  String get profileImageUpdated => 'تم تحديث صورة الملف الشخصي.';
+
+  @override
+  String buildInfo(String mode, String host, String build) {
+    return '$mode · $host · إصدار $build';
+  }
+
+  @override
+  String get meetingJoinUnavailable =>
+      'الانضمام إلى اجتماع من التطبيق غير متاح بعد — لا توفر واجهة WorkFlow بحثاً عن الاجتماع برمزه، والتطبيق لا يتضمن عميل الوسائط LiveKit.';
+
+  @override
+  String get callsPending => 'ستتوفر المكالمات عندما تجهز خدمة الاجتماعات.';
+
+  @override
+  String get mediaPending => 'يتصل الصوت والفيديو عند توفر خدمة الاجتماعات.';
+
+  @override
+  String get imagePickerPending =>
+      'تغيير الصورة غير متاح في التطبيق بعد — يحتاج أداة لاختيار الصور. واجهة WorkFlow تقبل الرفع.';
 }

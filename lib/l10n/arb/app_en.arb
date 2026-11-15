@@ -312,7 +312,6 @@
   "filterTeams": "Teams & Channels",
   "unreadCount": "{count} unread",
   "you": "You",
-  "callsPending": "Calls will be available when the meetings backend is ready.",
   "call": "Call",
   "videoCall": "Video call",
   "conversationInfo": "Conversation info",
@@ -322,7 +321,7 @@
   "membersCount": "{count} members",
   "activeNow": "Active now",
   "messageHint": "Type a message or press '/' for commands...",
-  "attachmentsPending": "Attachments aren’t available in the app yet — it needs a file picker. The WorkFlow API already accepts images, PDF and text files.",
+  "attachmentsPending": "Files can't be chosen on this device.",
   "delivered": "Delivered",
   "newConversationTitle": "Create a new conversation",
   "newConversationBody": "Choose type and participants",
@@ -444,7 +443,6 @@
   "moreOptions": "More options",
   "leave": "Leave",
   "micMuted": "Speaker muted",
-  "mediaPending": "Audio and video connect once the meetings backend is available.",
   "meetingStartedAt": "Meeting started at {time}",
   "messageParticipantsHint": "Type a message to participants...",
   "livePoll": "LIVE POLL",
@@ -929,7 +927,6 @@
       }
     }
   },
-  "meetingJoinUnavailable": "Joining a meeting from the app isn’t available yet — the WorkFlow API has no meeting lookup by code, and the app does not include the LiveKit media client.",
   "meetingCreateUnavailable": "Meetings can’t be created from this account — the WorkFlow API has no create route for your role.",
   "durationSeconds": "{h}h {m}m {s}s",
   "@durationSeconds": {
@@ -998,7 +995,6 @@
   "taskCreateUnavailable": "Tasks can’t be created here yet — the WorkFlow API accepts new tasks only from a project leader, and this form isn’t connected to it.",
   "emojiUseKeyboard": "Use your keyboard’s emoji button — the app has no emoji picker yet.",
   "voiceNotSupported": "Voice messages aren’t supported — the WorkFlow API accepts images, PDF and text files only.",
-  "imagePickerPending": "Changing your photo isn’t available in the app yet — it needs an image picker. The WorkFlow API already accepts the upload.",
   "conversationCreateUnavailable": "Starting a conversation isn’t connected to the WorkFlow API yet — this form only works in demo mode.",
   "meetingTimeInPast": "Choose a date and time that haven’t passed",
   "deleteAccountTitle": "Delete your account?",
@@ -1088,5 +1084,32 @@
         "type": "String"
       }
     }
-  }
+  },
+  "noNotificationsYet": "No notifications yet. They appear here when something in your workspace needs you.",
+  "noUnreadNotifications": "No unread notifications.",
+  "noReadNotifications": "No read notifications.",
+  "joinByCodeNoClientRoute": "Client accounts can't join by code: the WorkFlow API has no meeting lookup by code for clients. Open the meeting from Meetings and tap Join.",
+  "joinByCodeNotConnected": "Joining by code isn't connected in the app yet. Open the meeting from Meetings and tap Join.",
+  "callsInMeetings": "Calls aren't part of conversations in the WorkFlow API. Voice and video happen in meetings: open Meetings and join one.",
+  "demoRoomMedia": "Demo room: audio and video run in the live app, where meetings connect through LiveKit.",
+  "profileImageInvalid": "Choose a JPG, PNG or WebP image of 2 MB or less.",
+  "profileImageUpdated": "Profile picture updated.",
+  "buildInfo": "{mode} · {host} · build {build}",
+  "@buildInfo": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      },
+      "host": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  },
+  "meetingJoinUnavailable": "Joining a meeting from the app isn’t available yet — the WorkFlow API has no meeting lookup by code, and the app does not include the LiveKit media client.",
+  "callsPending": "Calls will be available when the meetings backend is ready.",
+  "mediaPending": "Audio and video connect once the meetings backend is available.",
+  "imagePickerPending": "Changing your photo isn’t available in the app yet — it needs an image picker. The WorkFlow API already accepts the upload."
 }
