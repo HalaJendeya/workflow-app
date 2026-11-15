@@ -233,9 +233,8 @@ class _ApiMeetingRoomScreenState extends ConsumerState<ApiMeetingRoomScreen> {
           back,
         ],
       ),
-      MediaPhase.idle => _message(
-        l10n.mediaPending,
-        actions: [_button(l10n.joinMeeting, join, const Key('room-join'))],
+      MediaPhase.idle => Center(
+        child: _button(l10n.joinMeeting, join, const Key('room-join')),
       ),
       MediaPhase.connected || MediaPhase.reconnecting => const SizedBox(),
     };

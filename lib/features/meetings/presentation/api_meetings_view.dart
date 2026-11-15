@@ -7,6 +7,7 @@ import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
+import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/meetings/application/meeting_media_controller.dart';
@@ -14,6 +15,8 @@ import 'package:workflow_app/features/meetings/data/meetings_repository.dart';
 import 'package:workflow_app/features/meetings/domain/meeting.dart';
 import 'package:workflow_app/features/meetings/presentation/api_meeting_room_screen.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_details_screen.dart';
+import 'package:workflow_app/features/meetings/presentation/meeting_forms.dart'
+    show joinByCodeUnavailable;
 import 'package:workflow_app/features/meetings/presentation/meetings_screen.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -132,7 +135,13 @@ class _ApiMeetingsViewState extends ConsumerState<ApiMeetingsView> {
           child: FilterChipBox(
             label: l10n.joinByCode,
             selected: true,
-            onTap: () => showSnack(context, l10n.meetingJoinUnavailable),
+            onTap: () => showSnack(
+              context,
+              joinByCodeUnavailable(
+                l10n,
+                ref.read(sessionControllerProvider).value?.portal,
+              ),
+            ),
           ),
         ),
         ModuleCard(

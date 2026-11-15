@@ -5,6 +5,8 @@ import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
+import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/finance/domain/finance_models.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/meetings/domain/meeting.dart';
@@ -489,8 +491,13 @@ class _JoinByCodeScreenState extends ConsumerState<JoinByCodeScreen> {
     if (!validateAndReveal(_form)) return;
     final l10n = AppLocalizations.of(context);
     if (!ref.read(demoModeProvider)) {
-      // The API has no lookup by code and the app has no LiveKit client.
-      showSnack(context, l10n.meetingJoinUnavailable);
+      showSnack(
+        context,
+        joinByCodeUnavailable(
+          l10n,
+          ref.read(sessionControllerProvider).value?.portal,
+        ),
+      );
       return;
     }
     final code = _code.text.trim().toUpperCase();
@@ -532,3 +539,12 @@ class _JoinByCodeScreenState extends ConsumerState<JoinByCodeScreen> {
     );
   }
 }
+
+/// Why "Join by code" cannot join in API mode, for this portal: clients
+/// have no lookup-by-code route at all; employees have
+/// `GET …/meetings/by-code/{code}`, which the app does not call yet. Either
+/// way the meeting can be joined from its details (LiveKit).
+String joinByCodeUnavailable(AppLocalizations l10n, Portal? portal) =>
+    portal == Portal.employee
+    ? l10n.joinByCodeNotConnected
+    : l10n.joinByCodeNoClientRoute;

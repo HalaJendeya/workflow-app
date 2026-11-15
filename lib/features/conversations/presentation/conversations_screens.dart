@@ -769,7 +769,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         thread != null &&
         ref.read(conversationThreadProvider(_apiId).notifier).loadingEarlier;
     final rtl = Directionality.of(context) == TextDirection.rtl;
-    void pending() => showSnack(context, l10n.callsPending);
+    void pending() => showSnack(context, l10n.callsInMeetings);
     return Scaffold(
       backgroundColor: AppColors.appBackground,
       body: Column(

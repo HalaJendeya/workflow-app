@@ -516,7 +516,7 @@ class _MeetingRoomScreenState extends ConsumerState<MeetingRoomScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
               child: Text(
-                l10n.mediaPending,
+                l10n.demoRoomMedia,
                 key: const Key('room-media-pending'),
                 textAlign: TextAlign.center,
                 style: _t(11, RoomColors.sub),
