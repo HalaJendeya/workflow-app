@@ -3973,6 +3973,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Auto'**
   String get appearanceAuto;
+
+  /// No description provided for @myTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'My tasks'**
+  String get myTasks;
+
+  /// No description provided for @teamTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Team tasks'**
+  String get teamTasks;
+
+  /// No description provided for @taskScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Whose tasks'**
+  String get taskScope;
+
+  /// No description provided for @taskDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Task details'**
+  String get taskDetails;
+
+  /// No description provided for @noDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No description'**
+  String get noDescription;
+
+  /// No description provided for @dueOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Due {date}'**
+  String dueOn(String date);
+
+  /// No description provided for @dueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Due date'**
+  String get dueDate;
+
+  /// No description provided for @fieldSprint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sprint'**
+  String get fieldSprint;
+
+  /// No description provided for @changeStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Change status'**
+  String get changeStatus;
+
+  /// No description provided for @taskActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Task actions'**
+  String get taskActions;
+
+  /// No description provided for @subtasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtasks'**
+  String get subtasks;
+
+  /// No description provided for @subtasksProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} done'**
+  String subtasksProgress(int done, int total);
+
+  /// No description provided for @workDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Work details'**
+  String get workDetails;
+
+  /// No description provided for @scheduleAndTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule and time'**
+  String get scheduleAndTime;
+
+  /// No description provided for @noTasksAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks are assigned to you.'**
+  String get noTasksAssigned;
+
+  /// No description provided for @tasksHiddenUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 task was left out because the server did not confirm it is assigned to you.} other{{count} tasks were left out because the server did not confirm they are assigned to you.}}'**
+  String tasksHiddenUnverified(int count);
+
+  /// No description provided for @taskDetailsStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t refresh this task. Showing what the list had.'**
+  String get taskDetailsStale;
+
+  /// No description provided for @openTaskHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens the task details'**
+  String get openTaskHint;
+
+  /// No description provided for @taskDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Task deleted.'**
+  String get taskDeleted;
 }
 
 class _AppLocalizationsDelegate

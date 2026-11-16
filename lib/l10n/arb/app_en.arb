@@ -1119,5 +1119,48 @@
   "appearanceDark": "Dark",
   "changeLanguage": "Change language",
   "changeAppearance": "Change appearance",
-  "appearanceAuto": "Auto"
+  "appearanceAuto": "Auto",
+  "myTasks": "My tasks",
+  "teamTasks": "Team tasks",
+  "taskScope": "Whose tasks",
+  "taskDetails": "Task details",
+  "noDescription": "No description",
+  "dueOn": "Due {date}",
+  "@dueOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "dueDate": "Due date",
+  "fieldSprint": "Sprint",
+  "changeStatus": "Change status",
+  "taskActions": "Task actions",
+  "subtasks": "Subtasks",
+  "subtasksProgress": "{done} of {total} done",
+  "@subtasksProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "workDetails": "Work details",
+  "scheduleAndTime": "Schedule and time",
+  "noTasksAssigned": "No tasks are assigned to you.",
+  "tasksHiddenUnverified": "{count, plural, =1{1 task was left out because the server did not confirm it is assigned to you.} other{{count} tasks were left out because the server did not confirm they are assigned to you.}}",
+  "@tasksHiddenUnverified": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "taskDetailsStale": "Couldn’t refresh this task. Showing what the list had.",
+  "openTaskHint": "Opens the task details",
+  "taskDeleted": "Task deleted."
 }

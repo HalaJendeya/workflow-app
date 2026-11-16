@@ -101,15 +101,16 @@ void main() {
       scrollable: page(),
     );
     expect(find.byKey(const Key('task-t1')), findsNothing);
-    await tester.tap(
-      find.descendant(
-        of: find.byKey(const Key('task-t3')),
-        matching: find.byKey(const Key('action-delete')),
-      ),
-    );
+    // Delete lives in the task's details, behind the actions menu.
+    await tester.tap(find.byKey(const Key('task-t3')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('task-actions')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('action-delete')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('confirm-delete')));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('task-details')), findsNothing);
     expect(find.byKey(const Key('task-t3')), findsNothing);
   });
 

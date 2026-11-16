@@ -21,6 +21,8 @@ class WorkTask implements Identified {
     required this.start,
     required this.end,
     required this.amount,
+    this.description,
+    this.due,
     this.subtasksDone = 0,
     this.subtasksTotal = 0,
   });
@@ -38,6 +40,12 @@ class WorkTask implements Identified {
   final DateTime start;
   final DateTime end;
   final double amount;
+
+  /// What the task asks for; null when none was written.
+  final String? description;
+
+  /// Deadline, when the task has one.
+  final DateTime? due;
   final int subtasksDone;
   final int subtasksTotal;
 
@@ -75,6 +83,8 @@ class WorkTask implements Identified {
     start: start ?? this.start,
     end: end ?? this.end,
     amount: amount ?? this.amount,
+    description: description,
+    due: due,
     subtasksDone: subtasksDone,
     subtasksTotal: subtasksTotal,
   );
@@ -133,7 +143,11 @@ const workProjects = [
   'Engineering',
 ];
 
-const workPeople = [
+/// The demo account (profile "Demo User"): My Tasks shows its tasks.
+const demoSelf = 'Demo User';
+
+const List<String> workPeople = [
+  demoSelf,
   'Employee 1',
   'Employee 2',
   'Employee 3',
@@ -142,101 +156,112 @@ const workPeople = [
   'Omar Demo',
 ];
 
-final workTasksProvider =
-    NotifierProvider<LocalCollection<WorkTask>, List<WorkTask>>(
-      () => LocalCollection<WorkTask>(
-        () => [
-          WorkTask(
-            id: 't1',
-            code: 'P01-T04',
-            title: 'Create executive dashboard widgets & realtime stream',
-            project: workProjects[0],
-            sprint: 'Sprint 4',
-            assignee: 'Lina Dawood',
-            status: TaskStatus.inProgress,
-            priority: TaskPriority.urgent,
-            points: 5,
-            start: _d(-1, 9),
-            end: _d(-1, 11, 30),
-            amount: 133.58,
-            subtasksDone: 3,
-            subtasksTotal: 5,
-          ),
-          WorkTask(
-            id: 't2',
-            code: 'P01-T09',
-            title: 'Integrate payment webhooks',
-            project: workProjects[0],
-            sprint: 'Sprint 4',
-            assignee: 'Karim Daher',
-            status: TaskStatus.inProgress,
-            priority: TaskPriority.high,
-            points: 3,
-            start: _d(-2, 7, 40),
-            end: _d(-2, 12, 10),
-            amount: 160.75,
-            subtasksDone: 1,
-            subtasksTotal: 4,
-          ),
-          WorkTask(
-            id: 't3',
-            code: 'P01-T12',
-            title: 'Configure Redis cache invalidation hooks',
-            project: workProjects[0],
-            sprint: 'Sprint 4',
-            assignee: 'Omar Demo',
-            status: TaskStatus.inProgress,
-            priority: TaskPriority.medium,
-            points: 2,
-            start: _d(-3, 9, 30),
-            end: _d(-3, 11, 30),
-            amount: 95,
-          ),
-          WorkTask(
-            id: 't4',
-            code: 'TASK-8921',
-            title: 'Consequatur magna qui',
-            project: 'UI & UX',
-            sprint: 'Sprint 4',
-            assignee: 'Employee 1',
-            status: TaskStatus.todo,
-            priority: TaskPriority.low,
-            points: 1,
-            start: _d(-4, 5, 31),
-            end: _d(-4, 10, 29),
-            amount: 210.4,
-          ),
-          WorkTask(
-            id: 't5',
-            code: 'TASK-8922',
-            title: 'Voluptas sit amet',
-            project: 'Frontend Development',
-            sprint: 'Core integration',
-            assignee: 'Employee 2',
-            status: TaskStatus.completed,
-            priority: TaskPriority.medium,
-            points: 3,
-            start: _d(-5, 7, 40),
-            end: _d(-5, 12, 10),
-            amount: 160.75,
-          ),
-          WorkTask(
-            id: 't6',
-            code: 'TASK-8930',
-            title: 'Dolorbus est nulla',
-            project: 'Graphic Design',
-            sprint: 'Backlog',
-            assignee: 'Employee 3',
-            status: TaskStatus.backlog,
-            priority: TaskPriority.low,
-            points: 2,
-            start: _d(-6, 9),
-            end: _d(-6, 11, 30),
-            amount: 95,
-          ),
-        ],
+final NotifierProvider<LocalCollection<WorkTask>, List<WorkTask>>
+workTasksProvider = NotifierProvider<LocalCollection<WorkTask>, List<WorkTask>>(
+  () => LocalCollection<WorkTask>(
+    () => [
+      WorkTask(
+        id: 't1',
+        code: 'P01-T04',
+        title: 'Create executive dashboard widgets & realtime stream',
+        project: workProjects[0],
+        sprint: 'Sprint 4',
+        assignee: demoSelf,
+        description:
+            'Build the KPI widgets for the executive dashboard and feed '
+            'them from the realtime event stream.',
+        due: _d(2, 18),
+        status: TaskStatus.inProgress,
+        priority: TaskPriority.urgent,
+        points: 5,
+        start: _d(-1, 9),
+        end: _d(-1, 11, 30),
+        amount: 133.58,
+        subtasksDone: 3,
+        subtasksTotal: 5,
       ),
-    );
+      WorkTask(
+        id: 't2',
+        code: 'P01-T09',
+        title: 'Integrate payment webhooks',
+        project: workProjects[0],
+        sprint: 'Sprint 4',
+        assignee: 'Karim Daher',
+        description: 'Receive and verify payment provider callbacks.',
+        status: TaskStatus.inProgress,
+        priority: TaskPriority.high,
+        points: 3,
+        start: _d(-2, 7, 40),
+        end: _d(-2, 12, 10),
+        amount: 160.75,
+        subtasksDone: 1,
+        subtasksTotal: 4,
+      ),
+      WorkTask(
+        id: 't3',
+        code: 'P01-T12',
+        title: 'Configure Redis cache invalidation hooks',
+        project: workProjects[0],
+        sprint: 'Sprint 4',
+        assignee: demoSelf,
+        description:
+            'Invalidate cached project and invoice pages whenever the '
+            'underlying records change, including bulk imports, and '
+            'add a dashboard showing the hit rate per cache key so the '
+            'team can spot stale entries before customers do.',
+        due: _d(5, 17),
+        status: TaskStatus.inProgress,
+        priority: TaskPriority.medium,
+        points: 2,
+        start: _d(-3, 9, 30),
+        end: _d(-3, 11, 30),
+        amount: 95,
+      ),
+      WorkTask(
+        id: 't4',
+        code: 'TASK-8921',
+        title: 'Consequatur magna qui',
+        project: 'UI & UX',
+        sprint: 'Sprint 4',
+        assignee: demoSelf,
+        status: TaskStatus.todo,
+        priority: TaskPriority.low,
+        points: 1,
+        start: _d(-4, 5, 31),
+        end: _d(-4, 10, 29),
+        amount: 210.4,
+      ),
+      WorkTask(
+        id: 't5',
+        code: 'TASK-8922',
+        title: 'Voluptas sit amet',
+        project: 'Frontend Development',
+        sprint: 'Core integration',
+        assignee: 'Employee 2',
+        status: TaskStatus.completed,
+        priority: TaskPriority.medium,
+        points: 3,
+        start: _d(-5, 7, 40),
+        end: _d(-5, 12, 10),
+        amount: 160.75,
+      ),
+      WorkTask(
+        id: 't6',
+        code: 'TASK-8930',
+        title: 'Dolorbus est nulla',
+        project: 'Graphic Design',
+        sprint: 'Backlog',
+        assignee: 'Employee 3',
+        status: TaskStatus.backlog,
+        priority: TaskPriority.low,
+        points: 2,
+        start: _d(-6, 9),
+        end: _d(-6, 11, 30),
+        amount: 95,
+      ),
+    ],
+  ),
+);
 
 final timesheetsProvider =
     NotifierProvider<LocalCollection<TimesheetEntry>, List<TimesheetEntry>>(

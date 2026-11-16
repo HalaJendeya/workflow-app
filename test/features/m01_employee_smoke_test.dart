@@ -347,7 +347,10 @@ Future<void> _details(WidgetTester tester, String screen) async {
       return;
   }
   await _tap(tester, view);
-  final sheet = find.byType(BottomSheet);
+  // Tasks open a details page; the other records a sheet.
+  final sheet = screen == 'Tasks'
+      ? find.byKey(const Key('task-details'))
+      : find.byType(BottomSheet);
   expect(sheet, findsOneWidget, reason: '$screen details did not open');
   await screenshot(tester, 'details_$screen');
   // At 320x640 and text x1.3 the sheet fills the screen, so close it the
@@ -577,6 +580,8 @@ void main() {
     ) async {
       await _pump(tester, const Size(320, 640), scale: 1.3);
       await _open(tester, 'Tasks');
+      // Team tasks: all six demo tasks.
+      await _tap(tester, find.byKey(const Key('task-scope-team')));
       // Six demo tasks: three in progress, one completed, none in review
       // (demo tasks have no review state).
       for (final label in [

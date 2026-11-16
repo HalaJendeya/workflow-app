@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:workflow_app/core/data/local_collection.dart';
+import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
@@ -12,6 +13,7 @@ import 'package:workflow_app/features/work/data/board_repository.dart';
 import 'package:workflow_app/features/work/data/employee_work_repository.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/features/work/presentation/api_sprint_view.dart';
+import 'package:workflow_app/features/work/presentation/task_details_screen.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -70,9 +72,9 @@ const _pdi = '\u2069';
 const _joinedDash = '\u2060–\u2060';
 
 /// [text] as figures that keep their order in Arabic (see [scheduleLabel]).
-String _isolate(String text) => '$_lri$text$_pdi';
+String ltrIsolate(String text) => '$_lri$text$_pdi';
 
-final _dt = DateFormat('yyyy/MM/dd - HH:mm', 'en');
+final _dueDay = DateFormat('yyyy/MM/dd', 'en');
 
 /// Add/edit task. Demo only for now: the API accepts new tasks only from a
 /// project leader and this form does not send them yet, so in API mode
@@ -83,28 +85,6 @@ Future<void> openTaskForm(BuildContext context, {WorkTask? existing}) =>
       page: (_) => TaskFormScreen(existing: existing),
       unavailable: AppLocalizations.of(context).taskCreateUnavailable,
     );
-
-void showTaskDetails(BuildContext context, WorkTask t) {
-  final l10n = AppLocalizations.of(context);
-  unawaited(
-    showRecordDetails(
-      context,
-      title: t.title,
-      status: taskStatusLabel(l10n, t.status),
-      tone: BadgeTone.info,
-      fields: [
-        DetailField(l10n.taskCode, '${t.code} • ${t.sprint}'),
-        DetailField(l10n.fieldAmount, money(t.amount)),
-        DetailField(l10n.fieldProject, t.project),
-        DetailField(l10n.fieldEmployee, t.assignee),
-        DetailField(l10n.priority, priorityLabel(l10n, t.priority)),
-        DetailField(l10n.startDate, _dt.format(t.start)),
-        DetailField(l10n.endDate, _dt.format(t.end)),
-        DetailField(l10n.duration, durationLabel(t.duration)),
-      ],
-    ),
-  );
-}
 
 /// Status chips of Figma "Tasks Management" (node 729:24295).
 enum TaskStatusTab { all, inProgress, inReview, completed }
@@ -145,6 +125,7 @@ class TasksScreen extends ConsumerStatefulWidget {
 class _TasksScreenState extends ConsumerState<TasksScreen> {
   static const _pageSize = 4;
   String _query = '';
+  TaskScope _scope = TaskScope.mine;
   TaskStatusTab _tab = TaskStatusTab.all;
   Timer? _debounce;
 
@@ -180,12 +161,18 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final demo = ref.watch(demoModeProvider);
-    final all = ref.watch(workTasksProvider);
+    final mine = _scope == TaskScope.mine;
+    // Demo: My Tasks are the demo account's (the API filters by
+    // `assigned_to` and checks every row; see BoardRepository.tasks).
+    final all = [
+      for (final t in ref.watch(workTasksProvider))
+        if (!mine || t.assignee == demoSelf) t,
+    ];
     final q = _query.trim().toLowerCase();
     final filtered = all.where((t) {
       if (!demoTaskInTab(t, _tab)) return false;
       if (_project != null && t.project != _project) return false;
-      if (_assignee != null && t.assignee != _assignee) return false;
+      if (!mine && _assignee != null && t.assignee != _assignee) return false;
       if (_priority != null && t.priority != _priority) return false;
       return q.isEmpty ||
           '${t.title} ${t.code} ${t.project} ${t.assignee}'
@@ -202,7 +189,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     final budget = all.fold<double>(0, (s, t) => s + t.amount);
     // API mode: figures from `stats` of GET /employee/tasks. The employee
     // role gets no cost/currency, so budget utilisation has no source.
-    final api = demo ? null : ref.watch(employeeTaskStatsProvider);
+    final api = demo ? null : ref.watch(scopedTaskStatsProvider(_scope));
     final stats = api?.value;
     String tabCount(TaskStatusTab tab) {
       if (demo) return '${all.where((t) => demoTaskInTab(t, tab)).length}';
@@ -225,10 +212,34 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       onCreate: () => openTaskForm(context),
       createLabel: l10n.addTask,
       children: [
+        // Whose tasks: the employee's own first. "Team tasks" is every
+        // task the backend lets this account see (`tasks.view`).
+        ChipRow(
+          key: const Key('task-scope'),
+          children: [
+            for (final (scope, label) in [
+              (TaskScope.mine, l10n.myTasks),
+              (TaskScope.team, l10n.teamTasks),
+            ])
+              Semantics(
+                selected: _scope == scope,
+                child: FilterChipBox(
+                  key: Key('task-scope-${scope.name}'),
+                  label: label,
+                  selected: _scope == scope,
+                  onTap: () => setState(() {
+                    _scope = scope;
+                    _assignee = null;
+                    _page = 0;
+                  }),
+                ),
+              ),
+          ],
+        ),
         if (api case AsyncError(:final error))
           ApiErrorCard(
             error: error,
-            onRetry: () => ref.invalidate(employeeTaskStatsProvider),
+            onRetry: () => ref.invalidate(scopedTaskStatsProvider(_scope)),
           ),
         MetricGroup(
           metrics: [
@@ -268,6 +279,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         if (!demo)
           _ApiTaskRows(
             query: (
+              scope: _scope,
               search: _query,
               status: apiStatusOf(_tab),
               priority: _priority,
@@ -300,18 +312,19 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                   _page = 0;
                 }),
               ),
-              DropdownChip<String?>(
-                value: _assignee,
-                options: [
-                  null,
-                  ...{for (final t in all) t.assignee},
-                ],
-                labelOf: (p) => p ?? l10n.allAssignees,
-                onChanged: (p) => setState(() {
-                  _assignee = p;
-                  _page = 0;
-                }),
-              ),
+              if (!mine)
+                DropdownChip<String?>(
+                  value: _assignee,
+                  options: [
+                    null,
+                    ...{for (final t in all) t.assignee},
+                  ],
+                  labelOf: (p) => p ?? l10n.allAssignees,
+                  onChanged: (p) => setState(() {
+                    _assignee = p;
+                    _page = 0;
+                  }),
+                ),
               DropdownChip<TaskPriority?>(
                 value: _priority,
                 options: const [null, ...TaskPriority.values],
@@ -324,52 +337,24 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               ),
             ],
           ),
-          if (visible.isEmpty) EmptyNotice(text: l10n.noRecords),
+          if (visible.isEmpty)
+            EmptyNotice(
+              text: mine && all.isEmpty ? l10n.noTasksAssigned : l10n.noRecords,
+            ),
           for (final t in visible)
             TaskCard(
               key: Key('task-${t.id}'),
               title: t.title,
-              subtitle: [t.code, t.sprint, t.project].join(' · '),
-              badge: StatusBadge(
+              description: t.description,
+              due: switch (t.due) {
+                final d? => ltrIsolate(_dueDay.format(d)),
+                null => null,
+              },
+              status: StatusBadge(
                 label: taskStatusLabel(l10n, t.status),
                 tone: taskStatusTone(t.status),
               ),
-              meta: [
-                TaskMeta(Icons.person_outline, l10n.fieldEmployee, t.assignee),
-                TaskMeta(
-                  Icons.event_outlined,
-                  l10n.startDate,
-                  scheduleLabel(t.start, t.end),
-                ),
-                TaskMeta(
-                  Icons.timer_outlined,
-                  l10n.duration,
-                  durationLabel(t.duration),
-                ),
-                TaskMeta(
-                  Icons.flag_outlined,
-                  l10n.priority,
-                  priorityLabel(l10n, t.priority),
-                ),
-                TaskMeta(
-                  Icons.payments_outlined,
-                  l10n.fieldAmount,
-                  money(t.amount),
-                  strong: true,
-                ),
-              ],
-              onView: () => showTaskDetails(context, t),
-              onEdit: () => openTaskForm(context, existing: t),
-              onDelete: () async {
-                if (await confirmDelete(context, t.code)) {
-                  final removed = ref
-                      .read(workTasksProvider.notifier)
-                      .remove(t.id);
-                  if (context.mounted) {
-                    showLocalOutcome(context, applied: removed, deleted: true);
-                  }
-                }
-              },
+              onOpen: () => openTaskDetails(context, t),
             ),
           Pager(
             page: page,
@@ -538,8 +523,6 @@ class _ApiTaskRows extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final value = ref.watch(apiTasksProvider(query));
-    final date = DateFormat('yyyy/MM/dd', 'en');
-    final time = DateFormat('HH:mm', 'en');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -564,90 +547,51 @@ class _ApiTaskRows extends ConsumerWidget {
         AsyncSection(
           value: value,
           onRetry: () => ref.invalidate(apiTasksProvider(query)),
-          builder: (page) => Column(
+          builder: (list) => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (page.items.isEmpty) EmptyNotice(text: l10n.noRecords),
-              for (final t in page.items) ...[
-                TaskCard(
-                  key: Key('api-task-${t.id}'),
-                  title: t.title,
-                  subtitle: [
-                    '#${t.id}',
-                    ?t.sprintName,
-                    ?t.projectTitle,
-                  ].join(' · '),
-                  badge: StatusBadge(
-                    label: apiTaskStatusLabel(l10n, t.status),
-                    tone: apiTaskStatusTone(t.status),
-                  ),
-                  // Only what the server sent: no empty fields, no guesses.
-                  // The employee role receives no task cost.
-                  meta: [
-                    if (t.assigneeName != null)
-                      TaskMeta(
-                        Icons.person_outline,
-                        l10n.fieldEmployee,
-                        t.assigneeName!,
-                      ),
-                    if (t.taskDate != null || t.start != null)
-                      TaskMeta(
-                        Icons.event_outlined,
-                        l10n.startDate,
-                        _isolate(
-                          [
-                            if (t.taskDate != null) date.format(t.taskDate!),
-                            [
-                              if (t.start != null) time.format(t.start!),
-                              if (t.end != null) time.format(t.end!),
-                            ].join(_joinedDash),
-                          ].where((x) => x.isNotEmpty).join(' '),
-                        ),
-                      ),
-                    if (t.duration != null)
-                      TaskMeta(
-                        Icons.timer_outlined,
-                        l10n.duration,
-                        durationLabel(t.duration!),
-                      ),
-                    if (t.priority != null)
-                      TaskMeta(
-                        Icons.flag_outlined,
-                        l10n.priority,
-                        priorityLabel(l10n, t.priority!),
-                      ),
-                    if (t.storyPoints != null)
-                      TaskMeta(
-                        Icons.star_outline,
-                        l10n.storyPoints,
-                        l10n.points(t.storyPoints!),
-                        strong: true,
-                      ),
-                  ],
-                  onView: () => showRecordDetails(
-                    context,
-                    title: t.title,
-                    status: apiTaskStatusLabel(l10n, t.status),
-                    tone: BadgeTone.info,
-                    fields: [
-                      DetailField(l10n.fieldProject, t.projectTitle ?? '—'),
-                      DetailField(
-                        l10n.priority,
-                        t.priority == null
-                            ? '—'
-                            : priorityLabel(l10n, t.priority!),
-                      ),
-                      DetailField(l10n.fieldEmployee, t.assigneeName ?? '—'),
-                    ],
+              if (list.hidden > 0) ...[
+                ModuleCard(
+                  key: const Key('tasks-hidden-notice'),
+                  child: Text(
+                    l10n.tasksHiddenUnverified(list.hidden),
+                    style: AppTextStyles.mobileXsRegular.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
               ],
-              if (page.lastPage > 1)
+              if (list.page.items.isEmpty && list.hidden == 0)
+                EmptyNotice(
+                  text:
+                      query.scope == TaskScope.mine &&
+                          query.search.trim().isEmpty &&
+                          query.status == null &&
+                          query.priority == null
+                      ? l10n.noTasksAssigned
+                      : l10n.noRecords,
+                ),
+              for (final t in list.page.items) ...[
+                TaskCard(
+                  key: Key('api-task-${t.id}'),
+                  title: t.title,
+                  // Only what the server sent; the API has no due date
+                  // (`task_date` is the planned work day, shown in details).
+                  description: t.description,
+                  status: StatusBadge(
+                    label: apiTaskStatusLabel(l10n, t.status),
+                    tone: apiTaskStatusTone(t.status),
+                  ),
+                  onOpen: () => openApiTaskDetails(context, t),
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (list.page.lastPage > 1)
                 Pager(
-                  page: page.currentPage - 1,
-                  pageSize: page.perPage,
-                  total: page.total,
+                  page: list.page.currentPage - 1,
+                  pageSize: list.page.perPage,
+                  total: list.page.total,
                   onPage: onPage,
                 ),
             ],

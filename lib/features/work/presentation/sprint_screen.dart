@@ -10,6 +10,7 @@ import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/features/work/presentation/api_sprint_view.dart';
 import 'package:workflow_app/features/work/presentation/kanban_drag.dart';
+import 'package:workflow_app/features/work/presentation/task_details_screen.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -523,7 +524,7 @@ class _KanbanCard extends ConsumerWidget {
           title: Text(l10n.viewDetails),
           onTap: () {
             Navigator.pop(sheet);
-            showTaskDetails(context, task);
+            unawaited(openTaskDetails(context, task));
           },
         ),
       ],

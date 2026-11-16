@@ -251,6 +251,7 @@ void main() {
         }),
       );
       final p = await repo().tasks((
+        scope: TaskScope.team,
         search: ' login ',
         status: ApiTaskStatus.inReview,
         priority: TaskPriority.high,
@@ -266,7 +267,52 @@ void main() {
         'status': 'in_review',
         'priority': 'high',
       });
-      expect(p.items.single.title, 'Task 3');
+      expect(p.page.items.single.title, 'Task 3');
+      expect(p.page.items.single.description, 'd');
+      expect(p.page.items.single.assigneeId, 10);
+      expect(p.hidden, 0);
+    });
+
+    test('My Tasks sends assigned_to, keeps only my rows', () async {
+      final other = taskJson(4, 'todo')
+        ..['assignee'] = {'id': 11, 'name': 'Someone Else'};
+      final unassigned = taskJson(5, 'todo')..['assignee'] = null;
+      final noId = taskJson(6, 'todo')..['assignee'] = {'name': 'No Id'};
+      http.reply(
+        200,
+        ok({
+          'current_page': 1,
+          'data': [taskJson(3, 'todo'), other, unassigned, noId],
+          'last_page': 1,
+          'per_page': 10,
+          'total': 4,
+        }),
+      );
+      final p = await repo().tasks((
+        scope: TaskScope.mine,
+        search: '',
+        status: null,
+        priority: null,
+        page: 1,
+      ), assignedTo: 10);
+      expect(http.last.queryParameters['assigned_to'], 10);
+      // Never shown as "mine" unless the row itself says so.
+      expect(p.page.items.map((t) => t.id), [3]);
+      expect(p.hidden, 3);
+    });
+
+    test('task details read GET /employee/tasks/{id}', () async {
+      http.reply(200, ok(taskJson(7, 'in_review')));
+      final t = await repo().task(7);
+      expect(http.last.path, '/api/v1/employee/tasks/7');
+      expect(t.status, ApiTaskStatus.inReview);
+      expect(t.canUpdate, isTrue);
+      expect(t.canDelete, isFalse);
+    });
+
+    test('a blank description is no description', () {
+      final t = ApiTask.fromJson(taskJson(1, 'todo')..['description'] = '  ');
+      expect(t.description, isNull);
     });
 
     test('a 422 from update-status is surfaced', () async {
@@ -500,6 +546,11 @@ void main() {
     expect(find.textContaining('section is ready'), findsNothing);
     expect(find.byKey(const Key('api-task-3')), findsOneWidget);
     expect(find.text('Task 3'), findsOneWidget);
+    // The card is a summary; time is in the details.
+    expect(find.text('1h 10m'), findsNothing);
+    await tester.tap(find.byKey(const Key('api-task-3')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('task-details')), findsOneWidget);
     expect(find.text('1h 10m'), findsOneWidget);
     // Demo rows never appear in API mode.
     expect(find.text('Integrate payment webhooks'), findsNothing);

@@ -17,6 +17,7 @@ import 'package:workflow_app/features/projects/presentation/api_projects_view.da
 import 'package:workflow_app/features/projects/presentation/projects_screen.dart';
 import 'package:workflow_app/features/work/data/employee_work_repository.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
+import 'package:workflow_app/features/work/presentation/task_details_screen.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -47,11 +48,14 @@ class _EmployeeDashboardScreenState
         .watch(projectsProvider)
         .where((p) => q.isEmpty || p.name.toLowerCase().contains(q))
         .toList();
+    // The employee's own work, most urgent first.
     final focus =
         tasks
             .where(
               (t) =>
-                  q.isEmpty || '${t.title} ${t.code}'.toLowerCase().contains(q),
+                  t.assignee == demoSelf &&
+                  (q.isEmpty ||
+                      '${t.title} ${t.code}'.toLowerCase().contains(q)),
             )
             .toList()
           ..sort((a, b) => b.priority.index.compareTo(a.priority.index));
@@ -811,7 +815,7 @@ class _FocusTaskCard extends StatelessWidget {
     final barColor = done ? ModuleColors.successFg : AppColors.primary;
     return ModuleCard(
       key: Key('focus-${t.id}'),
-      onTap: () => showTaskDetails(context, t),
+      onTap: () => openTaskDetails(context, t),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

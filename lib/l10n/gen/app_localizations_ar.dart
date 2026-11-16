@@ -2161,4 +2161,76 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get appearanceAuto => 'تلقائي';
+
+  @override
+  String get myTasks => 'مهامي';
+
+  @override
+  String get teamTasks => 'مهام الفريق';
+
+  @override
+  String get taskScope => 'مهام من';
+
+  @override
+  String get taskDetails => 'تفاصيل المهمة';
+
+  @override
+  String get noDescription => 'لا يوجد وصف';
+
+  @override
+  String dueOn(String date) {
+    return 'الاستحقاق $date';
+  }
+
+  @override
+  String get dueDate => 'تاريخ الاستحقاق';
+
+  @override
+  String get fieldSprint => 'السبرنت';
+
+  @override
+  String get changeStatus => 'تغيير الحالة';
+
+  @override
+  String get taskActions => 'إجراءات المهمة';
+
+  @override
+  String get subtasks => 'المهام الفرعية';
+
+  @override
+  String subtasksProgress(int done, int total) {
+    return 'أُنجز $done من $total';
+  }
+
+  @override
+  String get workDetails => 'تفاصيل العمل';
+
+  @override
+  String get scheduleAndTime => 'الموعد والوقت';
+
+  @override
+  String get noTasksAssigned => 'لا توجد مهام مسندة إليك.';
+
+  @override
+  String tasksHiddenUnverified(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'استُبعدت $count مهمة لأن الخادم لم يؤكد أنها مسندة إليك.',
+      few: 'استُبعدت $count مهام لأن الخادم لم يؤكد أنها مسندة إليك.',
+      two: 'استُبعدت مهمتان لأن الخادم لم يؤكد أنهما مسندتان إليك.',
+      one: 'استُبعدت مهمة واحدة لأن الخادم لم يؤكد أنها مسندة إليك.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get taskDetailsStale =>
+      'تعذّر تحديث هذه المهمة. تُعرض البيانات الواردة من القائمة.';
+
+  @override
+  String get openTaskHint => 'يفتح تفاصيل المهمة';
+
+  @override
+  String get taskDeleted => 'حُذفت المهمة.';
 }

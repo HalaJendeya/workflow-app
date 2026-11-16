@@ -16,10 +16,11 @@ import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 import '../helpers/viewport.dart';
 
-/// Task cards (Tasks list, Kanban, dashboard focus tasks): density at
-/// 390×844, written to `$TASK_REPORT` when set, and layout checks in light,
-/// dark, English and Arabic at the phone sizes — no overflow (fails the
-/// test), every card's actions reachable, badges inside their card.
+/// Task cards (Tasks list, Kanban, dashboard focus tasks) and the task
+/// details: density at 390×844 (`$TASK_REPORT`), layout in light, dark,
+/// English and Arabic at the phone sizes — no overflow (fails the test),
+/// badges inside their card, the details' menu and status control
+/// reachable — plus My Tasks, details, actions and back navigation.
 
 Future<void> _pump(
   WidgetTester tester, {
@@ -93,6 +94,13 @@ Finder _navItem(int i) => find
     )
     .at(i);
 
+Future<void> _tapIn(WidgetTester tester, Finder f) async {
+  await tester.ensureVisible(f);
+  await tester.pumpAndSettle();
+  await tester.tap(f);
+  await tester.pumpAndSettle();
+}
+
 Finder _cards(String prefix) => find.byWidgetPredicate(
   (w) =>
       w.key is ValueKey<String> &&
@@ -131,16 +139,27 @@ void main() {
           .stateList<ScrollableState>(find.byType(Scrollable))
           .firstWhere((s) => s.position.axis == Axis.vertical);
       // Scroll so the first card is at the top of the screen.
-      final first = _cards('task-').first;
+      final first = _cards('task-t').first;
       await tester.ensureVisible(first);
       await tester.pumpAndSettle();
       list.position.jumpTo(
         list.position.pixels + tester.getRect(first).top - 20,
       );
       await tester.pumpAndSettle();
-      final (avg, whole) = _density(tester, 'task-');
+      final (avg, whole) = _density(tester, 'task-t');
       report.add('tasks_list\t${avg.round()}\t$whole');
+      for (final e in _cards('task-t').evaluate()) {
+        final key = (e.widget.key! as ValueKey<String>).value;
+        final h = tester.getSize(find.byKey(Key(key))).height.round();
+        report.add('  $key\t$h');
+      }
       await screenshot(tester, 'task_list');
+      final scope = find.byKey(const Key('task-scope'));
+      list.position.jumpTo(
+        list.position.pixels + tester.getRect(scope).top - 120,
+      );
+      await tester.pumpAndSettle();
+      await screenshot(tester, 'task_list_top');
       expect(avg, greaterThan(0));
     });
 
@@ -195,30 +214,24 @@ void main() {
       final tag = '$name ${size.width.toInt()}x${size.height.toInt()} x$scale';
       final rtl = name.startsWith('ar');
 
-      testWidgets('Tasks list: $tag', (tester) async {
+      testWidgets('Tasks list and details: $tag', (tester) async {
         await _pump(tester, size: size, scale: scale, prefs: prefs);
         await _openCategory(tester, 2);
-        final cards = _cards('task-');
-        expect(cards, findsWidgets);
+        final cards = _cards('task-t');
+        // My Tasks: the demo account's three tasks.
+        expect(cards, findsNWidgets(3));
         for (var i = 0; i < 2; i++) {
           final card = cards.at(i);
           await tester.ensureVisible(card);
           await tester.pumpAndSettle();
           final box = tester.getRect(card);
           expect(box.width, lessThanOrEqualTo(size.width));
+          // No actions on the card.
           for (final key in const ['action-edit', 'action-delete']) {
-            final action = find.descendant(
-              of: card,
-              matching: find.byKey(Key(key)),
-            );
             expect(
-              action.hitTestable(),
-              findsOneWidget,
-              reason: '$key reachable',
+              find.descendant(of: card, matching: find.byKey(Key(key))),
+              findsNothing,
             );
-            final r = tester.getRect(action);
-            expect(r.width, greaterThanOrEqualTo(40));
-            expect(box.contains(r.center), isTrue);
           }
           final badge = tester.getRect(
             find.descendant(of: card, matching: find.byType(StatusBadge)),
@@ -240,6 +253,45 @@ void main() {
             'task_list_${name.replaceAll(' ', '_')}_320',
           );
         }
+        // Details: reachable menu and back, in this mode and size.
+        final first = cards.first;
+        await tester.ensureVisible(first);
+        await tester.pumpAndSettle();
+        await tester.tap(first);
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('task-details')), findsOneWidget);
+        expect(
+          find.byKey(const Key('task-actions')).hitTestable(),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('task-change-status')).hitTestable(),
+          findsOneWidget,
+        );
+        if (size.width == 320) {
+          await screenshot(
+            tester,
+            'task_details_${name.replaceAll(' ', '_')}_320',
+          );
+        }
+        final list = tester
+            .stateList<ScrollableState>(
+              find.descendant(
+                of: find.byKey(const Key('task-details')),
+                matching: find.byType(Scrollable),
+              ),
+            )
+            .first;
+        list.position.jumpTo(list.position.maxScrollExtent);
+        await tester.pumpAndSettle();
+        // Scrolled to the end: back and the menu are still in reach.
+        expect(
+          find.byKey(const Key('task-actions')).hitTestable(),
+          findsOneWidget,
+        );
+        await tester.tap(find.byKey(const Key('task-details-back')));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('task-details')), findsNothing);
       });
 
       testWidgets('Kanban: $tag', (tester) async {
@@ -278,7 +330,11 @@ void main() {
       Locale locale = const Locale('en'),
       double width = 320,
       double scale = 1.3,
-      bool actions = true,
+      String? description =
+          'Invalidate cached project and invoice pages whenever the '
+          'underlying records change, including bulk imports, and add a '
+          'dashboard showing the hit rate per cache key.',
+      String? due = '2026/11/20',
     }) async {
       useViewport(tester, Size(width, 400));
       tester.platformDispatcher.textScaleFactorTestValue = scale;
@@ -299,30 +355,13 @@ void main() {
                   title:
                       'Create executive dashboard widgets and a realtime '
                       'stream for every regional office',
-                  subtitle: 'P01-T04 · Sprint 3 · Customer Portal Revamp',
-                  badge: const StatusBadge(
+                  description: description,
+                  due: due,
+                  status: const StatusBadge(
                     label: 'In Progress',
                     tone: BadgeTone.warning,
                   ),
-                  meta: const [
-                    TaskMeta(Icons.person_outline, 'Assignee', 'Lina Daoud'),
-                    TaskMeta(
-                      Icons.event_outlined,
-                      'Schedule',
-                      '2026/11/15 09:00–11:30',
-                    ),
-                    TaskMeta(Icons.timer_outlined, 'Duration', '2.5h'),
-                    TaskMeta(Icons.flag_outlined, 'Priority', 'Urgent'),
-                    TaskMeta(
-                      Icons.payments_outlined,
-                      'Amount',
-                      r'$1,250.00',
-                      strong: true,
-                    ),
-                  ],
-                  onView: () => taps.add('view'),
-                  onEdit: actions ? () => taps.add('edit') : null,
-                  onDelete: actions ? () => taps.add('delete') : null,
+                  onOpen: () => taps.add('open'),
                 ),
               ),
             ),
@@ -332,73 +371,199 @@ void main() {
       return taps;
     }
 
-    testWidgets('tap opens details; edit and delete keep their own actions', (
-      tester,
-    ) async {
+    testWidgets('a tap anywhere on the card opens the task', (tester) async {
       final taps = await pumpCard(tester);
-      await tester.tap(
-        find.text('P01-T04 · Sprint 3 · Customer Portal Revamp'),
-      );
-      await tester.tap(find.byKey(const Key('action-edit')));
-      await tester.tap(find.byKey(const Key('action-delete')));
-      expect(taps, ['view', 'edit', 'delete']);
+      await tester.tap(find.byKey(const Key('task-description')));
+      await tester.tap(find.byKey(const Key('task-due')));
+      expect(taps, ['open', 'open']);
     });
 
-    testWidgets(
-      'long content at 320 px and 130 % text: no overflow, all meta',
-      (tester) async {
-        await pumpCard(tester);
-        for (final v in const ['Lina Daoud', '2.5h', 'Urgent', r'$1,250.00']) {
-          expect(find.text(v), findsOneWidget);
-        }
-        // Metadata wraps instead of clipping; nothing is cut off to the side.
-        final card = tester.getRect(find.byKey(const Key('card')));
-        for (final e in find.byType(Text).evaluate()) {
-          final r = tester.getRect(find.byWidget(e.widget));
-          expect(r.right, lessThanOrEqualTo(card.right + 0.5));
-          expect(r.left, greaterThanOrEqualTo(card.left - 0.5));
-        }
-      },
-    );
+    testWidgets('long text at 320 px and 130 %: two description lines', (
+      tester,
+    ) async {
+      await pumpCard(tester);
+      final d = tester.widget<Text>(find.byKey(const Key('task-description')));
+      expect(d.maxLines, 2);
+      expect(d.overflow, TextOverflow.ellipsis);
+      final card = tester.getRect(find.byKey(const Key('card')));
+      for (final e in find.byType(Text).evaluate()) {
+        final r = tester.getRect(find.byWidget(e.widget));
+        expect(r.right, lessThanOrEqualTo(card.right + 0.5));
+        expect(r.left, greaterThanOrEqualTo(card.left - 0.5));
+      }
+      expect(find.text('Due 2026/11/20'), findsOneWidget);
+    });
 
-    testWidgets('metadata is announced with its label', (tester) async {
+    testWidgets('no description and no due date: nothing invented', (
+      tester,
+    ) async {
+      await pumpCard(tester, description: null, due: null, scale: 1);
+      expect(find.byKey(const Key('task-description')), findsNothing);
+      expect(find.byKey(const Key('task-due')), findsNothing);
+      // Title and status only: a short card.
+      expect(
+        tester.getSize(find.byKey(const Key('card'))).height,
+        lessThan(110),
+      );
+    });
+
+    testWidgets('announced as a button that opens the details', (tester) async {
       final handle = tester.ensureSemantics();
       await pumpCard(tester, scale: 1);
-      // The card is one button; its announcement names every value.
-      final label = tester
+      final data = tester
           .getSemantics(find.byKey(const Key('action-view')))
-          .getSemanticsData()
-          .label;
-      expect(label, contains('Assignee: Lina Daoud'));
-      expect(label, contains('Priority: Urgent'));
+          .getSemanticsData();
+      expect(data.hint, 'Opens the task details');
+      expect(data.label, contains('Create executive dashboard'));
+      expect(data.label, contains('In Progress'));
+      // Touch target: the whole card.
+      expect(
+        tester.getSize(find.byKey(const Key('action-view'))).height,
+        greaterThanOrEqualTo(48),
+      );
       handle.dispose();
     });
 
-    testWidgets('without permissions no edit/delete is shown', (tester) async {
-      await pumpCard(tester, actions: false);
-      expect(find.byKey(const Key('action-edit')), findsNothing);
-      expect(find.byKey(const Key('action-delete')), findsNothing);
-    });
-
-    testWidgets('Arabic: badge on the left, actions at the left end', (
-      tester,
-    ) async {
+    testWidgets('Arabic: the status badge is on the left', (tester) async {
       await pumpCard(tester, locale: const Locale('ar'), width: 390, scale: 1);
       final card = tester.getRect(find.byKey(const Key('card')));
       final badge = tester.getRect(find.byType(StatusBadge));
-      final delete = tester.getRect(find.byKey(const Key('action-delete')));
       expect(badge.left, lessThan(card.center.dx));
-      expect(delete.left, lessThan(card.center.dx));
     });
+  });
 
-    testWidgets('a card is about a third of the old stacked height', (
+  group('demo My Tasks and details', () {
+    testWidgets('My Tasks by default; Team tasks shows everyone', (
       tester,
     ) async {
-      await pumpCard(tester, width: 390, scale: 1);
+      await _pump(tester);
+      await _openCategory(tester, 2);
+      expect(find.byKey(const Key('task-t1')), findsOneWidget);
+      expect(find.byKey(const Key('task-t2')), findsNothing);
+      await _tapIn(tester, find.byKey(const Key('task-scope-team')));
+      expect(find.byKey(const Key('task-t2')), findsOneWidget);
+      await _tapIn(tester, find.byKey(const Key('task-scope-mine')));
+      expect(find.byKey(const Key('task-t2')), findsNothing);
+    });
+
+    testWidgets('the card shows title, description, status and due only', (
+      tester,
+    ) async {
+      await _pump(tester);
+      await _openCategory(tester, 2);
+      final card = find.byKey(const Key('task-t1'));
+      await tester.ensureVisible(card);
+      for (final hidden in ['P01-T04', 'Sprint 4', 'Urgent', r'$133.58']) {
+        expect(
+          find.descendant(of: card, matching: find.textContaining(hidden)),
+          findsNothing,
+          reason: hidden,
+        );
+      }
       expect(
-        tester.getSize(find.byKey(const Key('card'))).height,
-        lessThan(160),
+        find.descendant(of: card, matching: find.byKey(const Key('task-due'))),
+        findsOneWidget,
       );
+      // t4 has neither a description nor a due date.
+      final bare = find.byKey(const Key('task-t4'));
+      await tester.ensureVisible(bare);
+      expect(
+        find.descendant(
+          of: bare,
+          matching: find.byKey(const Key('task-description')),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('details: every section, no cost; back to the list', (
+      tester,
+    ) async {
+      await _pump(tester);
+      await _openCategory(tester, 2);
+      await _tapIn(tester, find.byKey(const Key('task-t3')));
+      expect(find.byKey(const Key('task-details')), findsOneWidget);
+      for (final text in [
+        'Configure Redis cache invalidation hooks',
+        'P01-T12',
+        'Demo Project 01 — Customer Portal Revamp',
+        'Sprint 4',
+        'Medium',
+        'Demo User',
+        '2 pts',
+        '2h 0m',
+        'Due date',
+      ]) {
+        expect(find.text(text), findsOneWidget, reason: text);
+      }
+      // The full description, not two lines.
+      final d = tester.widget<Text>(
+        find.byKey(const Key('task-details-description')),
+      );
+      expect(d.maxLines, isNull);
+      expect(d.data, contains('stale entries before customers do'));
+      expect(find.textContaining(r'$95'), findsNothing);
+      await _tapIn(tester, find.byKey(const Key('task-details-back')));
+      expect(find.byKey(const Key('task-details')), findsNothing);
+      expect(find.byKey(const Key('task-t3')), findsOneWidget);
+    });
+
+    testWidgets('change status from the details', (tester) async {
+      await _pump(tester);
+      await _openCategory(tester, 2);
+      await _tapIn(tester, find.byKey(const Key('task-t4')));
+      await _tapIn(tester, find.byKey(const Key('task-change-status')));
+      await _tapIn(tester, find.byKey(const Key('status-completed')));
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('task-details-status')),
+          matching: find.text('Completed'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Task status updated.'), findsOneWidget);
+    });
+
+    testWidgets('edit and delete live in the menu; delete asks first', (
+      tester,
+    ) async {
+      await _pump(tester);
+      await _openCategory(tester, 2);
+      await _tapIn(tester, find.byKey(const Key('task-t3')));
+      await _tapIn(tester, find.byKey(const Key('task-actions')));
+      expect(find.byKey(const Key('action-edit')), findsOneWidget);
+      await _tapIn(tester, find.byKey(const Key('action-edit')));
+      expect(find.byKey(const Key('task-title')), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      await _tapIn(tester, find.byKey(const Key('task-actions')));
+      await _tapIn(tester, find.byKey(const Key('action-delete')));
+      // Cancel keeps it.
+      await _tapIn(tester, find.text('Cancel'));
+      expect(find.byKey(const Key('task-details')), findsOneWidget);
+      await _tapIn(tester, find.byKey(const Key('task-actions')));
+      await _tapIn(tester, find.byKey(const Key('action-delete')));
+      await _tapIn(tester, find.text('Delete').last);
+      expect(find.byKey(const Key('task-details')), findsNothing);
+      expect(find.byKey(const Key('task-t3')), findsNothing);
+    });
+
+    testWidgets('Kanban and dashboard open the same details', (tester) async {
+      await _pump(tester);
+      await tester.tap(_navItem(1));
+      await tester.pumpAndSettle();
+      await _tapIn(tester, _cards('kanban-').first);
+      await _tapIn(tester, find.text('View Details'));
+      expect(find.byKey(const Key('task-details')), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await _openCategory(tester, 0);
+      final focus = _cards('focus-');
+      // The dashboard lists the employee's own tasks.
+      expect(focus, findsNWidgets(3));
+      await _tapIn(tester, focus.first);
+      expect(find.byKey(const Key('task-details')), findsOneWidget);
     });
   });
 

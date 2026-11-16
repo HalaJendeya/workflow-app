@@ -2,8 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/core/network/api_client.dart';
+import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/network/api_response.dart';
+import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 
 /// Task status values the backend uses (collection `WorkFlow`, 2026-11-14):
@@ -82,24 +84,29 @@ DateTime? _at(DateTime? day, Object? time) {
 /// create/update rules (`title`, `status`, `priority`, `story_points`,
 /// `task_date`, `start_time`, `end_time`), the documented row relations
 /// (`assignee`, `project`, `sprint`, `can {update, delete}`) and the task
-/// rows of the "Get Timesheet Details" example. Only `id` and `title` are
-/// required; everything else is optional. The employee role never
-/// receives `cost` or `currency`, so none is read.
+/// rows of the "Get Timesheet Details" example. `description` is the
+/// create/update field; `assignee.id` is the `users.id` that
+/// `assigned_to` takes. Only `id` and `title` are required; everything
+/// else is optional. The employee role never receives `cost` or
+/// `currency`, so none is read.
 class ApiTask {
   const new({
     required this.id,
     required this.title,
     required this.status,
     required this.rawStatus,
+    this.description,
     this.priority,
     this.storyPoints,
     this.taskDate,
     this.start,
     this.end,
+    this.assigneeId,
     this.assigneeName,
     this.projectTitle,
     this.sprintName,
     this.canUpdate,
+    this.canDelete,
   });
 
   factory fromJson(Json j) {
@@ -112,15 +119,23 @@ class ApiTask {
           : missingField('title'),
       status: apiTaskStatus(j['status']),
       rawStatus: '${j['status'] ?? ''}',
+      description: switch (j['description']) {
+        final String d when d.trim().isNotEmpty => d.trim(),
+        _ => null,
+      },
       priority: _priority(j['priority']),
       storyPoints: asInt(j['story_points']),
       taskDate: day,
       start: _at(day, j['start_time']),
       end: _at(day, j['end_time']),
+      assigneeId: j['assignee'] is Json
+          ? asInt((j['assignee'] as Json)['id'])
+          : null,
       assigneeName: _label(j['assignee'], 'name'),
       projectTitle: _label(j['project'], 'title'),
       sprintName: _label(j['sprint'], 'name'),
       canUpdate: can is Json ? can['update'] as bool? : null,
+      canDelete: can is Json ? can['delete'] as bool? : null,
     );
   }
 
@@ -128,17 +143,26 @@ class ApiTask {
   final String title;
   final ApiTaskStatus status;
   final String rawStatus;
+
+  /// Free text the task was created with; null when absent or blank.
+  final String? description;
   final TaskPriority? priority;
   final int? storyPoints;
   final DateTime? taskDate;
   final DateTime? start;
   final DateTime? end;
+
+  /// `assignee.id`: a `users.id`, compared with the signed-in user.
+  final int? assigneeId;
   final String? assigneeName;
   final String? projectTitle;
   final String? sprintName;
 
   /// `can.update`; null when the row does not say.
   final bool? canUpdate;
+
+  /// `can.delete`; null when the row does not say.
+  final bool? canDelete;
 
   Duration? get duration =>
       start != null && end != null ? end!.difference(start!) : null;
@@ -303,7 +327,12 @@ class SprintPlanning {
   final int? backlogPoints;
 }
 
+/// Whose tasks the list shows: the signed-in employee's (`assigned_to`,
+/// the default) or every task the backend lets them see (`tasks.view`).
+enum TaskScope { mine, team }
+
 typedef TaskQuery = ({
+  TaskScope scope,
   String search,
   ApiTaskStatus? status,
   TaskPriority? priority,
@@ -355,7 +384,12 @@ class BoardRepository {
   /// `GET /employee/tasks` rows over all months, newest first (the
   /// route's default sort). `stats` is read separately by
   /// `EmployeeWorkRepository.taskStats`.
-  Future<ApiPage<ApiTask>> tasks(TaskQuery q) async {
+  ///
+  /// With [assignedTo] (My Tasks) the documented `assigned_to` filter is
+  /// sent, and every row is still checked: one whose `assignee.id` is not
+  /// [assignedTo] — another person's, unassigned, or without an id — is
+  /// left out and counted in [TaskList.hidden], never shown as "mine".
+  Future<TaskList> tasks(TaskQuery q, {int? assignedTo}) async {
     final body = ApiEnvelope.unwrapBody(
       await _client.get(
         '/api/v1/employee/tasks',
@@ -363,6 +397,7 @@ class BoardRepository {
           'month': 'all',
           'page': q.page,
           'per_page': 10,
+          'assigned_to': ?assignedTo,
           if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
           if (q.status case final s?) 'status': ?taskListStatusParam(s),
           if (q.priority case final p?) 'priority': p.name,
@@ -371,8 +406,29 @@ class BoardRepository {
     );
     final data = body['data'];
     if (data is! Json) missingField('data');
-    return ApiPage.parse(data, ApiTask.fromJson);
+    final page = ApiPage.parse(data, ApiTask.fromJson);
+    if (assignedTo == null) return TaskList(page);
+    final mine = [
+      for (final t in page.items)
+        if (t.assigneeId == assignedTo) t,
+    ];
+    return TaskList(
+      ApiPage(
+        items: mine,
+        currentPage: page.currentPage,
+        lastPage: page.lastPage,
+        perPage: page.perPage,
+        total: page.total,
+      ),
+      hidden: page.items.length - mine.length,
+    );
   }
+
+  /// `GET /employee/tasks/{task}` (`tasks.view`). The collection gives no
+  /// response example; it is read as a task row (see [ApiTask]).
+  Future<ApiTask> task(int id) async => ApiTask.fromJson(
+    ApiEnvelope.unwrapObject(await _client.get('/api/v1/employee/tasks/$id')),
+  );
 
   Future<void> updateStatus(int taskId, ApiTaskStatus status) async {
     ApiEnvelope.unwrapData(
@@ -401,7 +457,48 @@ final FutureProviderFamily<SprintPlanning, int?> planningProvider =
           ref.watch(boardRepositoryProvider).planning(projectId: projectId),
     );
 
-final FutureProviderFamily<ApiPage<ApiTask>, TaskQuery> apiTasksProvider =
-    FutureProvider.autoDispose.family<ApiPage<ApiTask>, TaskQuery>(
-      (ref, q) => ref.watch(boardRepositoryProvider).tasks(q),
+/// A page of tasks plus how many rows of it were left out because they
+/// could not be confirmed as the signed-in user's.
+class TaskList {
+  const new(this.page, {this.hidden = 0});
+
+  final ApiPage<ApiTask> page;
+  final int hidden;
+}
+
+/// The signed-in user's id for My Tasks. Without one there is no "mine"
+/// to ask for, so it fails instead of falling back to every task.
+int myUserId(Ref ref) {
+  final id = ref.watch(
+    sessionControllerProvider.select((s) => s.value?.userId),
+  );
+  if (id == null) {
+    throw const ApiException(
+      kind: ApiFailureKind.unauthorized,
+      message: 'Not signed in.',
     );
+  }
+  return id;
+}
+
+/// Keyed to the account and its company (and, through the query, to the
+/// scope): one user's or company's tasks are never served to another.
+final FutureProviderFamily<TaskList, TaskQuery> apiTasksProvider =
+    FutureProvider.autoDispose.family<TaskList, TaskQuery>((ref, q) {
+      ref.watch(sessionControllerProvider.select((s) => s.value?.companyId));
+      final me = q.scope == TaskScope.mine ? myUserId(ref) : null;
+      ref.watch(sessionControllerProvider.select((s) => s.value?.userId));
+      return ref.watch(boardRepositoryProvider).tasks(q, assignedTo: me);
+    });
+
+/// One task, fetched fresh when its details open; keyed like the list.
+final FutureProviderFamily<ApiTask, int> apiTaskProvider = FutureProvider
+    .autoDispose
+    .family<ApiTask, int>((ref, id) {
+      ref.watch(
+        sessionControllerProvider.select(
+          (s) => (s.value?.userId, s.value?.companyId),
+        ),
+      );
+      return ref.watch(boardRepositoryProvider).task(id);
+    });

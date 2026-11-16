@@ -63,45 +63,32 @@ class TintedActions extends StatelessWidget {
   }
 }
 
-/// One piece of task metadata: an icon and a short value. [label] names
-/// it for screen readers (the icon stands in for it on screen).
-class TaskMeta {
-  const new(this.icon, this.label, this.value, {this.strong = false});
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  /// The figure the reader looks for first (cost, points).
-  final bool strong;
-}
-
-/// A task in a list, content first: the title with its badge at the top
-/// end, then identifier · sprint · project on one line, then icon-labelled
-/// metadata that wraps only when it must, with compact edit/delete icons at
-/// the end. Tapping the card opens the details.
-///
-/// Typically two or three rows (~110 px) instead of a label above every
-/// value (~430 px).
+/// A task in a list: only what tells the employee what the work is — the
+/// title with its status at the top end, up to two lines of description
+/// (when the task has one) and the due date (when it has one). Everything
+/// else (code, sprint, project, priority, time, points) is in the details,
+/// which a tap on the card opens; there are no actions on the card.
 class TaskCard extends StatelessWidget {
   const new({
     required this.title,
-    required this.subtitle,
-    required this.meta,
-    required this.onView,
-    this.badge,
-    this.onEdit,
-    this.onDelete,
+    required this.status,
+    required this.onOpen,
+    this.description,
+    this.due,
     super.key,
   });
 
   final String title;
-  final String subtitle;
-  final List<TaskMeta> meta;
-  final Widget? badge;
-  final VoidCallback onView;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
+
+  /// The status badge.
+  final Widget status;
+
+  /// Shown as written, two lines at most; nothing is shown without one.
+  final String? description;
+
+  /// A formatted due date; null when the task has none.
+  final String? due;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -109,16 +96,6 @@ class TaskCard extends StatelessWidget {
     final secondary = AppTextStyles.mobileXsRegular.copyWith(
       color: AppColors.textSecondary,
     );
-    Widget icon(IconData i, String tip, VoidCallback onTap, Key key, Color c) =>
-        IconButton(
-          key: key,
-          tooltip: tip,
-          onPressed: onTap,
-          visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints.tightFor(width: 40, height: 40),
-          padding: EdgeInsets.zero,
-          icon: Icon(i, size: 20, color: c),
-        );
     return Material(
       color: AppColors.surface,
       shape: RoundedRectangleBorder(
@@ -126,18 +103,18 @@ class TaskCard extends StatelessWidget {
         side: BorderSide(color: ModuleColors.chipBorder),
       ),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        key: const Key('action-view'),
-        onTap: onView,
-        child: Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 6, 6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: 8),
-                child: Row(
+      child: Semantics(
+        hint: l10n.openTaskHint,
+        child: InkWell(
+          key: const Key('action-view'),
+          onTap: onOpen,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
@@ -150,93 +127,45 @@ class TaskCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (badge != null) ...[const SizedBox(width: 8), badge!],
+                    const SizedBox(width: AppSpacing.sm),
+                    status,
                   ],
                 ),
-              ),
-              const SizedBox(height: 2),
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: 8),
-                child: Text(
-                  subtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: secondary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Wrap(
-                        spacing: 12,
-                        runSpacing: 4,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [for (final m in meta) _MetaItem(m)],
-                      ),
+                if (description != null) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    description!,
+                    key: const Key('task-description'),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.mobileXsRegular.copyWith(
+                      color: AppColors.textPrimary,
+                      height: 1.45,
                     ),
                   ),
-                  if (onEdit != null)
-                    icon(
-                      Icons.edit_outlined,
-                      l10n.edit,
-                      onEdit!,
-                      const Key('action-edit'),
-                      AppColors.textSecondary,
-                    ),
-                  if (onDelete != null)
-                    icon(
-                      Icons.delete_outline,
-                      l10n.delete,
-                      onDelete!,
-                      const Key('action-delete'),
-                      ModuleColors.dangerFg,
-                    ),
                 ],
-              ),
-            ],
+                if (due != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    key: const Key('task-due'),
+                    children: [
+                      Icon(
+                        Icons.event_outlined,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Flexible(child: Text(l10n.dueOn(due!), style: secondary)),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
-
-class _MetaItem extends StatelessWidget {
-  const new(this.meta);
-
-  final TaskMeta meta;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    label: '${meta.label}: ${meta.value}',
-    excludeSemantics: true,
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(meta.icon, size: 14, color: AppColors.textSecondary),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text(
-            meta.value,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style:
-                (meta.strong
-                        ? AppTextStyles.mobileXsSemiBold
-                        : AppTextStyles.mobileXsRegular)
-                    .copyWith(
-                      color: meta.strong
-                          ? AppColors.neutral900
-                          : AppColors.textPrimary,
-                    ),
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 /// Priority as a small badge (shared by task cards and Kanban cards).

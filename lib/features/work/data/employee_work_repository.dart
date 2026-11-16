@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/core/network/api_client.dart';
 import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/network/api_response.dart';
+import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/work/data/board_repository.dart';
 
 /// `GET /api/v1/employee/dashboard` → `data {myTasks, myHours, myMinutes,
 /// totalEarned, paidSalary, unpaidSalary}`, as returned by the live server.
@@ -94,11 +97,14 @@ class EmployeeWorkRepository {
         ),
       );
 
-  Future<TaskStats> taskStats() async {
+  /// `stats` of `GET /employee/tasks`; with [assignedTo], of the
+  /// signed-in user's tasks (`assigned_to`). The collection says `stats`
+  /// ignores `status` only, so it follows `assigned_to`.
+  Future<TaskStats> taskStats({int? assignedTo}) async {
     final body = ApiEnvelope.unwrapBody(
       await _client.get(
         '/api/v1/employee/tasks',
-        query: {'per_page': 1, 'month': 'all'},
+        query: {'per_page': 1, 'month': 'all', 'assigned_to': ?assignedTo},
       ),
     );
     final s = body['stats'];
@@ -156,6 +162,21 @@ final FutureProvider<TaskStats> employeeTaskStatsProvider =
     FutureProvider.autoDispose(
       (ref) => ref.watch(employeeWorkRepositoryProvider).taskStats(),
     );
+
+/// Task figures for the Tasks screen's scope, keyed to the account and
+/// company like the rows.
+final FutureProviderFamily<TaskStats, TaskScope> scopedTaskStatsProvider =
+    FutureProvider.autoDispose.family<TaskStats, TaskScope>((ref, scope) {
+      ref.watch(
+        sessionControllerProvider.select(
+          (s) => (s.value?.userId, s.value?.companyId),
+        ),
+      );
+      final me = scope == TaskScope.mine ? myUserId(ref) : null;
+      return ref
+          .watch(employeeWorkRepositoryProvider)
+          .taskStats(assignedTo: me);
+    });
 
 final FutureProvider<TimesheetSummary> employeeTimesheetSummaryProvider =
     FutureProvider.autoDispose(

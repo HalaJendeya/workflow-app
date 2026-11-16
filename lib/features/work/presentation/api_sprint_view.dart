@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +12,7 @@ import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/work/data/board_repository.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/features/work/presentation/kanban_drag.dart';
+import 'package:workflow_app/features/work/presentation/task_details_screen.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -109,8 +112,14 @@ class _ApiSprintViewState extends ConsumerState<ApiSprintView>
     }
   }
 
+  /// A task its row says may not be updated opens its details; otherwise
+  /// the move sheet, which also leads to the details.
   Future<void> _chooseMove(ApiTask t) async {
     final l10n = AppLocalizations.of(context);
+    if (t.canUpdate == false) {
+      await openApiTaskDetails(context, t);
+      return;
+    }
     final target = await showOptionSheet<ApiTaskStatus>(
       context,
       title: l10n.moveTo,
@@ -118,6 +127,16 @@ class _ApiSprintViewState extends ConsumerState<ApiSprintView>
       labelOf: (c) => apiTaskStatusLabel(l10n, c),
       selected: _pending[t.id] ?? t.status,
       keyOf: (c) => Key('move-${c.name}'),
+      extra: (sheet) => [
+        ListTile(
+          key: const Key('kanban-view-details'),
+          title: Text(l10n.viewDetails),
+          onTap: () {
+            Navigator.pop(sheet);
+            unawaited(openApiTaskDetails(context, t));
+          },
+        ),
+      ],
     );
     if (target != null && mounted) await _move(t, target);
   }
@@ -633,7 +652,6 @@ class ApiTaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final t = task;
-    final canMove = t.canUpdate ?? true;
     final d = t.duration;
     return Material(
       key: Key('kanban-${t.id}'),
@@ -644,7 +662,8 @@ class ApiTaskCard extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: pending || !canMove ? null : onTap,
+        // Read-only tasks still open (their details); moving stays gated.
+        onTap: pending ? null : onTap,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
           child: Column(

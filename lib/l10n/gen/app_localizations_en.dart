@@ -2166,4 +2166,75 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appearanceAuto => 'Auto';
+
+  @override
+  String get myTasks => 'My tasks';
+
+  @override
+  String get teamTasks => 'Team tasks';
+
+  @override
+  String get taskScope => 'Whose tasks';
+
+  @override
+  String get taskDetails => 'Task details';
+
+  @override
+  String get noDescription => 'No description';
+
+  @override
+  String dueOn(String date) {
+    return 'Due $date';
+  }
+
+  @override
+  String get dueDate => 'Due date';
+
+  @override
+  String get fieldSprint => 'Sprint';
+
+  @override
+  String get changeStatus => 'Change status';
+
+  @override
+  String get taskActions => 'Task actions';
+
+  @override
+  String get subtasks => 'Subtasks';
+
+  @override
+  String subtasksProgress(int done, int total) {
+    return '$done of $total done';
+  }
+
+  @override
+  String get workDetails => 'Work details';
+
+  @override
+  String get scheduleAndTime => 'Schedule and time';
+
+  @override
+  String get noTasksAssigned => 'No tasks are assigned to you.';
+
+  @override
+  String tasksHiddenUnverified(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count tasks were left out because the server did not confirm they are assigned to you.',
+      one: '1 task was left out because the server did not confirm it is assigned to you.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get taskDetailsStale =>
+      'Couldn’t refresh this task. Showing what the list had.';
+
+  @override
+  String get openTaskHint => 'Opens the task details';
+
+  @override
+  String get taskDeleted => 'Task deleted.';
 }
