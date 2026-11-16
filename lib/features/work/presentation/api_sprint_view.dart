@@ -10,7 +10,9 @@ import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/work/data/board_repository.dart';
+import 'package:workflow_app/features/work/data/work_options.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
+import 'package:workflow_app/features/work/presentation/api_task_list_screen.dart';
 import 'package:workflow_app/features/work/presentation/kanban_drag.dart';
 import 'package:workflow_app/features/work/presentation/task_details_screen.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
@@ -54,11 +56,27 @@ String apiTaskStatusLabel(AppLocalizations l10n, ApiTaskStatus s) =>
   TaskPriority.low => (AppColors.primary50, AppColors.primary),
 };
 
+/// The label of a sprint `status` (`planned`, `active`, `completed`);
+/// anything else is shown as the server sent it.
+String sprintStatusLabel(AppLocalizations l10n, String status) =>
+    switch (status) {
+      'planned' => l10n.sprintPlanned,
+      'active' => l10n.sprintActive,
+      'completed' => l10n.statusCompleted,
+      _ => status,
+    };
+
 /// "Sprint & Backlog" (729:24447) from `GET /employee/kanban` and
 /// `GET /employee/sprints`. Moving a card calls
-/// `POST /employee/kanban/update-status`.
+/// `POST /employee/kanban/update-status`. Sprint create, start, complete,
+/// edit, delete and move-between-sprints are refused to employees
+/// (Permission Boundary), so none of them is offered.
 class ApiSprintView extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({this.initialProjectId, super.key});
+
+  /// The project to open on (from Project details); null = the server's
+  /// default project.
+  final int? initialProjectId;
 
   @override
   ConsumerState<ApiSprintView> createState() => _ApiSprintViewState();
@@ -68,8 +86,19 @@ class _ApiSprintViewState extends ConsumerState<ApiSprintView>
     with KanbanDropBarHost {
   bool _kanban = true;
   ApiTaskStatus _column = ApiTaskStatus.inProgress;
-  int? _projectId;
+  late int? _projectId = widget.initialProjectId;
   String _query = '';
+
+  /// A project lead may see the whole team's cards (`scope=all`); everyone
+  /// else, and a lead by default, sees their own (`mine`).
+  bool _team = false;
+
+  /// The board being shown. `all` only on a project the user leads
+  /// (choosing "Team" pins the project the server had selected).
+  BoardKey _key(Set<int> led) => (
+    projectId: _projectId,
+    all: _team && _projectId != null && led.contains(_projectId),
+  );
 
   /// Moves sent to the server and not yet confirmed, by task id. The card
   /// is shown in its destination with a spinner meanwhile; a second move
@@ -95,12 +124,12 @@ class _ApiSprintViewState extends ConsumerState<ApiSprintView>
       if (!mounted) return;
       showSnack(context, l10n.taskStatusUpdated);
       // Reconcile with the server before dropping the local placement.
-      ref
-        ..invalidate(kanbanProvider(_projectId))
-        // Every backlog page, whichever project key it was read with.
-        ..invalidate(planningProvider);
+      // Every list, figure, board and backlog is read again.
+      invalidateTaskData(ref, taskId: t.id);
       try {
-        await ref.read(kanbanProvider(_projectId).future);
+        await ref.read(
+          kanbanProvider(_key(ref.read(ledProjectIdsProvider))).future,
+        );
       } on Object {
         // The board shows its own error and retry.
       }
@@ -171,9 +200,12 @@ class _ApiSprintViewState extends ConsumerState<ApiSprintView>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final board = ref.watch(kanbanProvider(_projectId));
+    final led = ref.watch(ledProjectIdsProvider);
+    final key = _key(led);
+    final board = ref.watch(kanbanProvider(key));
     final projects = board.value?.projects ?? const <BoardProject>[];
     final selected = board.value?.selectedProjectId ?? _projectId;
+    final leads = selected != null && led.contains(selected);
     final projectTitle = projects
         .where((p) => p.id == selected)
         .map((p) => p.title)
@@ -201,7 +233,12 @@ class _ApiSprintViewState extends ConsumerState<ApiSprintView>
                         projects.firstWhere((p) => p.id == id).title,
                     selected: selected,
                   );
-                  if (picked != null) setState(() => _projectId = picked);
+                  if (picked != null) {
+                    setState(() {
+                      _projectId = picked;
+                      _team = false;
+                    });
+                  }
                 },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,50 +260,43 @@ class _ApiSprintViewState extends ConsumerState<ApiSprintView>
             ],
           ),
         ),
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            Expanded(
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  WfFilterPill(
-                    label: l10n.kanban,
-                    selected: _kanban,
-                    onTap: () => setState(() => _kanban = true),
-                  ),
-                  WfFilterPill(
-                    label: l10n.backlog,
-                    selected: !_kanban,
-                    onTap: () => setState(() => _kanban = false),
-                  ),
-                ],
-              ),
+            WfFilterPill(
+              label: l10n.kanban,
+              selected: _kanban,
+              onTap: () => setState(() => _kanban = true),
             ),
-            const SizedBox(width: 8),
-            Material(
-              color: AppColors.primary50,
-              borderRadius: BorderRadius.circular(10),
-              child: InkWell(
-                key: const Key('create-sprint'),
-                borderRadius: BorderRadius.circular(10),
-                onTap: () => showSnack(context, l10n.sprintCreateUnavailable),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 11,
-                  ),
-                  child: Text(
-                    l10n.createSprint,
-                    style: AppTextStyles.mobileXsSemiBold.copyWith(
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-              ),
+            WfFilterPill(
+              label: l10n.backlog,
+              selected: !_kanban,
+              onTap: () => setState(() => _kanban = false),
             ),
           ],
         ),
+        // Whose cards: offered only to the project's leader (`scope=all`
+        // is documented as the lead's view).
+        if (_kanban && leads)
+          ChipRow(
+            key: const Key('board-scope'),
+            children: [
+              for (final (team, label) in [
+                (false, l10n.myTasks),
+                (true, l10n.teamTasks),
+              ])
+                FilterChipBox(
+                  key: Key('board-scope-${team ? 'team' : 'mine'}'),
+                  label: label,
+                  selected: _team == team,
+                  onTap: () => setState(() {
+                    _projectId = selected;
+                    _team = team;
+                  }),
+                ),
+            ],
+          ),
         if (_kanban)
           // While a move is being reconciled the board keeps its cards on
           // screen instead of flashing a spinner.
@@ -275,7 +305,7 @@ class _ApiSprintViewState extends ConsumerState<ApiSprintView>
           else
             AsyncSection(
               value: board,
-              onRetry: () => ref.invalidate(kanbanProvider(_projectId)),
+              onRetry: () => ref.invalidate(kanbanProvider(key)),
               builder: (b) => _board(b, matches),
             )
         else
@@ -584,28 +614,77 @@ class _Backlog extends ConsumerWidget {
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  for (final s in p.sprints) ...[
-                    const SizedBox(height: 12),
+                  if (p.sprints.isEmpty) ...[
+                    const SizedBox(height: 8),
                     Text(
-                      s.name,
-                      style: AppTextStyles.mobileBaseSemiBold.copyWith(
-                        color: AppColors.textPrimary,
+                      l10n.noSprintsYet,
+                      style: AppTextStyles.mobileXsRegular.copyWith(
+                        color: AppColors.textSecondary,
                       ),
                     ),
-                    if (s.pointsTotal != null)
-                      Text(
-                        l10n.sprintPoints(
-                          s.pointsDone ?? 0,
-                          s.pointsTotal!,
-                          s.pointsTotal! == 0
-                              ? 0
-                              : ((s.pointsDone ?? 0) * 100 ~/ s.pointsTotal!),
+                  ],
+                  for (final s in p.sprints)
+                    InkWell(
+                      key: Key('sprint-row-${s.id}'),
+                      borderRadius: BorderRadius.circular(8),
+                      // The sprint's tasks, from the task list filtered by
+                      // `sprint_id` (not `GET /sprints/{id}`; see S1).
+                      onTap: () => openApiTaskList(
+                        context,
+                        title: s.name,
+                        subtitle: sprintStatusLabel(l10n, s.status),
+                        query: TaskQuery(
+                          scope: TaskScope.team,
+                          sprintId: s.id,
+                          projectId: p.selectedProjectId,
                         ),
-                        style: AppTextStyles.mobileXsRegular.copyWith(
-                          color: AppColors.textSecondary,
+                        emptyText: l10n.sprintTasksEmpty,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 12, bottom: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    s.name,
+                                    style: AppTextStyles.mobileBaseSemiBold
+                                        .copyWith(color: AppColors.textPrimary),
+                                  ),
+                                  Text(
+                                    [
+                                      if (s.status.isNotEmpty)
+                                        sprintStatusLabel(l10n, s.status),
+                                      if (s.pointsTotal != null)
+                                        l10n.sprintPoints(
+                                          s.pointsDone ?? 0,
+                                          s.pointsTotal!,
+                                          s.pointsTotal! == 0
+                                              ? 0
+                                              : ((s.pointsDone ?? 0) *
+                                                    100 ~/
+                                                    s.pointsTotal!),
+                                        ),
+                                    ].join(' · '),
+                                    style: AppTextStyles.mobileXsRegular
+                                        .copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right,
+                              color: AppColors.textSecondary,
+                              textDirection: Directionality.of(context),
+                            ),
+                          ],
                         ),
                       ),
-                  ],
+                    ),
                 ],
               ),
             ),

@@ -7,6 +7,8 @@ import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
+import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/finance/domain/finance_models.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/projects/data/projects_repository.dart';
@@ -126,8 +128,14 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   Widget build(BuildContext context) {
     final demo = ref.watch(demoModeProvider);
     if (!demo) {
+      // Employees: project create/update are Permission Boundary routes
+      // (403), so no Add Project button is shown.
+      final employee =
+          ref.watch(sessionControllerProvider).value?.portal == Portal.employee;
       return ApiProjectsView(
-        onCreate: widget.canManage ? () => openProjectForm(context) : null,
+        onCreate: widget.canManage && !employee
+            ? () => openProjectForm(context)
+            : null,
         initialStatus: widget.initialStatus,
       );
     }

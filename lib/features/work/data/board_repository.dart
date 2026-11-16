@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:workflow_app/app/providers.dart';
@@ -6,6 +7,7 @@ import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/network/api_response.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/work/data/work_options.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 
 /// Task status values the backend uses (collection `WorkFlow`, 2026-11-14):
@@ -67,6 +69,8 @@ TaskPriority? _priority(Object? v) => switch (v) {
 
 String? _label(Object? v, String key) => v is Json ? v[key] as String? : null;
 
+int? _id(Object? v) => v is Json ? asInt(v['id']) : null;
+
 /// `HH:mm[:ss]` on [day]; null when absent or malformed.
 DateTime? _at(DateTime? day, Object? time) {
   if (day == null || time is! String) return null;
@@ -103,7 +107,9 @@ class ApiTask {
     this.end,
     this.assigneeId,
     this.assigneeName,
+    this.projectId,
     this.projectTitle,
+    this.sprintId,
     this.sprintName,
     this.canUpdate,
     this.canDelete,
@@ -132,7 +138,9 @@ class ApiTask {
           ? asInt((j['assignee'] as Json)['id'])
           : null,
       assigneeName: _label(j['assignee'], 'name'),
+      projectId: _id(j['project']),
       projectTitle: _label(j['project'], 'title'),
+      sprintId: _id(j['sprint']),
       sprintName: _label(j['sprint'], 'name'),
       canUpdate: can is Json ? can['update'] as bool? : null,
       canDelete: can is Json ? can['delete'] as bool? : null,
@@ -155,7 +163,13 @@ class ApiTask {
   /// `assignee.id`: a `users.id`, compared with the signed-in user.
   final int? assigneeId;
   final String? assigneeName;
+
+  /// `project.id` / `sprint.id` of the row's relations; null when the
+  /// row does not carry them. Used to scope a lead's edit form and to open
+  /// related lists, never to guess another id.
+  final int? projectId;
   final String? projectTitle;
+  final int? sprintId;
   final String? sprintName;
 
   /// `can.update`; null when the row does not say.
@@ -331,13 +345,72 @@ class SprintPlanning {
 /// the default) or every task the backend lets them see (`tasks.view`).
 enum TaskScope { mine, team }
 
-typedef TaskQuery = ({
-  TaskScope scope,
-  String search,
-  ApiTaskStatus? status,
-  TaskPriority? priority,
-  int page,
-});
+/// Documented `sort` values of `GET /employee/tasks` the app offers.
+/// [newest] is the route's default (`-created_at`) and is not sent.
+enum TaskSort {
+  newest(null),
+  plannedDate('-task_date'),
+  title('title');
+
+  new(this.param);
+
+  final String? param;
+}
+
+/// One request of `GET /employee/tasks`: scope, search, the documented
+/// filters (`status`, `priority`, `project_id`, `sprint_id`), sort and
+/// page. A value object, so equal queries share one provider.
+@immutable
+class TaskQuery {
+  const new({
+    this.scope = TaskScope.mine,
+    this.search = '',
+    this.status,
+    this.priority,
+    this.page = 1,
+    this.projectId,
+    this.sprintId,
+    this.sort = TaskSort.newest,
+    this.perPage = 10,
+  });
+
+  final TaskScope scope;
+  final String search;
+  final ApiTaskStatus? status;
+  final TaskPriority? priority;
+  final int page;
+  final int? projectId;
+  final int? sprintId;
+  final TaskSort sort;
+  final int perPage;
+
+  /// Whether anything narrows the list beyond the scope (empty states).
+  bool get filtered =>
+      search.trim().isNotEmpty ||
+      status != null ||
+      priority != null ||
+      projectId != null ||
+      sprintId != null;
+
+  List<Object?> get _props => [
+    scope,
+    search,
+    status,
+    priority,
+    page,
+    projectId,
+    sprintId,
+    sort,
+    perPage,
+  ];
+
+  @override
+  bool operator ==(Object other) =>
+      other is TaskQuery && listEquals(other._props, _props);
+
+  @override
+  int get hashCode => Object.hashAll(_props);
+}
 
 /// `status` filter of `GET /employee/tasks`. The collection documents
 /// backlog, todo, pending, in_progress, in_review and completed (anything
@@ -360,14 +433,19 @@ class BoardRepository {
 
   final ApiClient _client;
 
-  Future<KanbanBoard> kanban({int? projectId}) async => KanbanBoard.fromJson(
-    ApiEnvelope.unwrapObject(
-      await _client.get(
-        '/api/v1/employee/kanban',
-        query: {'project_id': ?projectId},
-      ),
-    ),
-  );
+  /// `scope` is documented as `mine | all`: employees (leads included)
+  /// get `mine` by default; `all` is for the lead. The app asks for
+  /// `all` only on a project the user leads (`ledProjectIdsProvider`);
+  /// the server still decides what it returns.
+  Future<KanbanBoard> kanban({int? projectId, bool all = false}) async =>
+      KanbanBoard.fromJson(
+        ApiEnvelope.unwrapObject(
+          await _client.get(
+            '/api/v1/employee/kanban',
+            query: {'project_id': ?projectId, if (all) 'scope': 'all'},
+          ),
+        ),
+      );
 
   /// The backlog's first page only: the collection documents no query
   /// parameter for its other pages.
@@ -396,11 +474,14 @@ class BoardRepository {
         query: {
           'month': 'all',
           'page': q.page,
-          'per_page': 10,
+          'per_page': q.perPage,
           'assigned_to': ?assignedTo,
           if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
           if (q.status case final s?) 'status': ?taskListStatusParam(s),
           if (q.priority case final p?) 'priority': p.name,
+          'project_id': ?q.projectId,
+          'sprint_id': ?q.sprintId,
+          'sort': ?q.sort.param,
         },
       ),
     );
@@ -430,6 +511,27 @@ class BoardRepository {
     ApiEnvelope.unwrapObject(await _client.get('/api/v1/employee/tasks/$id')),
   );
 
+  /// `POST /employee/tasks` (`tasks.create`). Only the project's leader
+  /// may create on it (403 otherwise). The documented response is
+  /// `data.id` (201); the new task's id is returned.
+  Future<int> createTask(TaskDraft draft) async {
+    final data = ApiEnvelope.unwrapObject(
+      await _client.post('/api/v1/employee/tasks', body: draft.toCreate()),
+    );
+    return asInt(data['id']) ?? missingField('data.id');
+  }
+
+  /// `PUT /employee/tasks/{task}` (`tasks.update`, lead only). Sends only
+  /// the fields that differ from [original], so a value the form could not
+  /// read from the row is never overwritten.
+  Future<void> updateTask(int id, TaskDraft draft, TaskDraft original) async {
+    final body = draft.changesFrom(original);
+    if (body.isEmpty) return;
+    ApiEnvelope.unwrapObject(
+      await _client.put('/api/v1/employee/tasks/$id', body: body),
+    );
+  }
+
   Future<void> updateStatus(int taskId, ApiTaskStatus status) async {
     ApiEnvelope.unwrapData(
       await _client.post(
@@ -444,18 +546,31 @@ final boardRepositoryProvider = Provider<BoardRepository>(
   (ref) => BoardRepository(ref.watch(apiClientProvider)),
 );
 
-final FutureProviderFamily<KanbanBoard, int?> kanbanProvider = FutureProvider
-    .autoDispose
-    .family<KanbanBoard, int?>(
-      (ref, projectId) =>
-          ref.watch(boardRepositoryProvider).kanban(projectId: projectId),
-    );
+/// Which board to read: a project (null = the server's default) and
+/// whether to ask for the whole team's cards (`scope=all`).
+typedef BoardKey = ({int? projectId, bool all});
+
+/// Rebuilds when the signed-in account or its company changes, so data is
+/// never served to another account or company.
+void watchSessionScope(Ref ref) => ref.watch(
+  sessionControllerProvider.select(
+    (s) => (s.value?.userId, s.value?.companyId),
+  ),
+);
+
+final FutureProviderFamily<KanbanBoard, BoardKey> kanbanProvider =
+    FutureProvider.autoDispose.family<KanbanBoard, BoardKey>((ref, key) {
+      watchSessionScope(ref);
+      return ref
+          .watch(boardRepositoryProvider)
+          .kanban(projectId: key.projectId, all: key.all);
+    });
 
 final FutureProviderFamily<SprintPlanning, int?> planningProvider =
-    FutureProvider.autoDispose.family<SprintPlanning, int?>(
-      (ref, projectId) =>
-          ref.watch(boardRepositoryProvider).planning(projectId: projectId),
-    );
+    FutureProvider.autoDispose.family<SprintPlanning, int?>((ref, projectId) {
+      watchSessionScope(ref);
+      return ref.watch(boardRepositoryProvider).planning(projectId: projectId);
+    });
 
 /// A page of tasks plus how many rows of it were left out because they
 /// could not be confirmed as the signed-in user's.
@@ -485,9 +600,8 @@ int myUserId(Ref ref) {
 /// scope): one user's or company's tasks are never served to another.
 final FutureProviderFamily<TaskList, TaskQuery> apiTasksProvider =
     FutureProvider.autoDispose.family<TaskList, TaskQuery>((ref, q) {
-      ref.watch(sessionControllerProvider.select((s) => s.value?.companyId));
+      watchSessionScope(ref);
       final me = q.scope == TaskScope.mine ? myUserId(ref) : null;
-      ref.watch(sessionControllerProvider.select((s) => s.value?.userId));
       return ref.watch(boardRepositoryProvider).tasks(q, assignedTo: me);
     });
 
@@ -495,10 +609,6 @@ final FutureProviderFamily<TaskList, TaskQuery> apiTasksProvider =
 final FutureProviderFamily<ApiTask, int> apiTaskProvider = FutureProvider
     .autoDispose
     .family<ApiTask, int>((ref, id) {
-      ref.watch(
-        sessionControllerProvider.select(
-          (s) => (s.value?.userId, s.value?.companyId),
-        ),
-      );
+      watchSessionScope(ref);
       return ref.watch(boardRepositoryProvider).task(id);
     });

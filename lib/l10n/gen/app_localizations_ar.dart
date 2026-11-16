@@ -1783,10 +1783,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get taskStatusUpdated => 'تم تحديث حالة المهمة.';
 
   @override
-  String get sprintCreateUnavailable =>
-      'لا يمكن إنشاء سبرنت من حساب موظف — لا توفر واجهة WorkFlow مسار إنشاء سبرنت لهذا الدور.';
-
-  @override
   String backlogFirstPage(int shown, int total) {
     return 'عرض $shown من $total مهمة في الـ Backlog.';
   }
@@ -1820,7 +1816,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get taskCreateUnavailable =>
-      'لا يمكن إنشاء مهام من هنا بعد — تقبل واجهة WorkFlow المهام الجديدة من قائد المشروع فقط، وهذا النموذج غير مربوط بها.';
+      'يمكن لقائد المشروع فقط إنشاء المهام، وأنت لا تقود أي مشروع.';
 
   @override
   String get emojiUseKeyboard =>
@@ -2233,4 +2229,92 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get taskDeleted => 'حُذفت المهمة.';
+
+  @override
+  String get clear => 'مسح';
+
+  @override
+  String get optionalHint => 'اختياري';
+
+  @override
+  String get unassigned => 'غير مُسنَدة';
+
+  @override
+  String get noSprint => 'بدون سبرنت';
+
+  @override
+  String get startTime => 'وقت البدء';
+
+  @override
+  String get endTime => 'وقت الانتهاء';
+
+  @override
+  String get taskCreated => 'تم إنشاء المهمة.';
+
+  @override
+  String get taskSaved => 'تم حفظ المهمة.';
+
+  @override
+  String get taskEndWithoutStart => 'حدّد وقت البدء قبل وقت الانتهاء.';
+
+  @override
+  String get taskEndNotAfterStart => 'يجب أن يكون وقت الانتهاء بعد وقت البدء.';
+
+  @override
+  String get taskOverFourHours => 'لا يمكن أن تتجاوز مدة المهمة 4 ساعات.';
+
+  @override
+  String get taskLeadOnly => 'يمكن لقائد المشروع فقط إنشاء مهامه أو تعديلها.';
+
+  @override
+  String get taskMonthLocked =>
+      'تمت الموافقة على سجل ساعات هذا الشهر، لذا لا يمكن تغيير المهمة.';
+
+  @override
+  String get taskAssigneeHint =>
+      'بصفتك قائد المشروع يمكنك الإسناد لأعضاء هذا المشروع فقط.';
+
+  @override
+  String get taskNoChanges => 'لم يتغير شيء.';
+
+  @override
+  String get serverRejected => 'لم يقبل الخادم ما يلي:';
+
+  @override
+  String get sortPlannedDate => 'تاريخ العمل';
+
+  @override
+  String get sortTitle => 'العنوان (أ–ي)';
+
+  @override
+  String get projectTasks => 'مهام المشروع';
+
+  @override
+  String get projectSprints => 'السبرنتات';
+
+  @override
+  String get openBoard => 'فتح اللوحة';
+
+  @override
+  String get viewAllTasks => 'عرض كل المهام';
+
+  @override
+  String get noSprintsYet => 'لا توجد سبرنتات بعد.';
+
+  @override
+  String get sprintPlanned => 'مخطط';
+
+  @override
+  String get sprintActive => 'نشط';
+
+  @override
+  String get sprintTasksEmpty => 'لا توجد مهام في هذا السبرنت.';
+
+  @override
+  String get youLeadProject => 'أنت قائد هذا المشروع';
+
+  @override
+  String validationTooLong(int max) {
+    return 'استخدم $max حرفًا كحد أقصى.';
+  }
 }

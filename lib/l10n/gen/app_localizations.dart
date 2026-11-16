@@ -3314,12 +3314,6 @@ abstract class AppLocalizations {
   /// **'Task status updated.'**
   String get taskStatusUpdated;
 
-  /// No description provided for @sprintCreateUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Sprints can’t be created from an employee account — the WorkFlow API has no sprint create route for this role.'**
-  String get sprintCreateUnavailable;
-
   /// No description provided for @backlogFirstPage.
   ///
   /// In en, this message translates to:
@@ -3371,7 +3365,7 @@ abstract class AppLocalizations {
   /// No description provided for @taskCreateUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Tasks can’t be created here yet — the WorkFlow API accepts new tasks only from a project leader, and this form isn’t connected to it.'**
+  /// **'Only a project’s leader can create tasks, and you don’t lead any project.'**
   String get taskCreateUnavailable;
 
   /// No description provided for @emojiUseKeyboard.
@@ -4087,6 +4081,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Task deleted.'**
   String get taskDeleted;
+
+  /// No description provided for @clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clear;
+
+  /// No description provided for @optionalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get optionalHint;
+
+  /// No description provided for @unassigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned'**
+  String get unassigned;
+
+  /// No description provided for @noSprint.
+  ///
+  /// In en, this message translates to:
+  /// **'No sprint'**
+  String get noSprint;
+
+  /// No description provided for @startTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start time'**
+  String get startTime;
+
+  /// No description provided for @endTime.
+  ///
+  /// In en, this message translates to:
+  /// **'End time'**
+  String get endTime;
+
+  /// No description provided for @taskCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Task created.'**
+  String get taskCreated;
+
+  /// No description provided for @taskSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Task saved.'**
+  String get taskSaved;
+
+  /// No description provided for @taskEndWithoutStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a start time before the end time.'**
+  String get taskEndWithoutStart;
+
+  /// No description provided for @taskEndNotAfterStart.
+  ///
+  /// In en, this message translates to:
+  /// **'The end time must be after the start time.'**
+  String get taskEndNotAfterStart;
+
+  /// No description provided for @taskOverFourHours.
+  ///
+  /// In en, this message translates to:
+  /// **'A task can last at most 4 hours.'**
+  String get taskOverFourHours;
+
+  /// No description provided for @taskLeadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the project’s leader can create or edit its tasks.'**
+  String get taskLeadOnly;
+
+  /// No description provided for @taskMonthLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This month’s timesheet is already approved, so the task can’t be changed.'**
+  String get taskMonthLocked;
+
+  /// No description provided for @taskAssigneeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'As project leader you can assign only members of this project.'**
+  String get taskAssigneeHint;
+
+  /// No description provided for @taskNoChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing changed.'**
+  String get taskNoChanges;
+
+  /// No description provided for @serverRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'The server didn’t accept this:'**
+  String get serverRejected;
+
+  /// No description provided for @sortPlannedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned date'**
+  String get sortPlannedDate;
+
+  /// No description provided for @sortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title A–Z'**
+  String get sortTitle;
+
+  /// No description provided for @projectTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Project tasks'**
+  String get projectTasks;
+
+  /// No description provided for @projectSprints.
+  ///
+  /// In en, this message translates to:
+  /// **'Sprints'**
+  String get projectSprints;
+
+  /// No description provided for @openBoard.
+  ///
+  /// In en, this message translates to:
+  /// **'Open board'**
+  String get openBoard;
+
+  /// No description provided for @viewAllTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'View all tasks'**
+  String get viewAllTasks;
+
+  /// No description provided for @noSprintsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No sprints yet.'**
+  String get noSprintsYet;
+
+  /// No description provided for @sprintPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned'**
+  String get sprintPlanned;
+
+  /// No description provided for @sprintActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get sprintActive;
+
+  /// No description provided for @sprintTasksEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks in this sprint.'**
+  String get sprintTasksEmpty;
+
+  /// No description provided for @youLeadProject.
+  ///
+  /// In en, this message translates to:
+  /// **'You lead this project'**
+  String get youLeadProject;
+
+  /// No description provided for @validationTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Use at most {max} characters.'**
+  String validationTooLong(int max);
 }
 
 class _AppLocalizationsDelegate

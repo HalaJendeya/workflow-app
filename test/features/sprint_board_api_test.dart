@@ -250,13 +250,15 @@ void main() {
           'stats': {'total': 1},
         }),
       );
-      final p = await repo().tasks((
-        scope: TaskScope.team,
-        search: ' login ',
-        status: ApiTaskStatus.inReview,
-        priority: TaskPriority.high,
-        page: 2,
-      ));
+      final p = await repo().tasks(
+        const TaskQuery(
+          scope: TaskScope.team,
+          search: ' login ',
+          status: ApiTaskStatus.inReview,
+          priority: TaskPriority.high,
+          page: 2,
+        ),
+      );
       expect(http.last.path, '/api/v1/employee/tasks');
       // `status` takes the collection's list filter values.
       expect(http.last.queryParameters, {
@@ -288,13 +290,7 @@ void main() {
           'total': 4,
         }),
       );
-      final p = await repo().tasks((
-        scope: TaskScope.mine,
-        search: '',
-        status: null,
-        priority: null,
-        page: 1,
-      ), assignedTo: 10);
+      final p = await repo().tasks(const TaskQuery(), assignedTo: 10);
       expect(http.last.queryParameters['assigned_to'], 10);
       // Never shown as "mine" unless the row itself says so.
       expect(p.page.items.map((t) => t.id), [3]);
@@ -454,9 +450,10 @@ void main() {
     expect(find.byKey(const Key('kanban-9')), findsOneWidget);
     expect(find.text('Sprints (1)'), findsOneWidget);
     expect(find.text('Showing 1 of 7 backlog tasks.'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('create-sprint')));
-    await tester.pump();
-    expect(find.textContaining('no sprint create route'), findsOneWidget);
+    // Sprint create/start/complete are 403 for employees (Permission
+    // Boundary): no control for them is shown.
+    expect(find.byKey(const Key('create-sprint')), findsNothing);
+    expect(find.text('Create Sprint'), findsNothing);
   });
 
   testWidgets('task rows come from the API with no sample data', (

@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/app/routes.dart';
+import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/features/categories/presentation/categories_screen.dart';
 import 'package:workflow_app/features/dashboard/presentation/employee_dashboard_screen.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_forms.dart';
 import 'package:workflow_app/features/meetings/presentation/meetings_screen.dart';
+import 'package:workflow_app/features/work/data/work_options.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
 import 'package:workflow_app/features/work/presentation/timesheets_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 /// Employee "More" tab: Figma Categories (729:46349).
-class EmployeeCategoriesScreen extends StatelessWidget {
+class EmployeeCategoriesScreen extends ConsumerWidget {
   const new({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    // "Add task" only where it can be saved: the demo, or a project leader
+    // (the API accepts new tasks only on projects the user leads).
+    final canAddTask =
+        ref.watch(demoModeProvider) ||
+        ref.watch(ledProjectIdsProvider).isNotEmpty;
     void push(BuildContext c, Widget page) =>
         Navigator.of(c).push(MaterialPageRoute<void>(builder: (_) => page));
     return CategoriesScreen(
@@ -80,7 +88,7 @@ class EmployeeCategoriesScreen extends StatelessWidget {
         ),
       ],
       createActions: [
-        CreateAction(l10n.addTask, openTaskForm),
+        if (canAddTask) CreateAction(l10n.addTask, openTaskForm),
         CreateAction(l10n.scheduleMeeting, openScheduleMeeting),
         CreateAction(l10n.joinByCodeTitle, openJoinByCode),
       ],

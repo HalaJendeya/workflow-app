@@ -5,8 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
+import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/projects/data/projects_repository.dart';
+import 'package:workflow_app/features/projects/presentation/employee_project_related.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -235,6 +238,8 @@ class _ProjectDetailsSheet extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final value = ref.watch(apiProjectProvider(row.id));
     final shown = value.value ?? row;
+    final employee =
+        ref.watch(sessionControllerProvider).value?.portal == Portal.employee;
     return RecordDetailsBody(
       key: const Key('project-details'),
       title: shown.title,
@@ -246,7 +251,9 @@ class _ProjectDetailsSheet extends ConsumerWidget {
           error: error,
           onRetry: () => ref.invalidate(apiProjectProvider(row.id)),
         ),
-        AsyncData() => null,
+        // Employee: sprints, tasks and the board of a project the server
+        // has just confirmed this account may see.
+        AsyncData() => employee ? EmployeeProjectRelated(project: shown) : null,
         _ => const Padding(
           padding: EdgeInsets.only(top: 8),
           child: LinearProgressIndicator(key: Key('project-details-loading')),

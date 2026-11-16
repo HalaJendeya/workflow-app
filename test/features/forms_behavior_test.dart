@@ -330,7 +330,9 @@ void main() {
       expect(find.textContaining('no payment create route'), findsOneWidget);
     });
 
-    testWidgets('add project', (tester) async {
+    testWidgets('add project: not offered to an employee (403 route)', (
+      tester,
+    ) async {
       await _pump(
         tester,
         Portal.employee,
@@ -339,13 +341,15 @@ void main() {
       );
       await tester.tap(find.text('Projects').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('create-fab')));
-      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('create-fab')), findsNothing);
       expect(find.byKey(const Key('form-save')), findsNothing);
-      expect(find.textContaining('no project create route'), findsOneWidget);
     });
 
-    testWidgets('add task', (tester) async {
+    testWidgets('add task: not offered to someone who leads no project', (
+      tester,
+    ) async {
+      // No `projects/options?led=1` route here: no led project is known,
+      // so nothing lead-only is offered (the lead flow is in m07 tests).
       await _pump(
         tester,
         Portal.employee,
@@ -353,10 +357,8 @@ void main() {
         adapter: RouteHttpAdapter(routes),
       );
       await _openCategory(tester, 'Tasks');
-      await tester.tap(find.byKey(const Key('create-fab')));
-      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('create-fab')), findsNothing);
       expect(find.byKey(const Key('form-save')), findsNothing);
-      expect(find.textContaining('project leader'), findsOneWidget);
     });
 
     testWidgets('the More create menu says the same', (tester) async {

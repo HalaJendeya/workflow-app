@@ -378,3 +378,80 @@ class DateField extends StatelessWidget {
     ),
   );
 }
+
+/// Optional time-of-day input with the form styling. Shows the time as
+/// `HH:mm` (figures kept left-to-right in Arabic) and offers a clear button
+/// once set; [validator] errors show under it like the other inputs.
+class TimeField extends StatelessWidget {
+  const new({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    this.validator,
+    this.fieldKey,
+    super.key,
+  });
+
+  final String label;
+  final TimeOfDay? value;
+  final ValueChanged<TimeOfDay?> onChanged;
+  final String? Function(TimeOfDay? value)? validator;
+  final Key? fieldKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final v = value;
+    return _Labeled(
+      label: label,
+      child: FormField<TimeOfDay>(
+        key: ValueKey((label, v)),
+        initialValue: v,
+        validator: validator == null ? null : (_) => validator!(v),
+        builder: (field) => InkWell(
+          key: fieldKey,
+          borderRadius: BorderRadius.circular(AppRadii.input),
+          onTap: () async {
+            final picked = await showTimePicker(
+              context: context,
+              initialTime: v ?? const TimeOfDay(hour: 9, minute: 0),
+            );
+            if (picked != null) onChanged(picked);
+          },
+          child: InputDecorator(
+            decoration:
+                _decoration(
+                  suffix: v == null
+                      ? Icon(Icons.schedule, color: AppColors.textSecondary)
+                      : IconButton(
+                          tooltip: l10n.clear,
+                          onPressed: () => onChanged(null),
+                          icon: Icon(
+                            Icons.close,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                ).copyWith(
+                  errorText: field.errorText,
+                  errorMaxLines: 3,
+                  hintText: l10n.optionalHint,
+                  hintStyle: AppTextStyles.mobileBaseRegular.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+            isEmpty: v == null,
+            child: v == null
+                ? null
+                : Text(
+                    '\u2066${v.hour.toString().padLeft(2, '0')}:'
+                    '${v.minute.toString().padLeft(2, '0')}\u2069',
+                    style: AppTextStyles.mobileBaseRegular.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}

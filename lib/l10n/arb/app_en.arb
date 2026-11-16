@@ -966,7 +966,6 @@
     }
   },
   "taskStatusUpdated": "Task status updated.",
-  "sprintCreateUnavailable": "Sprints can’t be created from an employee account — the WorkFlow API has no sprint create route for this role.",
   "backlogFirstPage": "Showing {shown} of {total} backlog tasks.",
   "@backlogFirstPage": {
     "placeholders": {
@@ -992,7 +991,7 @@
   "invoiceCreateUnavailable": "Invoices can’t be created from this account — the WorkFlow API has no invoice create route for clients.",
   "paymentCreateUnavailable": "Payments can’t be recorded from this account — the WorkFlow API has no payment create route for clients.",
   "projectCreateUnavailable": "Projects can’t be created from this account — the WorkFlow API has no project create route for your role.",
-  "taskCreateUnavailable": "Tasks can’t be created here yet — the WorkFlow API accepts new tasks only from a project leader, and this form isn’t connected to it.",
+  "taskCreateUnavailable": "Only a project’s leader can create tasks, and you don’t lead any project.",
   "emojiUseKeyboard": "Use your keyboard’s emoji button — the app has no emoji picker yet.",
   "voiceNotSupported": "Voice messages aren’t supported — the WorkFlow API accepts images, PDF and text files only.",
   "conversationCreateUnavailable": "Starting a conversation isn’t connected to the WorkFlow API yet — this form only works in demo mode.",
@@ -1162,5 +1161,40 @@
   },
   "taskDetailsStale": "Couldn’t refresh this task. Showing what the list had.",
   "openTaskHint": "Opens the task details",
-  "taskDeleted": "Task deleted."
+  "taskDeleted": "Task deleted.",
+  "clear": "Clear",
+  "optionalHint": "Optional",
+  "unassigned": "Unassigned",
+  "noSprint": "No sprint",
+  "startTime": "Start time",
+  "endTime": "End time",
+  "taskCreated": "Task created.",
+  "taskSaved": "Task saved.",
+  "taskEndWithoutStart": "Set a start time before the end time.",
+  "taskEndNotAfterStart": "The end time must be after the start time.",
+  "taskOverFourHours": "A task can last at most 4 hours.",
+  "taskLeadOnly": "Only the project’s leader can create or edit its tasks.",
+  "taskMonthLocked": "This month’s timesheet is already approved, so the task can’t be changed.",
+  "taskAssigneeHint": "As project leader you can assign only members of this project.",
+  "taskNoChanges": "Nothing changed.",
+  "serverRejected": "The server didn’t accept this:",
+  "sortPlannedDate": "Planned date",
+  "sortTitle": "Title A–Z",
+  "projectTasks": "Project tasks",
+  "projectSprints": "Sprints",
+  "openBoard": "Open board",
+  "viewAllTasks": "View all tasks",
+  "noSprintsYet": "No sprints yet.",
+  "sprintPlanned": "Planned",
+  "sprintActive": "Active",
+  "sprintTasksEmpty": "No tasks in this sprint.",
+  "youLeadProject": "You lead this project",
+  "validationTooLong": "Use at most {max} characters.",
+  "@validationTooLong": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  }
 }

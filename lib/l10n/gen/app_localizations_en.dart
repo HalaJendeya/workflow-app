@@ -1786,10 +1786,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get taskStatusUpdated => 'Task status updated.';
 
   @override
-  String get sprintCreateUnavailable =>
-      'Sprints can’t be created from an employee account — the WorkFlow API has no sprint create route for this role.';
-
-  @override
   String backlogFirstPage(int shown, int total) {
     return 'Showing $shown of $total backlog tasks.';
   }
@@ -1823,7 +1819,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taskCreateUnavailable =>
-      'Tasks can’t be created here yet — the WorkFlow API accepts new tasks only from a project leader, and this form isn’t connected to it.';
+      'Only a project’s leader can create tasks, and you don’t lead any project.';
 
   @override
   String get emojiUseKeyboard =>
@@ -2237,4 +2233,94 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taskDeleted => 'Task deleted.';
+
+  @override
+  String get clear => 'Clear';
+
+  @override
+  String get optionalHint => 'Optional';
+
+  @override
+  String get unassigned => 'Unassigned';
+
+  @override
+  String get noSprint => 'No sprint';
+
+  @override
+  String get startTime => 'Start time';
+
+  @override
+  String get endTime => 'End time';
+
+  @override
+  String get taskCreated => 'Task created.';
+
+  @override
+  String get taskSaved => 'Task saved.';
+
+  @override
+  String get taskEndWithoutStart => 'Set a start time before the end time.';
+
+  @override
+  String get taskEndNotAfterStart =>
+      'The end time must be after the start time.';
+
+  @override
+  String get taskOverFourHours => 'A task can last at most 4 hours.';
+
+  @override
+  String get taskLeadOnly =>
+      'Only the project’s leader can create or edit its tasks.';
+
+  @override
+  String get taskMonthLocked =>
+      'This month’s timesheet is already approved, so the task can’t be changed.';
+
+  @override
+  String get taskAssigneeHint =>
+      'As project leader you can assign only members of this project.';
+
+  @override
+  String get taskNoChanges => 'Nothing changed.';
+
+  @override
+  String get serverRejected => 'The server didn’t accept this:';
+
+  @override
+  String get sortPlannedDate => 'Planned date';
+
+  @override
+  String get sortTitle => 'Title A–Z';
+
+  @override
+  String get projectTasks => 'Project tasks';
+
+  @override
+  String get projectSprints => 'Sprints';
+
+  @override
+  String get openBoard => 'Open board';
+
+  @override
+  String get viewAllTasks => 'View all tasks';
+
+  @override
+  String get noSprintsYet => 'No sprints yet.';
+
+  @override
+  String get sprintPlanned => 'Planned';
+
+  @override
+  String get sprintActive => 'Active';
+
+  @override
+  String get sprintTasksEmpty => 'No tasks in this sprint.';
+
+  @override
+  String get youLeadProject => 'You lead this project';
+
+  @override
+  String validationTooLong(int max) {
+    return 'Use at most $max characters.';
+  }
 }

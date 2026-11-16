@@ -6,9 +6,10 @@ import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/work/data/board_repository.dart';
-import 'package:workflow_app/features/work/data/employee_work_repository.dart';
+import 'package:workflow_app/features/work/data/work_options.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/features/work/presentation/api_sprint_view.dart';
+import 'package:workflow_app/features/work/presentation/api_task_form.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -417,8 +418,9 @@ class DemoTaskDetailsScreen extends ConsumerWidget {
 /// collection: `task_date` is the planned work date), no subtasks,
 /// attachments or comments for tasks, and gives employees no cost.
 /// Status changes use `POST /employee/kanban/update-status`, offered only
-/// when the task says `can.update: true`; edit and delete have no
-/// employee form or route in the app, so the menu is not shown.
+/// when the task says `can.update: true`. Edit (`PUT /employee/tasks/{id}`)
+/// is offered only on a project the user leads; delete is refused to
+/// employees (Permission Boundary) and never shown.
 class ApiTaskDetailsScreen extends ConsumerStatefulWidget {
   const new({required this.row, super.key});
 
@@ -446,12 +448,9 @@ class _ApiTaskDetailsScreenState extends ConsumerState<ApiTaskDetailsScreen> {
     setState(() => _changing = true);
     try {
       await ref.read(boardRepositoryProvider).updateStatus(t.id, target);
-      ref
-        ..invalidate(apiTaskProvider(t.id))
-        ..invalidate(apiTasksProvider)
-        ..invalidate(scopedTaskStatsProvider)
-        ..invalidate(kanbanProvider);
-      if (mounted) showSnack(context, l10n.taskStatusUpdated);
+      if (!mounted) return;
+      invalidateTaskData(ref, taskId: t.id);
+      showSnack(context, l10n.taskStatusUpdated);
     } on Object catch (e) {
       // A refusal (403, 409, 422) is shown as the server worded it; the
       // status on screen stays what the server last said.
@@ -467,7 +466,19 @@ class _ApiTaskDetailsScreenState extends ConsumerState<ApiTaskDetailsScreen> {
     final value = ref.watch(apiTaskProvider(widget.row.id));
     final t = value.value ?? widget.row;
     final failed = value.hasError && !value.isLoading;
+    final led = ref.watch(ledProjectIdsProvider);
     return TaskDetailsView(
+      actions: [
+        // Only once the server's current task is read: a stale row never
+        // seeds the edit form.
+        if (value.hasValue && !failed && canEditApiTask(led, t))
+          TaskAction(
+            key: const Key('task-edit'),
+            label: l10n.editTask,
+            icon: Icons.edit_outlined,
+            onSelected: () => openApiTaskForm(context, existing: t),
+          ),
+      ],
       title: t.title,
       status: StatusBadge(
         key: const Key('task-details-status'),
