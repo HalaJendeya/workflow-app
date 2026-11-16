@@ -138,3 +138,45 @@ Arabic at 320×640 ×1.3, 360×800, 390×844; `TASK_REPORT=…` for the figures)
 Redmi 8: open Tasks, Sprints → Kanban and Dashboard in English and Arabic,
 light and dark: badges at the top end, no cut-off dates or names, edit and
 delete easy to hit, tapping a card opens its details.
+
+## 9. Tasks: My Tasks first, details on demand
+
+Supersedes the card layout of §8 for the Tasks list (Kanban and dashboard
+cards are unchanged).
+
+- **Scope.** The Tasks screen opens on **My tasks**; **Team tasks** is the
+  second chip. API mode sends `assigned_to = <signed-in users.id>` to
+  `GET /employee/tasks` (rows and figures) and keeps only rows whose
+  `assignee.id` is that user; anything else is left out with a notice
+  (gap E7). Demo mode: the demo account's tasks ("Demo User").
+- **Card.** Title (up to 3 lines) with the status at the top end, the
+  description (2 lines, only when the task has one) and the due date (only
+  when it has one — API tasks never do). No code, sprint, project,
+  priority, time, points, assignee or cost; no buttons. The whole card
+  opens the details (announced "Opens the task details").
+- **Details** (a page, not a sheet). A fixed bar with back and, when
+  allowed, the actions menu (Edit, Delete — demo only). Then title, status
+  with **Change status**, the full description ("No description" when
+  none), subtasks (demo), Work details (task, project, sprint, priority,
+  assignee, story points) and Schedule and time (due date, planned date,
+  start, end, duration) — only fields the task has. No cost for employees.
+  API mode reads `GET /employee/tasks/{task}`; change status uses
+  `POST /employee/kanban/update-status` and appears only with
+  `can.update: true`; refusals are shown.
+- **Elsewhere.** Kanban (demo and API) keeps drag-and-drop and the move
+  sheet; the sheet gains **View details**, and a task the user may not move
+  opens its details instead of doing nothing. The dashboard's focus list
+  shows the employee's own tasks and opens the same details.
+
+| Card at 390 px | Height |
+|---|---:|
+| First version (labels over values) | 431 |
+| §8 compact card | 143 |
+| Title, description and due date | 135 |
+| Title and status only | 59 |
+
+Redmi 8 (API build): Tasks opens on My tasks with only your tasks; Team
+tasks shows the rest; tap a task → details; back returns to the same
+place; Change status shows only where allowed and reports a refusal; no
+Edit/Delete for API tasks; English/Arabic, light/dark, 130 % text.
+
