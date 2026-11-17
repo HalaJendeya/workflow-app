@@ -60,6 +60,10 @@ contract/product.**
 - Four meetings are still `live` 2–15 days after they started. This is stale
   server state, but it inflates "Live Now".
 
+## O6 — Found on the Redmi 8 (run 1, 2026-11-17)
+
+F8 (notification filter leaks into the Home card), F9 (RTL punctuation of server text), U1 (More **+** overlaps the Appearance row), U2 (unusable meeting actions offered to non-leads), U3 (Arabic date comma). Details: `docs/employee-device-acceptance.md` §3. **Not fixed yet.**
+
 ## Already fixed in `a662c3a` (for reference)
 
 - F1: task details parse.

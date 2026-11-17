@@ -142,3 +142,61 @@ someone changes data. Record **Pass / Fail / Note** and a screenshot per step.
 - Startup: record `TotalTime` from step 5 and the time until Home shows data.
 - Any FAIL: note the step id, the on-screen message only (no personal data),
   and whether it repeats after pull-to-refresh.
+
+## 3. Results — run 1 (2026-11-17, Regular Employee)
+
+Build `3dbf648` (release, API mode; app code identical to `048ac6a`),
+clean install, signed in by the owner. Claude drove the phone over adb and
+read results from screenshots (kept local: they show personal data). After
+the run, read-only API checks confirmed that no server state changed (unread
+notifications still 1, conversation unread 0, task #13 still `todo`).
+
+| Id | Result | Notes |
+|---|---|---|
+| L1 | PASS | No DEMO banner |
+| L2 | PASS | `API · api.workflownets.com · build 3dbf648` |
+| L3 | PASS | Session kept after force-stop; first frame 820–830 ms, Home with data ≈ 4.8 s |
+| H1 | PASS | "Projects 1", "testing mobile · To do" |
+| H2 | PASS | |
+| H3 | PASS | All 134, 1 unread (task assignment) |
+| D1 | PASS | Active tasks 1, Logged hours **160.0** |
+| D2 | PASS | To do 1, all others 0 |
+| T1 | PASS | Active 0, Logged 0.0, All 1 / 0 / 0 / 0 |
+| T2 | PASS | No Add Task |
+| T3 | PASS | No banner; #13, Medium, 1 pt, 2026/11/16, description shown. Note: no Sprint row (backlog), not "—" |
+| T4 | PASS | No ⋮/Edit, no Change status |
+| T5 | PASS | Same single task |
+| T6 | PASS | "No records match these filters"; note: status chips keep the overall count while searching |
+| T7 | PASS | Only the user's project offered |
+| P1 | PASS | One project, Pending, team 5, 80% |
+| P2 | PASS | No lead badge, no Add task; sprint and project task listed |
+| P3 | PASS | Empty state; loaded slowly (see N2) |
+| S1 | PASS | No My/Team switch; In Progress 0 and Completed 0 (whole sprint has 4 completed) |
+| S2 | PASS | After one Retry (first attempt: "Can't reach the server", see N2) |
+| S3 | NOT RUN | Skipped to avoid an accidental status write on an unstable connection |
+| TS1 | PASS | Approved 0, Pending 1, 160.0 h; outdated banner (O4) |
+| C1 | PASS | One conversation, Unread (0); not opened |
+| M1 | PASS | 6 / 4 live / 0 / 2; no "My invitations" card (the only invitation is accepted) |
+| M2 | PASS | Details load; Join not pressed |
+| Notifications panel | PASS | 1 unread; Unread filter shows exactly it; Mark all not touched |
+| A1 | PASS | Arabic + Dark applied instantly, mirrored |
+| A2 | PASS with defects | Home, Task Details, Dashboard, More correct in RTL/dark. Defects: F8 (below) and RTL punctuation of server text (F9) |
+| A3 | PASS | Arabic + Dark persisted after force-stop |
+| A4 | PASS | English + System default applied without restart |
+| I1 | PASS | Owner logged out |
+| I2 | PASS | Team Lead: Home "QA Task 1", All 136, no unread; My tasks only "QA Task 1"; **+ Add Task** on Tasks and in the More menu; nothing from the Regular Employee. Language/theme (device settings) kept |
+| I3 | PASS | Regular Employee again: Home "testing mobile", All 134 + unread dot; More **+** without Add Task; board on project #2 without My/Team switch; Dashboard 160.0 h, To do 1 — nothing from the Team Lead |
+| I4 | PASS | Back from Home exits to the launcher; no screen of a previous account shown |
+
+**Run 1 summary:** 33 PASS (A2 with defects F8/F9), 1 NOT RUN (S3, skipped for safety), 0 FAIL. Read-only Regular Employee acceptance on the device is complete except S3. This does **not** complete the Employee E2E: the mutation scenarios (`docs/employee-mutation-plan.md`) are not approved or run, and F8/F9 are open.
+
+### New findings in run 1
+
+| # | Kind | Finding |
+|---|---|---|
+| F8 | Flutter defect | The bell panel's Unread/Read filter is global (`notificationFilterProvider`). The Home Notifications card shares the same inbox, so after choosing **Unread** in the panel, Home shows "All 1" with only unread items until restart. |
+| F9 | Flutter defect (RTL) | English text from the server (notification messages) is laid out RTL in Arabic, so punctuation moves to the wrong end (`."… in "Team`). Server-text widgets need direction detection. |
+| U1 | UI | On More, the **+** button overlaps the end of the Appearance row (LTR and RTL; "Dark" shows as "Da"). |
+| U2 | UI / permissions | For a non-lead, the More **+** offers only "Schedule meeting" (shows "Meetings can't be created…") and "Join by Code" (not available in API mode). This contradicts the M07 rule that unusable actions are hidden. |
+| U3 | Copy | Arabic date header uses a Latin comma (`الثلاثاء, نوفمبر ١٧`). |
+| N2 | Environment | The phone's network was unstable: ping to the API host had 25% loss and 260–460 ms RTT, versus ≈150 ms from the PC. Some loads took 4–15 s; the backlog once failed and succeeded on Retry. The app's error and Retry handling worked. USB debugging also dropped four times. **Re-measure timings on a stable network** before any performance sign-off. |
