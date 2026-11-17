@@ -351,12 +351,12 @@ void main() {
       repo = _Inbox();
       c = _container([notificationsRepositoryProvider.overrideWithValue(repo)]);
       await c.read(sessionControllerProvider.future);
-      c.listen(notificationsControllerProvider, (_, _) {});
-      await c.read(notificationsControllerProvider.future);
+      c.listen(allNotificationsProvider, (_, _) {});
+      await c.read(allNotificationsProvider.future);
     });
 
     NotificationsController inbox() =>
-        c.read(notificationsControllerProvider.notifier);
+        c.read(allNotificationsProvider.notifier);
 
     test('a double tap marks a notification read once', () async {
       final gate = Completer<void>();
@@ -366,7 +366,7 @@ void main() {
       gate.complete();
       await Future.wait([a, b]);
       expect(repo.marked, ['n1']);
-      final v = c.read(notificationsControllerProvider).value!;
+      final v = c.read(allNotificationsProvider).value!;
       expect(v.unreadCount, 1);
       expect(v.items.firstWhere((n) => n.id == 'n1').isRead, isTrue);
     });
@@ -382,7 +382,7 @@ void main() {
       inbox()
         ..refreshIfStale(later)
         ..refreshIfStale(later);
-      await c.read(notificationsControllerProvider.future);
+      await c.read(allNotificationsProvider.future);
       expect(repo.pages, [1, 1]);
     });
 
@@ -394,7 +394,7 @@ void main() {
       gate.complete();
       await Future.wait([a, b]);
       expect(repo.markAllCalls, 1);
-      expect(c.read(notificationsControllerProvider).value!.unreadCount, 0);
+      expect(c.read(allNotificationsProvider).value!.unreadCount, 0);
 
       final pageGate = Completer<void>();
       repo.pageGate = pageGate;
@@ -405,10 +405,11 @@ void main() {
       expect(repo.pages, [1, 2]);
       // n2 came back on page 2 (a new notification shifted the pages): one
       // copy.
-      expect(
-        c.read(notificationsControllerProvider).value!.items.map((n) => n.id),
-        ['n1', 'n2', 'n3'],
-      );
+      expect(c.read(allNotificationsProvider).value!.items.map((n) => n.id), [
+        'n1',
+        'n2',
+        'n3',
+      ]);
     });
   });
 }

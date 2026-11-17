@@ -10,6 +10,7 @@ import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/notifications/application/notifications_controller.dart';
+import 'package:workflow_app/features/notifications/data/notifications_repository.dart';
 import 'package:workflow_app/features/overview/presentation/overview_screen.dart';
 import 'package:workflow_app/features/profile/data/profile_repository.dart';
 import 'package:workflow_app/features/profile/presentation/profile_screen.dart';
@@ -86,8 +87,13 @@ class _BellButtonState extends ConsumerState<_BellButton> {
   void initState() {
     super.initState();
     _lifecycle = AppLifecycleListener(
-      onResume: () =>
-          ref.read(notificationsControllerProvider.notifier).refreshIfStale(),
+      onResume: () {
+        // Every inbox in use (badge, Home card, panel) may be stale.
+        for (final f in NotificationFilter.values) {
+          final p = notificationsControllerProvider(f);
+          if (ref.exists(p)) ref.read(p.notifier).refreshIfStale();
+        }
+      },
     );
   }
 
@@ -100,10 +106,7 @@ class _BellButtonState extends ConsumerState<_BellButton> {
   @override
   Widget build(BuildContext context) {
     final onTap = widget.onTap;
-    final unread = ref
-        .watch(notificationsControllerProvider)
-        .value
-        ?.unreadCount;
+    final unread = ref.watch(allNotificationsProvider).value?.unreadCount;
     return Semantics(
       button: true,
       label: AppLocalizations.of(context).notificationsTitle,

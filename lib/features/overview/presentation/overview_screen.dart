@@ -83,7 +83,11 @@ class OverviewScreen extends ConsumerWidget {
             ref
               ..invalidate(profileProvider)
               ..invalidate(notificationsControllerProvider);
-            await ref.read(notificationsControllerProvider.future);
+            await ref.read(
+              notificationsControllerProvider(
+                ref.read(homeNotificationFilterProvider),
+              ).future,
+            );
           },
           child: CustomScrollView(
             slivers: [
@@ -229,7 +233,7 @@ Future<void> _showNotificationOptions(BuildContext context, WidgetRef ref) =>
       builder: (sheetContext) => Consumer(
         builder: (context, ref, _) {
           final l10n = AppLocalizations.of(context);
-          final current = ref.watch(notificationFilterProvider);
+          final current = ref.watch(homeNotificationFilterProvider);
           return SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -256,7 +260,7 @@ Future<void> _showNotificationOptions(BuildContext context, WidgetRef ref) =>
                           },
                           selected: f == current,
                           onTap: () => ref
-                              .read(notificationFilterProvider.notifier)
+                              .read(homeNotificationFilterProvider.notifier)
                               .select(f),
                         ),
                     ],
@@ -270,7 +274,9 @@ Future<void> _showNotificationOptions(BuildContext context, WidgetRef ref) =>
                       Navigator.of(sheetContext).pop();
                       try {
                         await ref
-                            .read(notificationsControllerProvider.notifier)
+                            .read(
+                              notificationsControllerProvider(current).notifier,
+                            )
                             .markAllRead();
                       } on Object catch (e) {
                         if (context.mounted) _snack(context, e);
@@ -299,17 +305,31 @@ Future<void> showNotificationsPanel(BuildContext context) =>
       builder: (_) => const _NotificationsPanel(),
     );
 
-class _NotificationsPanel extends ConsumerWidget {
+/// The panel's filter is its own state: it opens on "All" every time and
+/// never changes the Home card's list (F8).
+class _NotificationsPanel extends ConsumerStatefulWidget {
   const new();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_NotificationsPanel> createState() =>
+      _NotificationsPanelState();
+}
+
+class _NotificationsPanelState extends ConsumerState<_NotificationsPanel> {
+  NotificationFilter filter = NotificationFilter.all;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final inbox = ref.watch(notificationsControllerProvider);
-    final filter = ref.watch(notificationFilterProvider);
+    final provider = notificationsControllerProvider(filter);
+    final inbox = ref.watch(provider);
     final data = inbox.value;
-    final unread = data?.unreadCount ?? 0;
-    final controller = ref.read(notificationsControllerProvider.notifier);
+    // The unread count is the server's, whatever the list is filtered by.
+    final unread =
+        ref.watch(allNotificationsProvider).value?.unreadCount ??
+        data?.unreadCount ??
+        0;
+    final controller = ref.read(provider.notifier);
 
     Widget body(NotificationInbox d) {
       if (d.items.isEmpty) {
@@ -399,8 +419,7 @@ class _NotificationsPanel extends ConsumerWidget {
                     NotificationFilter.read => l10n.filterRead,
                   },
                   selected: f == filter,
-                  onTap: () =>
-                      ref.read(notificationFilterProvider.notifier).select(f),
+                  onTap: () => setState(() => filter = f),
                 ),
             ],
           ),
@@ -432,8 +451,7 @@ class _NotificationsPanel extends ConsumerWidget {
                 Text(localizedError(l10n, error), textAlign: TextAlign.center),
                 const SizedBox(height: AppSpacing.md),
                 FilledButton(
-                  onPressed: () =>
-                      ref.invalidate(notificationsControllerProvider),
+                  onPressed: () => ref.invalidate(provider),
                   child: Text(l10n.retry),
                 ),
               ],
@@ -582,7 +600,10 @@ class _NotificationsCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final inbox = ref.watch(notificationsControllerProvider);
+    final provider = notificationsControllerProvider(
+      ref.watch(homeNotificationFilterProvider),
+    );
+    final inbox = ref.watch(provider);
     final pill = ref.watch(_notificationPillProvider);
     final query = ref.watch(_searchProvider).trim().toLowerCase();
     final total = inbox.value?.total ?? 0;
@@ -631,7 +652,7 @@ class _NotificationsCard extends ConsumerWidget {
           const SizedBox(height: AppSpacing.md),
           AsyncView<NotificationInbox>(
             value: inbox,
-            onRetry: () => ref.invalidate(notificationsControllerProvider),
+            onRetry: () => ref.invalidate(provider),
             builder: (data) {
               final items = data.items.where(matches).toList();
               if (items.isEmpty) {
@@ -646,6 +667,7 @@ class _NotificationsCard extends ConsumerWidget {
                 children: [
                   for (final n in items) ...[
                     _RecordCard(
+                      key: Key('home-notification-${n.id}'),
                       title: n.title ?? '',
                       meta: n.createdAt == null
                           ? null
@@ -657,9 +679,7 @@ class _NotificationsCard extends ConsumerWidget {
                           : () async {
                               try {
                                 await ref
-                                    .read(
-                                      notificationsControllerProvider.notifier,
-                                    )
+                                    .read(provider.notifier)
                                     .markRead(n.id);
                               } on Object catch (e) {
                                 if (context.mounted) _snack(context, e);

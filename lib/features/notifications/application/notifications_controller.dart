@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/notifications/data/mock_notifications_repository.dart';
@@ -21,24 +22,40 @@ final notificationsRepositoryProvider = Provider<NotificationsRepository>((
   );
 });
 
-final notificationFilterProvider =
+/// Read-state filter of the Home Notifications card (set from the Home
+/// search field's options sheet). The bell panel keeps its own filter in
+/// its widget state, so choosing "Unread" in one never changes the other
+/// (F8). Starts at "All" again for another account, company or portal.
+final homeNotificationFilterProvider =
     NotifierProvider<NotificationFilterController, NotificationFilter>(
       NotificationFilterController.new,
     );
 
 class NotificationFilterController extends Notifier<NotificationFilter> {
   @override
-  NotificationFilter build() => NotificationFilter.all;
+  NotificationFilter build() {
+    ref.watch(
+      sessionControllerProvider.select(
+        (s) => (s.value?.userId, s.value?.companyId, s.value?.portal),
+      ),
+    );
+    return NotificationFilter.all;
+  }
 
-  // A setter would hide the intent at call sites.
   // A named method reads better than a setter at call sites.
   // ignore: use_setters_to_change_properties
   void select(NotificationFilter filter) => state = filter;
 }
 
-/// Inbox for the current filter with optimistic-free read updates: local
-/// state changes only after the server confirms.
+/// Inbox for one read-state filter with optimistic-free read updates: local
+/// state changes only after the server confirms. Each filter is its own
+/// instance, so the bell panel and the Home card can show different filters
+/// at once; a mark in one reloads the others from the server.
 class NotificationsController extends AsyncNotifier<NotificationInbox> {
+  new(this.filter);
+
+  final NotificationFilter filter;
+
   /// A badge older than this is reloaded when the app comes back.
   static const staleAfter = Duration(seconds: 60);
 
@@ -50,9 +67,7 @@ class NotificationsController extends AsyncNotifier<NotificationInbox> {
     _loadingMore = null;
     _markingAll = null;
     _loadedAt = DateTime.now();
-    return ref
-        .watch(notificationsRepositoryProvider)
-        .list(filter: ref.watch(notificationFilterProvider));
+    return ref.watch(notificationsRepositoryProvider).list(filter: filter);
   }
 
   /// In-flight requests: a repeated tap joins the one already sent instead
@@ -86,10 +101,7 @@ class NotificationsController extends AsyncNotifier<NotificationInbox> {
   Future<void> _loadMore(NotificationInbox current) async {
     final next = await ref
         .read(notificationsRepositoryProvider)
-        .list(
-          page: current.currentPage + 1,
-          filter: ref.read(notificationFilterProvider),
-        );
+        .list(page: current.currentPage + 1, filter: filter);
     if (!ref.mounted) return;
     // A notification that arrived meanwhile shifts the pages: an item can
     // come back on the next page. Keep one copy.
@@ -136,7 +148,8 @@ class NotificationsController extends AsyncNotifier<NotificationInbox> {
   /// Keeps the list true to the server-side read filter after a mark: read
   /// items stayed listed under "Unread" (with its count) until a reload.
   void _settle(NotificationInbox next) {
-    switch (ref.read(notificationFilterProvider)) {
+    _reloadOthers();
+    switch (filter) {
       case NotificationFilter.all:
         state = AsyncData(next);
       case NotificationFilter.unread:
@@ -157,6 +170,14 @@ class NotificationsController extends AsyncNotifier<NotificationInbox> {
         // Newly read items belong here but are not loaded: ask again.
         state = AsyncData(next);
         ref.invalidateSelf();
+    }
+  }
+
+  /// The other filters' lists and counts are stale after a mark: they load
+  /// again from the server (at once if shown, else when next shown).
+  void _reloadOthers() {
+    for (final f in NotificationFilter.values) {
+      if (f != filter) ref.invalidate(notificationsControllerProvider(f));
     }
   }
 
@@ -182,7 +203,20 @@ class NotificationsController extends AsyncNotifier<NotificationInbox> {
   }
 }
 
-final notificationsControllerProvider =
-    AsyncNotifierProvider<NotificationsController, NotificationInbox>(
-      NotificationsController.new,
-    );
+final AsyncNotifierProviderFamily<
+  NotificationsController,
+  NotificationInbox,
+  NotificationFilter
+>
+notificationsControllerProvider =
+    AsyncNotifierProvider.family<
+      NotificationsController,
+      NotificationInbox,
+      NotificationFilter
+    >(NotificationsController.new);
+
+/// The unfiltered inbox; the bell badge takes its unread count from here.
+final AsyncNotifierProvider<NotificationsController, NotificationInbox>
+allNotificationsProvider = notificationsControllerProvider(
+  NotificationFilter.all,
+);
