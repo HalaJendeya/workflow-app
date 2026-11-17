@@ -62,7 +62,7 @@ contract/product.**
 
 ## O6 — Found on the Redmi 8 (run 1, 2026-11-17)
 
-F8 (notification filter leaks into the Home card), F9 (RTL punctuation of server text), U1 (More **+** overlaps the Appearance row), U2 (unusable meeting actions offered to non-leads), U3 (Arabic date comma). Details: `docs/employee-device-acceptance.md` §3. **Not fixed yet.**
+F8 (notification filter leaks into the Home card), F9 (RTL punctuation of server text), U1 (More **+** overlaps the Appearance row), U2 (unusable meeting actions offered to non-leads), U3 (Arabic date comma). Details: `docs/employee-device-acceptance.md` §3. **Fixed locally, not pushed or device-verified:** F8 `54e7055`, F9 `50a6cdd` (+ `85c925a`), U1 `5f4291f`, U2 `575e4f0`, U3 `2aae5e5`, tests `35bac2e`. Re-check F8, F9 and the More screen on the Redmi 8. Mutation readiness: `docs/employee-mutation-readiness.md`.
 
 ## Already fixed in `a662c3a` (for reference)
 
