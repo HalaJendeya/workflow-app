@@ -7,6 +7,7 @@ import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/async_view.dart';
+import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/relative_time.dart';
 import 'package:workflow_app/core/widgets/status_bar_scrim.dart';
@@ -729,7 +730,7 @@ class _RecordCard extends StatelessWidget {
             // Two lines: a long notification title ("Invoice #INV-… is
             // overdue") lost its meaning when cut to one.
             Expanded(
-              child: Text(
+              child: ContentText(
                 title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -761,7 +762,7 @@ class _RecordCard extends StatelessWidget {
         ],
         if (body != null && body!.isNotEmpty) ...[
           const SizedBox(height: 5),
-          Text(
+          ContentText(
             body!,
             maxLines: 4,
             overflow: TextOverflow.ellipsis,

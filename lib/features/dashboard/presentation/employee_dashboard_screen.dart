@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:workflow_app/app/routes.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
+import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/dashboard/domain/client_dashboard.dart';
 import 'package:workflow_app/features/dashboard/domain/employee_dashboard.dart';
@@ -829,7 +830,7 @@ class _FocusTaskCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    ContentText(
                       t.title,
                       style: AppTextStyles.mobileXsSemiBold.copyWith(
                         color: AppColors.neutral900,

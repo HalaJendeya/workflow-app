@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
+import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
@@ -795,7 +796,7 @@ class ApiTaskCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              Text(
+              ContentText(
                 t.title,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,

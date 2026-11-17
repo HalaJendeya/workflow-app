@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -118,7 +119,7 @@ class TaskCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: Text(
+                      child: ContentText(
                         title,
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
@@ -133,7 +134,7 @@ class TaskCard extends StatelessWidget {
                 ),
                 if (description != null) ...[
                   const SizedBox(height: AppSpacing.xs),
-                  Text(
+                  ContentText(
                     description!,
                     key: const Key('task-description'),
                     maxLines: 2,

@@ -8,6 +8,7 @@ import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
+import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
@@ -361,7 +362,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          ContentText(
                             c.name,
                             style: AppTextStyles.mobileLgSemiBold.copyWith(
                               color: AppColors.textPrimary,
@@ -390,7 +391,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
+                ContentText(
                   c.last == null
                       ? ''
                       : c.type == ConversationType.group
@@ -811,11 +812,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                         Expanded(
                           // Shrinks before it truncates: at 320 px with
                           // large text the name was cut to its first letter.
-                          child: FitText(
-                            c.name,
-                            minScale: 0.55,
-                            style: AppTextStyles.mobile5xlBold.copyWith(
-                              color: AppColors.white,
+                          child: ContentDirectionality(
+                            text: c.name,
+                            child: FitText(
+                              c.name,
+                              minScale: 0.55,
+                              style: AppTextStyles.mobile5xlBold.copyWith(
+                                color: AppColors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -1154,7 +1158,7 @@ class _Bubble extends ConsumerWidget {
             ),
             SizedBox(height: m.mine ? 10 : 16),
             if (m.text.isNotEmpty)
-              Text(
+              ContentText(
                 m.text,
                 style: AppTextStyles.mobileBaseRegular.copyWith(
                   color: AppColors.textPrimary,

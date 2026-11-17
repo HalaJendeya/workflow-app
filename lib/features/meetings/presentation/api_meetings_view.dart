@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
+import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
@@ -350,7 +351,7 @@ class _DayCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
+          ContentText(
             m.title,
             style: AppTextStyles.mobileLgSemiBold.copyWith(
               color: AppColors.textPrimary,
@@ -622,7 +623,7 @@ class ApiMeetingDetailsScreen extends ConsumerWidget {
         children: [
           Text(label, style: secondary),
           const SizedBox(height: 4),
-          Text(
+          ContentText(
             value,
             style: AppTextStyles.mobileBaseSemiBold.copyWith(
               color: AppColors.textPrimary,
@@ -655,7 +656,7 @@ class ApiMeetingDetailsScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(m.title, style: h16),
+                      ContentText(m.title, style: h16),
                       const SizedBox(height: 4),
                       Text(l10n.detailsBody, style: secondary),
                       const SizedBox(height: 16),

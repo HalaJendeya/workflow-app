@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:workflow_app/core/design_system/app_icons.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/features/shell/workspace_header.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -736,18 +737,23 @@ class RecordCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          WordFitText(
-            title,
-            style: AppTextStyles.mobile2xlSemiBold.copyWith(
-              fontSize: 22,
-              height: 31 / 22,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+          // Project and meeting names come from the server: their own
+          // direction inside the app's (F9).
+          ContentDirectionality(
+            text: title,
+            child: WordFitText(
+              title,
+              style: AppTextStyles.mobile2xlSemiBold.copyWith(
+                fontSize: 22,
+                height: 31 / 22,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
           if (subtitle != null) ...[
             const SizedBox(height: 16),
-            Text(
+            ContentText(
               subtitle!,
               style: AppTextStyles.mobileXsRegular.copyWith(
                 color: AppColors.textSecondary,

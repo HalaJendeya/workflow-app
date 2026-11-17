@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
+import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/work/data/board_repository.dart';
@@ -184,7 +185,7 @@ class TaskDetailsView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
+                        ContentText(
                           title,
                           key: const Key('task-details-title'),
                           style: AppTextStyles.mobileLgSemiBold.copyWith(
@@ -219,7 +220,7 @@ class TaskDetailsView extends StatelessWidget {
                         const SizedBox(height: AppSpacing.md),
                         Text(l10n.description.toUpperCase(), style: heading),
                         const SizedBox(height: AppSpacing.xs),
-                        Text(
+                        ContentText(
                           description ?? l10n.noDescription,
                           key: const Key('task-details-description'),
                           style: AppTextStyles.mobileBaseRegular.copyWith(
@@ -305,7 +306,8 @@ class _FieldRow extends StatelessWidget {
             color: AppColors.textSecondary,
           ),
         ),
-        Text(
+        // Project, sprint or assignee names come from the server.
+        ContentText(
           field.value,
           style: AppTextStyles.mobileXsSemiBold.copyWith(
             color: AppColors.textPrimary,
