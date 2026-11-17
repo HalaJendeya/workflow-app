@@ -200,3 +200,32 @@ notifications still 1, conversation unread 0, task #13 still `todo`).
 | U2 | UI / permissions | For a non-lead, the More **+** offers only "Schedule meeting" (shows "Meetings can't be created…") and "Join by Code" (not available in API mode). This contradicts the M07 rule that unusable actions are hidden. |
 | U3 | Copy | Arabic date header uses a Latin comma (`الثلاثاء, نوفمبر ١٧`). |
 | N2 | Environment | The phone's network was unstable: ping to the API host had 25% loss and 260–460 ms RTT, versus ≈150 ms from the PC. Some loads took 4–15 s; the backlog once failed and succeeded on Retry. The app's error and Retry handling worked. USB debugging also dropped four times. **Re-measure timings on a stable network** before any performance sign-off. |
+
+## 4. Run 2 — F8, F9, U1–U3 fix check (build `00ac881`)
+
+The fixes are in `54e7055`…`35bac2e`. Build and install them with the
+commands in §1, using `00ac881` in place of `048ac6a` and
+`install -r` (keep the signed-in Regular Employee). **Read-only:** don't
+tap a notification (that marks it read), and don't use **Mark all as read**.
+Choosing a filter only sends a GET.
+
+| Id | Account / mode | Steps | Expected |
+|---|---|---|---|
+| R0 | any | Account sheet | `API · api.workflownets.com · build 00ac881`; no DEMO banner |
+| F8-1 | Regular Employee, English | Note the Home Notifications card: "All N" and the items shown | Read and unread items are listed |
+| F8-2 | same | Bell → **Unread** | The panel lists only unread; "1 unread" (or the current server count) |
+| F8-3 | same | Close the panel and look at the Home card | Unchanged from F8-1: same "All N", read items still listed |
+| F8-4 | same | Bell again | The panel opens on **All** again |
+| F8-5 | same | Bell → **Read**, close, pull to refresh Home | Home is still unfiltered; the badge dot matches the unread count |
+| F9-1 | Regular Employee, **Arabic** | Bell → the English task-assignment notification | The message reads left to right, with its full stop and closing quote at the **right** end (not `."… in "Team`) |
+| F9-2 | same | Home Tasks card, Tasks list, Task Details #13 | "testing mobile" and the description read LTR; the screen chrome (badges, back arrow, labels) stays mirrored RTL |
+| F9-3 | same | Chat list → "Team" (don't open it) | Name and preview in their own direction; the list layout stays RTL |
+| F9-4 | same | Any Arabic server text, if present | Still RTL; dates and numbers are unaffected |
+| U3-1 | same | Home masthead date | Arabic comma: `الثلاثاء، ١٧ نوفمبر` (day before month), not `,` |
+| U2-1 | Regular Employee, English and Arabic | More tab | **No + button** at all (no Schedule meeting, no Join by Code) |
+| U2-2 | same | More → Meetings | No + and no "join by code" chip; list, KPIs and details unchanged; Join remains on meeting details (don't press it) |
+| U1-1 | Regular Employee | More, scroll to the end | Language and Appearance rows fully visible ("Dark" in full) |
+| U1-2 | **Team Lead** (optional: owner signs out and in, as in I1/I2) | More, scroll to the end, in English and then Arabic | The + button sits below the Appearance row and covers no part of it; + offers **Add Task only** |
+| X-1 | both | After the run, read-only | Unread count, task #13 status and the conversation's unread count are unchanged |
+
+Record PASS / FAIL / NOTE per id, with the on-screen text only (no personal data).
