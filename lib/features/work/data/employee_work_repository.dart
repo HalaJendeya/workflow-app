@@ -7,6 +7,15 @@ import 'package:workflow_app/core/network/api_response.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/work/data/board_repository.dart';
 
+/// Live (2026-11-17, both QA accounts): `myMinutes` is the **total** in
+/// minutes (9600 with `myHours` 160, equal to the timesheets'
+/// `stats.total_minutes`), not the minutes past the hour. Adding both
+/// doubled the hours. A remainder (< 60) is still accepted: it is always
+/// below `myHours * 60` unless there are no whole hours, where the two
+/// readings agree.
+int _dashboardMinutes(int hours, int minutes) =>
+    minutes >= hours * 60 ? minutes : hours * 60 + minutes;
+
 /// `GET /api/v1/employee/dashboard` → `data {myTasks, myHours, myMinutes,
 /// totalEarned, paidSalary, unpaidSalary}`, as returned by the live server.
 /// The collection's description lists other keys (`wallet_balances`,
@@ -26,7 +35,7 @@ class EmployeeDashboardSummary {
     double d(String k) => asDouble(j[k]) ?? missingField(k);
     return EmployeeDashboardSummary(
       tasks: n('myTasks'),
-      loggedMinutes: n('myHours') * 60 + n('myMinutes'),
+      loggedMinutes: _dashboardMinutes(n('myHours'), n('myMinutes')),
       earned: d('totalEarned'),
       paid: d('paidSalary'),
       unpaid: d('unpaidSalary'),
@@ -154,14 +163,16 @@ final employeeWorkRepositoryProvider = Provider<EmployeeWorkRepository>(
 );
 
 final FutureProvider<EmployeeDashboardSummary>
-employeeDashboardSummaryProvider = FutureProvider.autoDispose(
-  (ref) => ref.watch(employeeWorkRepositoryProvider).dashboard(),
-);
+employeeDashboardSummaryProvider = FutureProvider.autoDispose((ref) {
+  watchSessionScope(ref);
+  return ref.watch(employeeWorkRepositoryProvider).dashboard();
+});
 
 final FutureProvider<TaskStats> employeeTaskStatsProvider =
-    FutureProvider.autoDispose(
-      (ref) => ref.watch(employeeWorkRepositoryProvider).taskStats(),
-    );
+    FutureProvider.autoDispose((ref) {
+      watchSessionScope(ref);
+      return ref.watch(employeeWorkRepositoryProvider).taskStats();
+    });
 
 /// Task figures for the Tasks screen's scope, keyed to the account and
 /// company like the rows.
@@ -179,6 +190,7 @@ final FutureProviderFamily<TaskStats, TaskScope> scopedTaskStatsProvider =
     });
 
 final FutureProvider<TimesheetSummary> employeeTimesheetSummaryProvider =
-    FutureProvider.autoDispose(
-      (ref) => ref.watch(employeeWorkRepositoryProvider).timesheets(),
-    );
+    FutureProvider.autoDispose((ref) {
+      watchSessionScope(ref);
+      return ref.watch(employeeWorkRepositoryProvider).timesheets();
+    });

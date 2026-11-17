@@ -464,7 +464,7 @@ class _ApiTaskDetailsScreenState extends ConsumerState<ApiTaskDetailsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final value = ref.watch(apiTaskProvider(widget.row.id));
-    final t = value.value ?? widget.row;
+    final t = value.value?.withPermissionsFrom(widget.row) ?? widget.row;
     final failed = value.hasError && !value.isLoading;
     final led = ref.watch(ledProjectIdsProvider);
     return TaskDetailsView(
@@ -532,9 +532,9 @@ class _ApiTaskDetailsScreenState extends ConsumerState<ApiTaskDetailsScreen> {
             if (t.taskDate case final d?)
               DetailField(l10n.taskDate, ltrIsolate(_day.format(d))),
             if (t.start case final s?)
-              DetailField(l10n.startDate, ltrIsolate(_time.format(s))),
+              DetailField(l10n.startTime, ltrIsolate(_time.format(s))),
             if (t.end case final e?)
-              DetailField(l10n.endDate, ltrIsolate(_time.format(e))),
+              DetailField(l10n.endTime, ltrIsolate(_time.format(e))),
             if (t.duration case final d?)
               DetailField(l10n.duration, durationLabel(d)),
           ],

@@ -390,11 +390,13 @@ void main() {
     expect(find.byKey(const Key('sprint-summary')), findsOneWidget);
     expect(find.text('2 / 8 points · 25%'), findsOneWidget);
     expect(find.byKey(const Key('kanban-1')), findsOneWidget);
-    // Whole-sprint count from stats, not just the visible cards.
+    // "My tasks" scope: the count is the cards shown, not the whole-sprint
+    // stats (4), so it agrees with My Tasks (QA 2026-11-17: live `stats`
+    // ignore the scope).
     expect(
       find.descendant(
         of: find.byKey(const Key('column-count')),
-        matching: find.text('4'),
+        matching: find.text('1'),
       ),
       findsOneWidget,
     );

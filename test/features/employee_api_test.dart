@@ -153,20 +153,33 @@ void main() {
         portal: Portal.employee,
       ).toStorage(),
     );
-    final adapter = RouteHttpAdapter({
-      'GET /api/v1/employee/account': (
-        200,
-        ok({'id': 7, 'email': 'me@test.dev', 'name': 'Me'}),
-      ),
-      'GET /api/v1/employee/dashboard': (200, dashboard()),
-      'GET /api/v1/employee/tasks': (200, tasks()),
-      'GET /api/v1/employee/projects': (
-        200,
-        list({
-          'stats': {'total': 0, 'pending': 0, 'in_progress': 0, 'completed': 0},
-        }),
-      ),
-    });
+    final taskQueries = <Map<String, String>>[];
+    final adapter = RouteHttpAdapter(
+      {
+        'GET /api/v1/employee/account': (
+          200,
+          ok({'id': 7, 'email': 'me@test.dev', 'name': 'Me'}),
+        ),
+        'GET /api/v1/employee/dashboard': (200, dashboard()),
+        'GET /api/v1/employee/projects': (
+          200,
+          list({
+            'stats': {
+              'total': 0,
+              'pending': 0,
+              'in_progress': 0,
+              'completed': 0,
+            },
+          }),
+        ),
+      },
+      handlers: {
+        'GET /api/v1/employee/tasks': (o) {
+          taskQueries.add(o.uri.queryParameters);
+          return (200, tasks());
+        },
+      },
+    );
     await tester.pumpWidget(
       ProviderScope(
         retry: (_, _) => null,
@@ -200,6 +213,11 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('36.5'), findsOneWidget);
+    // Task figures are the user's own, like Active tasks (QA 2026-11-17).
+    expect(taskQueries, isNotEmpty);
+    for (final q in taskQueries) {
+      expect(q['assigned_to'], '7');
+    }
     // Demo-only sections are not drawn with sample data.
     expect(find.text('Working Hours & Trend'), findsNothing);
   });

@@ -172,6 +172,7 @@ class _ApiSprintViewState extends ConsumerState<ApiSprintView>
 
   Widget _board(KanbanBoard b, bool Function(ApiTask) matches) => _Board(
     board: b,
+    wholeSprint: _key(ref.read(ledProjectIdsProvider)).all,
     column: _column,
     matches: matches,
     pending: _pending,
@@ -323,6 +324,7 @@ class _ApiSprintViewState extends ConsumerState<ApiSprintView>
 class _Board extends StatelessWidget {
   const new({
     required this.board,
+    required this.wholeSprint,
     required this.column,
     required this.matches,
     required this.pending,
@@ -335,6 +337,12 @@ class _Board extends StatelessWidget {
   });
 
   final KanbanBoard board;
+
+  /// Team scope (`scope=all`): every sprint card is on the board, so the
+  /// server's whole-sprint `stats.by_status` is the column count. In the
+  /// user's own scope the count is the cards shown, so it agrees with My
+  /// Tasks (live 2026-11-17: `stats` ignores the scope).
+  final bool wholeSprint;
   final ApiTaskStatus column;
   final bool Function(ApiTask) matches;
   final Map<int, ApiTaskStatus> pending;
@@ -347,9 +355,11 @@ class _Board extends StatelessWidget {
 
   ApiTaskStatus _statusOf(ApiTask t) => pending[t.id] ?? t.status;
 
-  /// The server's whole-sprint count, shifted by moves still pending.
+  /// The column's count (see [wholeSprint]), shifted by moves still
+  /// pending.
   int _count(ApiTaskStatus c) {
-    var n = board.byStatus[c] ?? board.tasks.where((t) => t.status == c).length;
+    final cards = board.tasks.where((t) => t.status == c).length;
+    var n = wholeSprint ? board.byStatus[c] ?? cards : cards;
     for (final t in board.tasks) {
       final to = pending[t.id];
       if (to == null) continue;
@@ -531,8 +541,6 @@ class _Board extends StatelessWidget {
                           color: AppColors.surface,
                           borderRadius: BorderRadius.circular(99),
                         ),
-                        // The whole-sprint count from stats, which can be
-                        // larger than the cards when scope is "mine".
                         child: Text(
                           '${_count(column)}',
                           style: AppTextStyles.mobileXsMedium.copyWith(

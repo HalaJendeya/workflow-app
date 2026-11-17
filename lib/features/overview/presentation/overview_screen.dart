@@ -5,7 +5,9 @@ import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/core/design_system/app_icons.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
+import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/async_view.dart';
+import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/relative_time.dart';
 import 'package:workflow_app/core/widgets/status_bar_scrim.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
@@ -16,6 +18,11 @@ import 'package:workflow_app/features/notifications/data/notifications_repositor
 import 'package:workflow_app/features/notifications/domain/app_notification.dart';
 import 'package:workflow_app/features/profile/data/profile_repository.dart';
 import 'package:workflow_app/features/shell/workspace_header.dart';
+import 'package:workflow_app/features/work/data/board_repository.dart';
+import 'package:workflow_app/features/work/presentation/api_sprint_view.dart';
+import 'package:workflow_app/features/work/presentation/task_details_screen.dart';
+import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
+import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 /// Notification pills in the Overview card. The API exposes a `category`
@@ -467,15 +474,20 @@ class _CardTitle extends StatelessWidget {
   );
 }
 
-/// "Tasks" content card. No task endpoint exists for clients and the
-/// employee task list has no documented item fields, so in API mode the card
-/// says so instead of showing invented data.
+/// "Tasks" content card. For an employee in API mode the Projects pill
+/// lists the latest tasks assigned to them (`GET /employee/tasks`,
+/// `assigned_to` = the user) with their real count; each opens Task
+/// Details. Clients have no task route, and meeting/general task groups do
+/// not exist in the API, so those say so; no count is invented.
 class _TasksCard extends ConsumerStatefulWidget {
   const new();
 
   @override
   ConsumerState<_TasksCard> createState() => _TasksCardState();
 }
+
+/// The Home card's slice of My Tasks.
+const _homeTasks = TaskQuery(perPage: 3);
 
 class _TasksCardState extends ConsumerState<_TasksCard> {
   int _pill = 0;
@@ -484,12 +496,18 @@ class _TasksCardState extends ConsumerState<_TasksCard> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final isMock = ref.watch(appConfigProvider).isMock;
+    final employeeApi =
+        !isMock &&
+        ref.watch(sessionControllerProvider).value?.portal == Portal.employee;
+    final mine = employeeApi ? ref.watch(apiTasksProvider(_homeTasks)) : null;
+    final count = isMock ? 1 : mine?.value?.page.total;
     final pills = [
-      l10n.tasksFilterProjects(isMock ? 1 : 0),
+      if (count == null) l10n.navProjects else l10n.tasksFilterProjects(count),
       l10n.tasksFilterMeetings,
       l10n.tasksFilterGeneral,
     ];
     return WfCard(
+      key: const Key('home-tasks-card'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -513,6 +531,30 @@ class _TasksCardState extends ConsumerState<_TasksCard> {
               title: 'Solve meetings problem',
               meta: 'TMS Development · In Sprint 24 • Due today',
               status: 'Developer Resumed',
+            )
+          else if (mine != null && _pill == 0)
+            AsyncSection<TaskList>(
+              value: mine,
+              onRetry: () => ref.invalidate(apiTasksProvider(_homeTasks)),
+              builder: (list) => list.page.items.isEmpty
+                  ? _InlineNotice(text: l10n.noTasksAssigned)
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final t in list.page.items) ...[
+                          TaskCard(
+                            key: Key('home-task-${t.id}'),
+                            title: t.title,
+                            status: StatusBadge(
+                              label: apiTaskStatusLabel(l10n, t.status),
+                              tone: apiTaskStatusTone(t.status),
+                            ),
+                            onOpen: () => openApiTaskDetails(context, t),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                        ],
+                      ],
+                    ),
             )
           else
             _InlineNotice(

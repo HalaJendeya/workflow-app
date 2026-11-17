@@ -178,6 +178,33 @@ class ApiTask {
   /// `can.delete`; null when the row does not say.
   final bool? canDelete;
 
+  /// This task with [row]'s `can` where this one does not say. Task
+  /// details (`GET /tasks/{id}`) carry no `can`; the list row the user
+  /// opened them from does, and the server's 403 stays the authority.
+  ApiTask withPermissionsFrom(ApiTask row) =>
+      canUpdate != null && canDelete != null
+      ? this
+      : ApiTask(
+          id: id,
+          title: title,
+          status: status,
+          rawStatus: rawStatus,
+          description: description,
+          priority: priority,
+          storyPoints: storyPoints,
+          taskDate: taskDate,
+          start: start,
+          end: end,
+          assigneeId: assigneeId,
+          assigneeName: assigneeName,
+          projectId: projectId,
+          projectTitle: projectTitle,
+          sprintId: sprintId,
+          sprintName: sprintName,
+          canUpdate: canUpdate ?? row.canUpdate,
+          canDelete: canDelete ?? row.canDelete,
+        );
+
   Duration? get duration =>
       start != null && end != null ? end!.difference(start!) : null;
 
@@ -506,10 +533,35 @@ class BoardRepository {
   }
 
   /// `GET /employee/tasks/{task}` (`tasks.view`). The collection gives no
-  /// response example; it is read as a task row (see [ApiTask]).
-  Future<ApiTask> task(int id) async => ApiTask.fromJson(
-    ApiEnvelope.unwrapObject(await _client.get('/api/v1/employee/tasks/$id')),
-  );
+  /// response example. Live (2026-11-17) the task model is nested:
+  /// `data {task {…, project_id, sprint_id, assigned_to, assigned_user,
+  /// project, sprint}, duration_formatted, …}`, with no `assignee` and no
+  /// `can`. It is read as a task row (see [ApiTask]); only the id and name
+  /// of `assigned_user` are kept. A flat row is still accepted.
+  Future<ApiTask> task(int id) async {
+    final data = ApiEnvelope.unwrapObject(
+      await _client.get('/api/v1/employee/tasks/$id'),
+    );
+    final nested = data['task'];
+    if (nested is! Json) return ApiTask.fromJson(data);
+    final user = nested['assigned_user'];
+    final assignedTo = asInt(nested['assigned_to']);
+    final projectId = asInt(nested['project_id']);
+    final sprintId = asInt(nested['sprint_id']);
+    return ApiTask.fromJson({
+      ...nested,
+      'assignee':
+          nested['assignee'] ??
+          switch (user) {
+            final Json u => {'id': u['id'] ?? assignedTo, 'name': u['name']},
+            _ => assignedTo == null ? null : {'id': assignedTo},
+          },
+      'project':
+          nested['project'] ?? (projectId == null ? null : {'id': projectId}),
+      'sprint':
+          nested['sprint'] ?? (sprintId == null ? null : {'id': sprintId}),
+    });
+  }
 
   /// `POST /employee/tasks` (`tasks.create`). Only the project's leader
   /// may create on it (403 otherwise). The documented response is

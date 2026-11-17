@@ -65,6 +65,43 @@ Map<String, dynamic> _page(List<Object> rows) => ok({
   'total': rows.length,
 });
 
+/// `GET /employee/tasks/{id}` as api.workflownets.com answered it on
+/// 2026-11-17 (keys observed live; values here are invented).
+Map<String, dynamic> _liveDetails(Map<String, dynamic> row) {
+  final assignee = row['assignee'] as Map?;
+  final project = row['project'] as Map;
+  final sprint = row['sprint'] as Map?;
+  return {
+    'task': {
+      'id': row['id'],
+      'project_id': project['id'],
+      'sprint_id': sprint?['id'],
+      'assigned_to': assignee?['id'],
+      'title': row['title'],
+      'description': row['description'],
+      'story_points': row['story_points'],
+      'priority': row['priority'],
+      'status': row['status'],
+      'completed_at': null,
+      'completed_by': null,
+      'task_date': row['task_date'],
+      'start_time': row['start_time'],
+      'end_time': row['end_time'],
+      'duration': 90,
+      'assigned_user': assignee == null
+          ? null
+          : {...assignee, 'email': 'hidden@test.dev', 'is_active': 1},
+      'project': {...project, 'company_id': 3, 'leader_id': 10},
+      'sprint': sprint,
+      'work_logs': <Object>[],
+    },
+    'duration_formatted': '1.5h',
+    'assigned_user_name': assignee?['name'],
+    'project_name': project['title'],
+    'sprint_name': sprint?['name'],
+  };
+}
+
 /// A fake WorkFlow backend for the employee role, answering by method,
 /// path and (for tenancy) the `X-Company` header.
 class _Server implements HttpClientAdapter {
@@ -86,6 +123,10 @@ class _Server implements HttpClientAdapter {
 
   _Reply? createReply;
   _Reply? updateReply;
+
+  /// Answer `GET /tasks/{id}` in the shape seen live on 2026-11-17:
+  /// the model nested under `data.task`, no `assignee` and no `can`.
+  bool nestedDetails = false;
 
   List<RequestOptions> where(String method, String path) => [
     for (final r in requests)
@@ -230,7 +271,9 @@ class _Server implements HttpClientAdapter {
       final id = int.parse(task.group(1)!);
       final row = tasks.where((t) => t['id'] == id).firstOrNull;
       if (row == null) return (404, failure('Not found'));
-      if (o.method == 'GET') return (200, ok(row));
+      if (o.method == 'GET') {
+        return (200, ok(nestedDetails ? _liveDetails(row) : row));
+      }
       if (o.method == 'PUT') {
         if (updateReply case final r?) return r;
         row.addAll((o.data as Map).cast<String, dynamic>());
@@ -362,6 +405,23 @@ void main() {
       adapter: http,
     );
     setUp(() => http = FakeHttpAdapter());
+
+    test('task details: the live nested shape is read as a task row', () async {
+      http.reply(200, ok(_liveDetails(_task(3, status: 'in_progress'))));
+      final t = await BoardRepository(client()).task(3);
+      expect(t.id, 3);
+      expect(t.title, 'Task 3');
+      expect(t.status, ApiTaskStatus.inProgress);
+      expect(t.assigneeId, 10);
+      expect(t.assigneeName, 'U10');
+      expect(t.projectId, 2);
+      expect(t.projectTitle, 'Portal');
+      expect(t.sprintId, 4);
+      expect(t.canUpdate, isNull);
+      expect(t.duration, const Duration(minutes: 90));
+      final row = ApiTask.fromJson(_task(3, canUpdate: false));
+      expect(t.withPermissionsFrom(row).canUpdate, isFalse);
+    });
 
     test('task list sends the documented project, sprint and sort', () async {
       http
@@ -659,6 +719,33 @@ void main() {
       expect(put.data, {'title': 'Only'});
     });
 
+    testWidgets('live nested details: no error, Edit and status offered', (
+      tester,
+    ) async {
+      final server = await _pump(tester);
+      server.nestedDetails = true;
+      await _openTasks(tester);
+      await _tap(tester, find.byKey(const Key('api-task-3')));
+      expect(server.where('GET', '/api/v1/employee/tasks/3'), isNotEmpty);
+      expect(find.text('Retry'), findsNothing);
+      // Times are labelled as times, not dates.
+      expect(find.text('Start time'), findsOneWidget);
+      expect(find.text('Start date'), findsNothing);
+      await _tap(tester, find.byKey(const Key('task-actions')));
+      expect(find.byKey(const Key('task-edit')), findsOneWidget);
+    });
+
+    testWidgets("live nested details keep the row's can.update false", (
+      tester,
+    ) async {
+      final server = await _pump(tester);
+      server.nestedDetails = true;
+      await _openTasks(tester);
+      await _tap(tester, find.byKey(const Key('api-task-5')));
+      expect(find.text('Retry'), findsNothing);
+      expect(find.byKey(const Key('task-actions')), findsNothing);
+    });
+
     testWidgets('no Edit when the row says can.update false', (tester) async {
       await _pump(tester);
       await _openTasks(tester);
@@ -807,6 +894,22 @@ void main() {
       );
       expect(find.byKey(const Key('api-task-3')), findsOneWidget);
     });
+  });
+
+  testWidgets('home: the Tasks card lists my tasks with their real count', (
+    tester,
+  ) async {
+    final server = await _pump(tester);
+    expect(find.text('Projects 3'), findsOneWidget);
+    expect(find.text('Projects 0'), findsNothing);
+    final home = server
+        .where('GET', '/api/v1/employee/tasks')
+        .where((r) => r.uri.queryParameters['per_page'] == '3')
+        .toList();
+    expect(home, isNotEmpty);
+    expect(home.first.uri.queryParameters['assigned_to'], '10');
+    await _tap(tester, find.byKey(const Key('home-task-3')));
+    expect(find.byKey(const Key('task-details')), findsOneWidget);
   });
 
   testWidgets('isolation: lead-only controls follow the account and company', (

@@ -15,6 +15,7 @@ import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/projects/data/projects_repository.dart';
 import 'package:workflow_app/features/projects/presentation/api_projects_view.dart';
 import 'package:workflow_app/features/projects/presentation/projects_screen.dart';
+import 'package:workflow_app/features/work/data/board_repository.dart';
 import 'package:workflow_app/features/work/data/employee_work_repository.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/features/work/presentation/task_details_screen.dart';
@@ -1015,7 +1016,9 @@ class _ApiEmployeeDashboard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final summary = ref.watch(employeeDashboardSummaryProvider);
-    final tasks = ref.watch(employeeTaskStatsProvider);
+    // The signed-in user's own tasks, like Active tasks above and My Tasks
+    // (QA 2026-11-17: the unscoped figures mixed in the whole team's).
+    final tasks = ref.watch(scopedTaskStatsProvider(TaskScope.mine));
     const projectsQuery = (search: '', status: null, page: 1);
     final projects = ref.watch(apiProjectsProvider(projectsQuery));
     String amount(double v) => money(v, currency: '', symbol: '');
@@ -1060,7 +1063,8 @@ class _ApiEmployeeDashboard extends ConsumerWidget {
         ),
         AsyncSection(
           value: tasks,
-          onRetry: () => ref.invalidate(employeeTaskStatsProvider),
+          onRetry: () =>
+              ref.invalidate(scopedTaskStatsProvider(TaskScope.mine)),
           builder: (t) => DashboardSection(
             title: l10n.taskDistribution,
             caption: l10n.taskDistributionBody,
