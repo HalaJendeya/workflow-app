@@ -85,6 +85,23 @@ Collection re-read 2026-11-16: still **updatedAt 2026-11-14T11:14:33Z**.
 | E15 | CSV exports (`projects/export`, `tasks/export`, `sprints/backlog/export`). | Missing (product) | Documented for employees (cost/budget columns left out). Not built: needs a decision on saving/sharing CSV on Android. | Owner decision. |
 | E16 | Sprint lifecycle for employees. | Blocked (by design) | Create, update, delete, start, complete and move-task are all in Permission Boundary (403). The "Create Sprint" button, which only explained this, was removed in API mode. | — |
 
+## Employee E2E QA — live read-only (2026-11-17)
+
+Two QA employee accounts (a project lead and a regular member), company 1,
+read-only GETs. Full report: `docs/employee-e2e-qa-report.md`.
+
+| # | Item | Status | Evidence / app behaviour | Needed to close |
+|---|---|---|---|---|
+| E17 | `GET /employee/tasks/{id}` shape | Handled (F1) | Live: `data {task {…, project_id, sprint_id, assigned_to, assigned_user, project, sprint, work_logs}, duration_formatted, assigned_user_name, project_name, sprint_name}`; no `assignee`, no `can`. The app now reads `data.task` and keeps the list row's `can`. Before: Task Details always failed and Edit was never offered. | Document the response (and a `can` block). |
+| E18 | Dashboard `myMinutes` | Handled (F3) | Live: total minutes (equals timesheets `stats.total_minutes`), not minutes past the hour. The app added both and doubled the hours. | Document the semantics. |
+| E19 | Kanban `stats.by_status` ignores `scope` | Handled (F6) | Whole-sprint counts in both scopes; the app counts visible cards in the user's own scope. | — |
+| E20 | Status rights of an assignee | Open (Q1) | The regular employee's own task says `can.update: false` although the role holds `kanban.manage_status`. The app offers no status change then. | Backend: may an assignee move their task on the board? |
+| E21 | WhatsApp settings route | Open | `GET /employee/account/whatsapp-notifications` → 404 for both accounts (both have an employee row). | Deploy or document. |
+| E3 | Timesheet rows | Now observable | Rows `{id, date, month, user, company, payment_type, rate, hours_minutes, total, currency, status, can{approve,reject}}`; `GET /timesheets/{id}` and `/details` 200. The app still shows only the summary. | Build the list (product). |
+| M10 | Notification subject | Now observable | `subject {type: task\|conversation, id}`; types `task_assigned`/`tasks`, `chat_message`/`chat`. | Build tap → open (product). |
+| S1 | Task cost in sprint details | **Still open** | `GET /employee/sprints/{id}` returns non-null `tasks[].cost` to the regular member as well. | Backend fix. |
+| S2 | Projects outside membership | **Confirmed defect** | A non-member gets `GET /employee/projects/{id}` 200 with client, leader and member emails; `tasks/project-employees/{id}` 200. Tasks, sprints and boards of that project are refused (403/422). | Backend fix. |
+
 ## Client API, conversations and meetings (later milestones)
 
 | # | Item | Status | Evidence |
