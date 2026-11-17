@@ -7,6 +7,7 @@
 | Contract | Postman `WorkFlow` `56083386-d0da80f4-f067-42e4-9b96-9e021769e55e`, **updatedAt 2026-11-14T11:14:33Z** (re-read today, unchanged; 1096 requests) |
 | Backend | `https://api.workflownets.com/api/v1` — treated as production |
 | Device | Redmi 8 `972ae5b70706`, Android 10, API-mode **debug** APK built from this branch |
+| Overall status | **Employee E2E NOT complete**: Regular Employee device acceptance and all approved mutation scenarios are outstanding. |
 | Scope of this phase | **Read-only.** Only GET requests were sent by Claude. No create, update, status change, message, read receipt, join or logout was sent. Phase 5 (mutations) waits for the owner's approval — see §10. |
 
 Credentials: the owner typed both passwords into a local helper (masked prompt);
@@ -190,7 +191,13 @@ committed).
 | `flutter build apk --debug` (API mode) | built and installed on the Redmi 8 |
 | Live smoke (both accounts) | 8/8 + 8/8 (with F1) |
 
-## 10. Proposed mutation plan (NOT executed — needs explicit approval)
+## 10. Proposed mutation plan — superseded
+
+**Superseded by `docs/employee-mutation-plan.md`** (2026-11-17, restricted to dedicated QA records, with exact operation IDs). The table below is kept for history only; do not approve from it.
+
+Follow-up documents: `docs/employee-device-acceptance.md` (Redmi 8 build + Regular Employee checklist), `docs/backend-security-issues-s1-s2.md` (backend report), `docs/employee-open-items.md` (Q1, WhatsApp 404, missing features).
+
+### Original proposal (superseded)
 
 Preconditions (owner/admin, outside the employee portal):
 - P1. Add the Regular Employee to **project 1 "QA Test Project"** (or name another project that is safe to write to). Without it, Scenario A must run in project 2, which holds non-QA data.
@@ -224,4 +231,4 @@ Nothing in the plan touches records outside project 1, the new conversation and 
 | `a662c3a` | Flutter fixes F1–F7, regression tests, opt-in live smoke test |
 | (this commit) | This report and `docs/api-contract-gaps.md` (E17–E21, S1/S2 update) |
 
-Local only: nothing pushed or merged. M08 not started.
+`a662c3a` and `048ac6a` were pushed (non-force) to `origin/feat/m01-batch2-emulator-fixes` on the owner's approval; remote head `048ac6a2d392301e4995f0b9e72563c30acc5872`. Not merged into `main`. M08 not started.
