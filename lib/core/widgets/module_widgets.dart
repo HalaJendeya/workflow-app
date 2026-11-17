@@ -128,12 +128,19 @@ class ModulePage extends StatelessWidget {
       SliverPadding(
         // Clears the floating navigation surface the shell reports in
         // `padding.bottom` (103 px, plus any system navigation bar), with
-        // the same 47 px breathing room as before.
+        // the same 47 px breathing room as before. With a + button the
+        // last card also clears the button (U1: on More it covered the end
+        // of the Appearance row).
         padding: EdgeInsets.fromLTRB(
           20,
           24,
           20,
-          47 + MediaQuery.paddingOf(context).bottom,
+          (onCreate == null
+                  ? 47
+                  : CreateFab.extent +
+                        kFloatingActionButtonMargin +
+                        AppSpacing.md) +
+              MediaQuery.paddingOf(context).bottom,
         ),
         // Built all at once, not lazily: a lazily built section only
         // loaded its API data when scrolled to (the page then jumped back
@@ -838,6 +845,9 @@ class _ActionIcon extends StatelessWidget {
 /// 0/4/12 primary@19 % shadow.
 class CreateFab extends StatelessWidget {
   const new({required this.onPressed, this.label, super.key});
+
+  /// Outer size: the 56 px button in a 6 px white ring.
+  static const double extent = 68;
 
   final VoidCallback onPressed;
   final String? label;
