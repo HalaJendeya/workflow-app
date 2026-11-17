@@ -8,6 +8,7 @@ import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/core/config/app_config.dart';
 import 'package:workflow_app/core/preferences/app_preferences.dart';
 import 'package:workflow_app/core/storage/session_storage.dart';
+import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
@@ -382,7 +383,9 @@ void main() {
       tester,
     ) async {
       await pumpCard(tester);
-      final d = tester.widget<Text>(find.byKey(const Key('task-description')));
+      final d = tester.widget<ContentText>(
+        find.byKey(const Key('task-description')),
+      );
       expect(d.maxLines, 2);
       expect(d.overflow, TextOverflow.ellipsis);
       final card = tester.getRect(find.byKey(const Key('card')));
@@ -497,7 +500,7 @@ void main() {
         expect(find.text(text), findsOneWidget, reason: text);
       }
       // The full description, not two lines.
-      final d = tester.widget<Text>(
+      final d = tester.widget<ContentText>(
         find.byKey(const Key('task-details-description')),
       );
       expect(d.maxLines, isNull);
