@@ -888,8 +888,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   const SizedBox(height: 20),
                 ],
                 Text(
-                  DateFormat(
-                    'EEEE, MMMM d, y',
+                  DateFormat.yMMMMEEEEd(
                     Localizations.localeOf(context).toLanguageTag(),
                   ).format(shown.isEmpty ? DateTime.now() : shown.first.at),
                   textAlign: TextAlign.center,

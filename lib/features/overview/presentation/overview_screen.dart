@@ -127,7 +127,9 @@ class _Masthead extends ConsumerWidget {
     final profile = ref.watch(profileProvider).value;
     const white = AppColors.white;
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final date = DateFormat('EEEE, MMMM d', locale).format(DateTime.now());
+    // Locale skeleton, not a fixed pattern: Arabic gets its own comma and
+    // day-month order (U3: "الثلاثاء, نوفمبر ١٧" had a Latin comma).
+    final date = DateFormat.MMMMEEEEd(locale).format(DateTime.now());
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(
