@@ -432,15 +432,11 @@ void main() {
       isEmpty,
     );
 
-    // Join by code says why it does not join here: employees have a
-    // by-code route the app does not call yet (clients have none).
-    await tester.tap(find.text('join by code').first);
-    await tester.pump();
-    expect(
-      find.textContaining("Joining by code isn't connected"),
-      findsOneWidget,
-    );
-    expect(find.textContaining('LiveKit'), findsNothing);
+    // U2: an employee can neither create a meeting (no route for the
+    // role) nor join by code (the app does not call the by-code route
+    // yet), so neither action is offered; meetings join from details.
+    expect(find.text('join by code'), findsNothing);
+    expect(find.byKey(const Key('create-fab')), findsNothing);
 
     await tester.ensureVisible(find.byKey(const Key('meeting-41')));
     await tester.tap(

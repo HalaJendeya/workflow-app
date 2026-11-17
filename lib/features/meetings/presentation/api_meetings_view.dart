@@ -124,27 +124,35 @@ class _ApiMeetingsViewState extends ConsumerState<ApiMeetingsView> {
     String n(int Function(MeetingCounts) pick) =>
         counts.value == null ? '—' : count(pick(counts.value!));
 
+    // U2: an employee (lead or not) has no meeting create route and the
+    // app does not call the by-code lookup yet, so neither action is shown
+    // (M07: unusable actions are hidden). Clients keep the explanation.
+    final employee =
+        ref.watch(sessionControllerProvider).value?.portal == Portal.employee;
     return ModulePage(
       title: l10n.meetingsTitle,
       description: l10n.meetingsDescription,
       onSearch: _onSearch,
-      onCreate: () => showSnack(context, l10n.meetingCreateUnavailable),
+      onCreate: employee
+          ? null
+          : () => showSnack(context, l10n.meetingCreateUnavailable),
       createLabel: l10n.scheduleMeeting,
       children: [
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: FilterChipBox(
-            label: l10n.joinByCode,
-            selected: true,
-            onTap: () => showSnack(
-              context,
-              joinByCodeUnavailable(
-                l10n,
-                ref.read(sessionControllerProvider).value?.portal,
+        if (!employee)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: FilterChipBox(
+              label: l10n.joinByCode,
+              selected: true,
+              onTap: () => showSnack(
+                context,
+                joinByCodeUnavailable(
+                  l10n,
+                  ref.read(sessionControllerProvider).value?.portal,
+                ),
               ),
             ),
           ),
-        ),
         ModuleCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

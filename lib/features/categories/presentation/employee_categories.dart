@@ -20,9 +20,8 @@ class EmployeeCategoriesScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     // "Add task" only where it can be saved: the demo, or a project leader
     // (the API accepts new tasks only on projects the user leads).
-    final canAddTask =
-        ref.watch(demoModeProvider) ||
-        ref.watch(ledProjectIdsProvider).isNotEmpty;
+    final demo = ref.watch(demoModeProvider);
+    final canAddTask = demo || ref.watch(ledProjectIdsProvider).isNotEmpty;
     void push(BuildContext c, Widget page) =>
         Navigator.of(c).push(MaterialPageRoute<void>(builder: (_) => page));
     return CategoriesScreen(
@@ -89,8 +88,13 @@ class EmployeeCategoriesScreen extends ConsumerWidget {
       ],
       createActions: [
         if (canAddTask) CreateAction(l10n.addTask, openTaskForm),
-        CreateAction(l10n.scheduleMeeting, openScheduleMeeting),
-        CreateAction(l10n.joinByCodeTitle, openJoinByCode),
+        // U2: in API mode an employee has no meeting create route and the
+        // app does not call the by-code lookup yet; a non-lead was offered
+        // only these two, neither usable. Without actions there is no +.
+        if (demo) ...[
+          CreateAction(l10n.scheduleMeeting, openScheduleMeeting),
+          CreateAction(l10n.joinByCodeTitle, openJoinByCode),
+        ],
       ],
     );
   }
