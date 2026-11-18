@@ -18,6 +18,11 @@ summary card, **Filters (n)** with removable active-filter chips (status
 included) and **Reset filters**, then the rows. Task cards show the title,
 description and status.
 
+Measured in API mode for a project lead with mocked data. At 360×800 the
+first task row starts at 487 px instead of 573 px (−86 px), and three cards
+are visible above the bar instead of one and a half. At 320×640 with 130%
+text it starts at 604 px instead of 746 px (−142 px).
+
 What stays the same: `status`, `project_id`, `priority` and `sort` go to
 `GET /employee/tasks`. My Tasks sends `assigned_to`. An applied change
 starts on page 1. Dismissing the sheet, or applying it unchanged, sends no
