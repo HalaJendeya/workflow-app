@@ -93,8 +93,14 @@ previous tab, then Home. Only Home's Back exits. No new floating button
 was added.
 
 Not changed, by design: where details screens sit (root versus tab
-navigator), and re-tapping the current tab, which still returns it to its
-first screen.
+navigator).
+
+> Correction (Android 16 emulator acceptance, see
+> `android-emulator-acceptance.md`): this note originally claimed that
+> re-tapping the current tab returned it to its first screen. It did not do
+> that for screens pushed from More; `dd08c75` fixed it. The same run found
+> that on Android 13+ predictive Back closed the app before `AppShell` saw
+> the press; `4691964` fixed that.
 
 ## 4. Tests added or changed
 
