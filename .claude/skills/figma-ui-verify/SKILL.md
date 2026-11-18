@@ -31,6 +31,8 @@ Never write to the Figma file.
 | Add payment | 643:35666 | Profile | 643:33288 |
 | Companies | 673:14300 | Client More | 666:69807 |
 | Sprint | 729:24447 | Employee More | 729:46349 |
+| Timesheets (record card 729:38123) | 729:37832 | Join by code (employee) | 729:21892 |
+| Employee report | **none** (composed from components; needs design) | | |
 
 Auth frames: `130:20944`, `150:2174`. For an unmapped screen, run `get_metadata` on `534:30389` and find it by name and y-position. Add it to this table in the same commit.
 

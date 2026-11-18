@@ -134,6 +134,26 @@ read-only GETs. Full report: `docs/employee-e2e-qa-report.md`.
 | M11 | Rename / delete for me | Handled (mocked) | `PUT /client/conversations/{id}` `{title}` (≤ 255) → `data.id`; offered for **group** conversations only (a direct chat is named after the person). `DELETE /client/conversations/{id}` ("Delete Conversation For Me" ⚠️) after a confirmation; the chat closes and the list refreshes. Who may rename is decided by the server; a refusal shows its reason. Never sent live. | Live check with a QA group conversation. |
 | M12 | Send response | Handled | The send test asserts `data.message.id` and `data.message.conversation_id` only. When `data.message` is a full message row it is shown at once; otherwise the next poll (from the last **polled** id, so nothing between is skipped) brings it. | A documented send response. |
 
+## Remaining Employee features — live read-only (2026-11-18)
+
+Collection re-read in full: still **updatedAt 2026-11-14T11:14:33Z**.
+Both QA employee tokens valid. Read-only GETs only. Full report:
+`docs/employee-remaining-features.md`.
+
+| # | Item | Status | Evidence / app behaviour | Needed to close |
+|---|---|---|---|---|
+| E3 | Timesheet rows | **Handled** | Rows and `GET /timesheets/{id}/details` are shown (status/month filters, paging, details grouped by project). `hours_minutes` is total minutes (live 9600 = 160 h). Per-task `cost` of the details is not shown. | Document the row (the prose names only some keys). |
+| E12 | Assignees a lead may choose | **Handled** | `GET /tasks/project-employees/{project}` rows `{id, name}`; `id` = `users.id` (live: the lead's row is the login user id). The form lists only these; the company-wide list is no longer used for assigning. | Document the row. |
+| E15 | CSV exports | **Handled** | Tasks, projects, timesheets, backlog: one Export CSV chip with the list's filters; system save dialog (`file_picker`, as for attachments). Live: `text/csv; charset=UTF-8`, BOM, `attachment; filename="…-YYYY-MM-DD.csv"`, no Cost/Currency for employees. A 200 that is not CSV is never saved. | — |
+| M10 | Navigation from a notification | **Handled (employee)** | Live `subject {type, id}`: `task`, `conversation`, `meeting`. Tap marks read and opens the task (by id), chat or meeting. Unknown types only mark read; clients never open a task. | Document `subject` types per notification `type`. |
+| C6 | Join by code (employee) | **Handled** | `GET /employee/meetings/by-code/{code}` → details; 404 (live) reads "No meeting with this code that you can open". No room password is sent (not in the route). | — |
+| E22 | `List Timesheets` test out of date | Open (contract) | The test asserts `data.timesheets.data`, `data.summary`; the server and the description put the paginator in `data` and `stats`/`totals`/`available_months` beside it. | Update the collection test. |
+| E23 | Report `task_completion_rate` unit | Open | 0–1 or 0–100 undocumented (live 0). Not read: the app shows completed of total from the documented counts. | Document the unit. |
+| E24 | Own join request `status` values | Open | Only `pending` is documented (admit/reject say "409 when no longer pending"). The app interprets `pending` only and shows other values as sent. `DELETE` never sent live. | Document the values. |
+| E25 | Task opened by id has no `can` | Open (E17) | Task details carry no `can`; a task opened from a notification, the report or a timesheet offers **no** status change (Edit still follows leadership). | A `can` block on `GET /tasks/{id}`. |
+| E26 | Employee report screen design | Open (design) | No Figma frame; built from existing components (masthead, chips, metric group, cards). | A Figma frame or design sign-off. |
+| E21 | WhatsApp settings route | **Open (backend)** | Now answers 404 "The route api/v1/employee/account/whatsapp-notifications could not be found" — not deployed, not an employee-row problem. | Deploy the route. |
+
 ## Design / API clarifications
 
 | # | Item | Decision |
@@ -147,8 +167,8 @@ read-only GETs inside the QA employee's own company only.
 
 | # | Issue | Result |
 |---|---|---|
-| S1 | **HIGH PRIORITY — task cost exposed to employees in sprint details.** The collection says employee task rows never carry `cost`/`currency` (planning page) and that an employee reaches only sprints of projects they are on. | **Still present as of 2026-11-14** (not rechecked 2026-11-16: no valid employee token). `GET /employee/sprints/{id}` returned `data.tasks[].cost` with non-null values (4 of 4 tasks). **M07: the app no longer needs that route** — sprint task lists come from `GET /employee/tasks?sprint_id=`, and a test asserts `/sprints/{id}` is never requested. Hiding or avoiding it in Flutter is not a fix: anyone with an employee token can still call it. **Release blocker.** |
-| S2 | **Employee access to projects they are not on.** | **Not verifiable with this account.** The list returns only the one project the QA user belongs to, and no `budget` key (list and detail), as documented. Proving direct access is refused needs an in-company project the user is not on; IDs were not guessed. **Remains a release blocker until retested.** |
+| S1 | **HIGH PRIORITY — task cost exposed to employees in sprint details.** The collection says employee task rows never carry `cost`/`currency` (planning page) and that an employee reaches only sprints of projects they are on. | **Still present on 2026-11-18** (regular member, sprint 2: 4 of 4 tasks with a non-null `cost`). Earlier: **still present as of 2026-11-14** (not rechecked 2026-11-16: no valid employee token). `GET /employee/sprints/{id}` returned `data.tasks[].cost` with non-null values (4 of 4 tasks). **M07: the app no longer needs that route** — sprint task lists come from `GET /employee/tasks?sprint_id=`, and a test asserts `/sprints/{id}` is never requested. Hiding or avoiding it in Flutter is not a fix: anyone with an employee token can still call it. **Release blocker.** |
+| S2 | **Employee access to projects they are not on.** | **Confirmed 2026-11-17 and still present 2026-11-18**: the regular member (not on project 1) gets `GET /employee/projects/1` 200 with the client record (`credit_limit`) and users' emails, and `tasks/project-employees/1` 200. The app asks for member lists only on projects the user leads — not a fix. Earlier (2026-11-14): **not verifiable with this account.** The list returns only the one project the QA user belongs to, and no `budget` key (list and detail), as documented. Proving direct access is refused needs an in-company project the user is not on; IDs were not guessed. **Remains a release blocker until retested.** |
 | S3 | Role-specific restrictions. | The `role:` prefix gate holds live (employee → 403 on `/client/account`). Permission-boundary routes were not exercised (they are writes). |
 
 Known backend authorization and sensitive-data issues must be fixed on the

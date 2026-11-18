@@ -22,7 +22,7 @@ is **not complete**; see `docs/employee-e2e-qa-report.md`.
 |---|---|
 | Route | `GET /api/v1/employee/account/whatsapp-notifications` (documented; `PUT` exists for opting in or out) |
 | Documented | 200 with the caller's settings when the caller has an `employees` row in the company. 404 "No employee record for your account in this company" only when there is none. |
-| Observed | **404 for both QA accounts** with `X-Company: 1`. Both have an `employees` row in company 1 (`GET /employee/account` returns `data.employee`). |
+| Observed | **404 for both QA accounts** with `X-Company: 1`. Both have an `employees` row in company 1 (`GET /employee/account` returns `data.employee`). **2026-11-18:** the 404 message is "The route api/v1/employee/account/whatsapp-notifications could not be found" — the route is **not deployed**, not an employee-row problem. |
 | Impact | The app does not use this route. The QA team cannot confirm opt-in state before mutation tests. The collection warns that task assignment may send a real WhatsApp message to an opted-in employee when `WHATSAPP_NOTIFICATIONS_ENABLED=true`. Both accounts have no phone number, and opt-in requires one. |
 | Needed | Backend: deploy the route, or correct the contract. Owner: confirm the production value of `WHATSAPP_NOTIFICATIONS_ENABLED` before any assignment test. |
 | Status | **Open — backend.** |
@@ -37,20 +37,34 @@ same label. The definitions are undocumented. Needed: the meaning of each from
 the backend, then rename one label (copy change in both ARB files). **Open —
 contract/product.**
 
-## O4 — Documented Employee features not built in the app
+## O4 — Documented Employee features (updated 2026-11-18)
 
-| Feature | Contract | Live check | Notes |
-|---|---|---|---|
-| Employee Reports | `GET /employee/report` (`year`, `month` or `from`/`to`, paged tasks) | 200 for both accounts: `{employee, period, summary, projects, tasks, timesheets, meetings}` | No screen. Needs a Figma frame and an owner decision. |
-| Timesheet rows and details | `GET /employee/timesheets` rows; `GET /timesheets/{id}`, `/timesheets/{id}/details` | 200; row and details shapes observed (E3) | The screen shows only the totals, with a plain note that individual entries are not shown yet (the outdated banner was replaced on 2026-11-18). |
-| Notification tap → open subject | Rows carry `subject {type, id}` | Live: `task`, `conversation` | Tapping only marks the item read (M10). |
-| Meetings: join by code | `GET /employee/meetings/by-code/{code}` | not called | Not offered in API mode (chip and More action hidden since 2026-11-18). |
-| Meetings: own join request status/cancel | `GET/DELETE /employee/meetings/{id}/join-request` | 404 when there is none (expected) | Only the 202 "waiting for host" state is handled. |
-| WhatsApp settings | see O2 | 404 | Not built; blocked by O2. |
-| CSV exports | `projects/export`, `tasks/export`, `sprints/backlog/export`, `timesheets/export` | not called | Needs a save/share decision (E15). |
-| Assignee list limited to project members | `GET /employee/tasks/project-employees/{p}` | 200 `[{id, name}]` | The form still lists all company employees (E12). The row shape is now observed, so this can be closed. |
-| Company switching | none for employees | — | Employees have one company. |
-| Meeting creation / scheduling | `POST /employee/meetings` is a 403 boundary | — | By design. |
+Built on 2026-11-18 (local commits, mock-tested; not yet on a device in
+API mode). Details: `docs/employee-remaining-features.md`.
+
+| Feature | Contract | Status |
+|---|---|---|
+| Employee Reports | `GET /employee/report` | **Built** — More → Overview → My report. **No Figma frame**: needs design review (E26). |
+| Timesheet rows and details | `GET /employee/timesheets`, `/timesheets/{id}/details` | **Built** — record cards, filters, paging, details by project. |
+| Notification tap → open subject | `subject {type, id}` (observed) | **Built** — task, chat, meeting. A task opened by id offers no status change (E25). |
+| Meetings: join by code | `GET /employee/meetings/by-code/{code}` | **Built** — Meetings chip, More → Create. |
+| Meetings: own join request status/cancel | `GET/DELETE /employee/meetings/{id}/join-request` | **Built** — status, Check again, Withdraw (confirmed). Never run live. |
+| CSV exports | `projects`, `tasks`, `sprints/backlog`, `timesheets` `/export` | **Built** — Export CSV chip, system save dialog. |
+| Assignee list limited to project members | `GET /employee/tasks/project-employees/{p}` | **Built** (E12 closed). |
+| WhatsApp settings | see O2 | Not built; route not deployed (O2). |
+| Host-side join requests (admit/reject) | `…/join-requests`, `meeting-join-requests/{id}/admit\|reject` | Not built: employees cannot create meetings; needs a product decision. |
+| Company switching | none for employees | — |
+| Meeting creation / scheduling | `POST /employee/meetings` is a 403 boundary | By design. |
+
+## O8 — Found while building O4 (2026-11-18)
+
+- E22: the collection's `List Timesheets` test asserts keys the server
+  does not send (`data.timesheets.data`, `data.summary`).
+- E23: report `task_completion_rate` unit undocumented (not used).
+- E24: join-request `status` values other than `pending` undocumented.
+- E25: task details have no `can` block, so a task opened by id cannot
+  offer a status change.
+- S1 and S2 re-checked read-only: **both still present**.
 
 ## O5 — Minor UI notes (not fixed)
 

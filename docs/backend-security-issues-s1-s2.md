@@ -175,3 +175,15 @@ colleague.
 
 Please reply with the deployed fix version. The mobile QA will re-run these
 exact read-only requests and report the status codes.
+
+## Re-check 2026-11-18 (read-only, values not printed)
+
+| # | Request (regular member, `X-Company: 1`) | Result |
+|---|---|---|
+| S1 | `GET /employee/sprints/2` | 200; 4 of 4 `tasks[]` carry a non-null `cost` — **still open** |
+| S2 | `GET /employee/projects/1` (not a member) | 200 with `client` (`credit_limit`) and users' `email` — **still open** |
+| S2 | `GET /employee/tasks/project-employees/1` (not a member) | 200 — **still open** |
+
+The new assignee picker reads `tasks/project-employees/{project}` only for
+projects the signed-in user leads. That limits what the app asks for; it
+does not fix S2 on the server.
