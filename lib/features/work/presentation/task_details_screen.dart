@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
+import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
@@ -28,6 +29,71 @@ Future<void> openApiTaskDetails(BuildContext context, ApiTask task) =>
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(builder: (_) => ApiTaskDetailsScreen(row: task)),
     );
+
+/// Opens a task known only by its id (a notification, a timesheet line).
+/// The details route carries no `can` block, so without a list row the
+/// status change is not offered (`can.update` unknown); Edit still follows
+/// project leadership as everywhere else.
+Future<void> openApiTaskById(BuildContext context, int id) => Navigator.of(
+  context,
+  rootNavigator: true,
+).push(MaterialPageRoute<void>(builder: (_) => ApiTaskByIdScreen(id: id)));
+
+/// Loads `GET /employee/tasks/{id}`, then shows the same details page as a
+/// list row does. A refusal (403: not a task the account may see) or a
+/// deleted task (404) is shown with the server's reason and a retry.
+class ApiTaskByIdScreen extends ConsumerWidget {
+  const new({required this.id, super.key});
+
+  final int id;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(apiTaskProvider(id));
+    if (value.hasValue) return ApiTaskDetailsScreen(row: value.requireValue);
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      key: const Key('task-by-id'),
+      backgroundColor: AppColors.appBackground,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  key: const Key('task-details-back'),
+                  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const BackButtonIcon(),
+                  color: AppColors.textPrimary,
+                ),
+                Expanded(
+                  child: Text(
+                    l10n.taskDetails,
+                    style: AppTextStyles.mobileLgSemiBold.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: switch (value) {
+                AsyncError(:final error) => ApiErrorCard(
+                  error: error,
+                  onRetry: () => ref.invalidate(apiTaskProvider(id)),
+                ),
+                _ => const Center(child: CircularProgressIndicator()),
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 final _day = DateFormat('yyyy/MM/dd', 'en');
 final _time = DateFormat('HH:mm', 'en');

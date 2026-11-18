@@ -4,10 +4,13 @@ import 'package:intl/intl.dart';
 import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
+import 'package:workflow_app/core/widgets/export_csv_chip.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
+import 'package:workflow_app/features/work/data/employee_exports.dart';
 import 'package:workflow_app/features/work/data/employee_work_repository.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
+import 'package:workflow_app/features/work/presentation/api_timesheets.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -38,6 +41,9 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
   String _query = '';
   TimesheetStatus? _status;
   DateTime? _month;
+
+  /// API mode: `month` filter as YYYY-MM (from `available_months`).
+  String? _apiMonth;
   int _page = 0;
 
   @override
@@ -81,9 +87,8 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
     return ModulePage(
       title: l10n.timesheetsTitle,
       description: l10n.timesheetsBody,
-      // API mode loads no rows (their fields are undocumented), so there
-      // is nothing to search, filter or page: those controls showed
-      // "Approved (0)" and "No records" beside the server's real counts.
+      // API mode lists only the employee's own timesheets (one per month),
+      // so a text search adds nothing beyond the status and month filters.
       onSearch: demo
           ? (v) => setState(() {
               _query = v;
@@ -91,7 +96,6 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
             })
           : null,
       children: [
-        if (!demo) InfoNotice(text: l10n.timesheetSummaryOnly),
         if (api case AsyncError(:final error))
           ApiErrorCard(
             error: error,
@@ -129,6 +133,7 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
             ),
           ],
         ),
+        if (!demo) ..._apiRows(context, l10n),
         if (demo) ...[
           WfSearchBox(
             fieldKey: const Key('timesheets-search'),
@@ -176,6 +181,82 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
         ],
       ],
     );
+  }
+
+  /// API mode: the employee's own timesheet rows with the documented
+  /// `status` and `month` filters (Figma 729:38117), the server's CSV of
+  /// the same filters, and the server's pages.
+  List<Widget> _apiRows(BuildContext context, AppLocalizations l10n) {
+    final query = (month: _apiMonth, status: _status, page: _page + 1);
+    final rows = ref.watch(apiTimesheetRowsProvider(query));
+    // Months come with the rows; the chosen one stays offered while the
+    // next page loads.
+    final months = {?_apiMonth, ...?rows.value?.months}.toList()
+      ..sort((a, b) => b.compareTo(a));
+    return [
+      ChipRow(
+        children: [
+          DropdownChip<TimesheetStatus?>(
+            key: const Key('timesheet-status-filter'),
+            value: _status,
+            options: const [null, ...TimesheetStatus.values],
+            labelOf: (s) => s == null
+                ? l10n.filterAllStatus
+                : timesheetStatusLabel(l10n, s),
+            onChanged: (s) => setState(() {
+              _status = s;
+              _page = 0;
+            }),
+          ),
+          DropdownChip<String?>(
+            key: const Key('timesheet-month-filter'),
+            value: _apiMonth,
+            options: [null, ...months],
+            labelOf: (m) =>
+                m == null ? l10n.periodMonth : timesheetMonthLabel(context, m),
+            onChanged: (m) => setState(() {
+              _apiMonth = m;
+              _page = 0;
+            }),
+          ),
+          ExportCsvChip(
+            download: () => ref
+                .read(employeeExportsProvider)
+                .timesheets(month: _apiMonth, status: _status?.name),
+          ),
+        ],
+      ),
+      AsyncSection<TimesheetRows>(
+        value: rows,
+        onRetry: () => ref.invalidate(apiTimesheetRowsProvider(query)),
+        builder: (r) {
+          final page = r.page;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (page.items.isEmpty)
+                EmptyNotice(
+                  key: const Key('timesheets-empty'),
+                  text: _status == null && _apiMonth == null
+                      ? l10n.noTimesheetsYet
+                      : l10n.noRecords,
+                ),
+              for (final t in page.items) ...[
+                ApiTimesheetCard(row: t),
+                const SizedBox(height: AppSpacing.md),
+              ],
+              if (page.lastPage > 1)
+                Pager(
+                  page: page.currentPage - 1,
+                  pageSize: page.perPage,
+                  total: page.total,
+                  onPage: (p) => setState(() => _page = p),
+                ),
+            ],
+          );
+        },
+      ),
+    ];
   }
 }
 
