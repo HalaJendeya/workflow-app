@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart' hide TextDirection;
+import 'package:intl/intl.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/content_text.dart';
@@ -94,7 +94,6 @@ class _EmployeeReportScreenState extends ConsumerState<EmployeeReportScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final value = ref.watch(employeeReportProvider(_query));
-    final rtl = Directionality.of(context) == TextDirection.rtl;
     return ModulePage(
       key: const Key('employee-report'),
       title: l10n.myReport,
@@ -124,7 +123,7 @@ class _EmployeeReportScreenState extends ConsumerState<EmployeeReportScreen> {
                 key: const Key('report-previous'),
                 tooltip: l10n.previousPeriod,
                 onPressed: () => _step(-1),
-                icon: Icon(rtl ? Icons.chevron_right : Icons.chevron_left),
+                icon: const Icon(Icons.chevron_left),
               ),
               Expanded(
                 child: Text(
@@ -140,7 +139,7 @@ class _EmployeeReportScreenState extends ConsumerState<EmployeeReportScreen> {
                 key: const Key('report-next'),
                 tooltip: l10n.nextPeriod,
                 onPressed: _atLatest ? null : () => _step(1),
-                icon: Icon(rtl ? Icons.chevron_left : Icons.chevron_right),
+                icon: const Icon(Icons.chevron_right),
               ),
             ],
           ),
