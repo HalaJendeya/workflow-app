@@ -238,7 +238,7 @@ class _ReportBody extends StatelessWidget {
               value: l10n.reportOf(r.completedTasks, r.taskCount),
             ),
             Metric(
-              label: l10n.loggedHours,
+              label: l10n.reportLoggedTime,
               value: ltrIsolate(minutesLabel(r.workingMinutes)),
             ),
             Metric(

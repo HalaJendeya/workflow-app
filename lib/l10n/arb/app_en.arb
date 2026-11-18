@@ -1309,5 +1309,7 @@
   "withdrawJoinRequest": "Withdraw request",
   "withdrawJoinRequestTitle": "Withdraw your join request?",
   "withdrawJoinRequestBody": "The host will no longer see your request. You can ask to join again later.",
-  "joinRequestWithdrawn": "Join request withdrawn."
+  "joinRequestWithdrawn": "Join request withdrawn.",
+  "reportLoggedTime": "Logged time",
+  "payType": "Pay type"
 }

@@ -2518,4 +2518,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get joinRequestWithdrawn => 'تم سحب طلب الانضمام.';
+
+  @override
+  String get reportLoggedTime => 'الوقت المسجّل';
+
+  @override
+  String get payType => 'نوع الأجر';
 }

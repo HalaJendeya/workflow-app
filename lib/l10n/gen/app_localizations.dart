@@ -4597,6 +4597,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Join request withdrawn.'**
   String get joinRequestWithdrawn;
+
+  /// No description provided for @reportLoggedTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged time'**
+  String get reportLoggedTime;
+
+  /// No description provided for @payType.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay type'**
+  String get payType;
 }
 
 class _AppLocalizationsDelegate

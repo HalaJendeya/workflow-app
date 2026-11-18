@@ -749,5 +749,7 @@
   "withdrawJoinRequest": "سحب الطلب",
   "withdrawJoinRequestTitle": "هل تريد سحب طلب الانضمام؟",
   "withdrawJoinRequestBody": "لن يرى المضيف طلبك بعد الآن. يمكنك طلب الانضمام مرة أخرى لاحقًا.",
-  "joinRequestWithdrawn": "تم سحب طلب الانضمام."
+  "joinRequestWithdrawn": "تم سحب طلب الانضمام.",
+  "reportLoggedTime": "الوقت المسجّل",
+  "payType": "نوع الأجر"
 }

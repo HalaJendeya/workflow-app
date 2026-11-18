@@ -191,7 +191,7 @@ class TimesheetDetailsScreen extends ConsumerWidget {
                       ),
                       DetailField(l10n.countedTasks, '${b.tasksCount}'),
                       DetailField(
-                        l10n.fieldRate,
+                        l10n.payType,
                         paymentTypeLabel(l10n, b.payType ?? row.paymentType),
                       ),
                       if (b.from != null && b.to != null)

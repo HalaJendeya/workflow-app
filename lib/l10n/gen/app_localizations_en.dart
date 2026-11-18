@@ -2523,4 +2523,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get joinRequestWithdrawn => 'Join request withdrawn.';
+
+  @override
+  String get reportLoggedTime => 'Logged time';
+
+  @override
+  String get payType => 'Pay type';
 }
