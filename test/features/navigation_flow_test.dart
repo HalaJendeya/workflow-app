@@ -32,7 +32,11 @@ late List<String> _exits;
 /// What the app last told Android with `setFrameworkHandlesBack`.
 bool? _frameworkHandlesBack;
 
-Future<void> _pump(WidgetTester tester, Portal portal) async {
+Future<void> _pump(
+  WidgetTester tester,
+  Portal portal, {
+  Locale locale = const Locale('en'),
+}) async {
   useViewport(tester, const Size(390, 844));
   await loadAppFonts();
   _exits = [];
@@ -73,7 +77,7 @@ Future<void> _pump(WidgetTester tester, Portal portal) async {
         ),
         sessionStorageProvider.overrideWithValue(storage),
       ],
-      child: const WorkFlowApp(locale: Locale('en')),
+      child: WorkFlowApp(locale: locale),
     ),
   );
   await tester.pumpAndSettle();
@@ -266,6 +270,35 @@ void main() {
       expect(find.byKey(const Key('task-filter-sheet')), findsNothing);
       _onTop(TasksScreen);
     });
+
+    // Emulator acceptance: in Arabic the masthead Back arrow pointed left.
+    // arrow_back mirrors itself; choosing arrow_forward for RTL mirrored it
+    // twice.
+    for (final (lang, more, tasks, mirrored) in [
+      ('ar', 'المزيد', 'المهام', true),
+      ('en', 'More', 'Tasks', false),
+    ]) {
+      testWidgets('masthead Back points the reading way back ($lang)', (
+        tester,
+      ) async {
+        await _pump(tester, Portal.employee, locale: Locale(lang));
+        await _bar(tester, more);
+        await _tap(tester, find.byKey(Key('category-$tasks')));
+        final back = find.byKey(const Key('masthead-back'));
+        final icon = tester.widget<Icon>(
+          find.descendant(of: back, matching: find.byType(Icon)),
+        );
+        expect(icon.icon, Icons.arrow_back);
+        final flips = find.descendant(
+          of: back,
+          matching: find.byWidgetPredicate(
+            (w) => w is Transform && w.transform.entry(0, 0) == -1,
+          ),
+        );
+        // Mirrored once in Arabic (points right), not at all in English.
+        expect(flips, mirrored ? findsOneWidget : findsNothing);
+      });
+    }
   });
 
   group('client', () {

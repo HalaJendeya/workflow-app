@@ -219,12 +219,11 @@ class ModuleMasthead extends StatelessWidget {
                       style: IconButton.styleFrom(
                         tapTargetSize: MaterialTapTargetSize.padded,
                       ),
-                      icon: Icon(
-                        Directionality.of(context) == TextDirection.rtl
-                            ? Icons.arrow_forward
-                            : Icons.arrow_back,
-                        color: white,
-                      ),
+                      // arrow_back mirrors itself in RTL (it points to
+                      // the right in Arabic). Picking arrow_forward for RTL
+                      // mirrored it twice, so Back pointed left (emulator
+                      // acceptance run).
+                      icon: const Icon(Icons.arrow_back, color: white),
                     ),
                     const SizedBox(width: 2),
                   ],
