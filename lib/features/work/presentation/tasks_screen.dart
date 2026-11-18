@@ -7,10 +7,13 @@ import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
+import 'package:workflow_app/core/widgets/export_csv_chip.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
+import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/work/data/board_repository.dart';
+import 'package:workflow_app/features/work/data/employee_exports.dart';
 import 'package:workflow_app/features/work/data/employee_work_repository.dart';
 import 'package:workflow_app/features/work/data/work_options.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
@@ -309,6 +312,16 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         ),
     ];
 
+    final apiQuery = TaskQuery(
+      scope: scope,
+      search: _query,
+      status: apiStatusOf(_filters.status),
+      priority: _filters.priority,
+      page: _page + 1,
+      projectId: _filters.project as int?,
+      sort: _filters.sort,
+    );
+
     Future<void> openFilters() async {
       final picked = await showTaskFilterSheet(
         context,
@@ -387,18 +400,23 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           active: activeFilters,
           onOpen: openFilters,
           onReset: () => _set(filters: const TaskFilters()),
+          // The server's CSV of exactly this list (every page).
+          trailing: demo
+              ? null
+              : ExportCsvChip(
+                  download: () => ref
+                      .read(employeeExportsProvider)
+                      .tasks(
+                        apiQuery,
+                        assignedTo: mine
+                            ? ref.read(sessionControllerProvider).value?.userId
+                            : null,
+                      ),
+                ),
         ),
         if (!demo)
           _ApiTaskRows(
-            query: TaskQuery(
-              scope: scope,
-              search: _query,
-              status: apiStatusOf(_filters.status),
-              priority: _filters.priority,
-              page: _page + 1,
-              projectId: _filters.project as int?,
-              sort: _filters.sort,
-            ),
+            query: apiQuery,
             showCount: narrowed,
             onPage: (p) => setState(() => _page = p),
           )

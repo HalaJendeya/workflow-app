@@ -351,6 +351,7 @@ class TaskFilterBar extends StatelessWidget {
     required this.active,
     required this.onOpen,
     required this.onReset,
+    this.trailing,
     super.key,
   });
 
@@ -358,6 +359,10 @@ class TaskFilterBar extends StatelessWidget {
   final List<ActiveFilter> active;
   final VoidCallback onOpen;
   final VoidCallback onReset;
+
+  /// An action on the filtered list (Export CSV), right after the Filters
+  /// button so it keeps its place whatever filters are active.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -411,6 +416,7 @@ class TaskFilterBar extends StatelessWidget {
             ),
           ),
         ),
+        ?trailing,
         for (final f in active)
           _ActiveChip(key: Key('active-filter-${f.key}'), filter: f),
         if (on)

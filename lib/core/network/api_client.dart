@@ -71,12 +71,14 @@ class ApiClient {
   /// for any other route.
   Future<Response<List<int>>> download(
     String path, {
+    Json? query,
     Map<String, String>? headers,
     void Function(int received, int total)? onReceiveProgress,
   }) async {
     try {
       return await _dio.get<List<int>>(
         path,
+        queryParameters: query,
         options: Options(
           responseType: ResponseType.bytes,
           headers: {'Accept': '*/*', ...?headers},

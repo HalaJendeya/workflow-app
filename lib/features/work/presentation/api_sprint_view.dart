@@ -7,10 +7,12 @@ import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/content_text.dart';
+import 'package:workflow_app/core/widgets/export_csv_chip.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/work/data/board_repository.dart';
+import 'package:workflow_app/features/work/data/employee_exports.dart';
 import 'package:workflow_app/features/work/data/work_options.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/features/work/presentation/api_task_list_screen.dart';
@@ -698,6 +700,18 @@ class _Backlog extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 20),
+            // The whole backlog as CSV: the list here is its first page.
+            if (total > 0) ...[
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: ExportCsvChip(
+                  download: () => ref
+                      .read(employeeExportsProvider)
+                      .backlog(projectId: p.selectedProjectId),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             if (rows.isEmpty) EmptyNotice(text: l10n.noRecords),
             for (final t in rows) ...[
               ApiTaskCard(

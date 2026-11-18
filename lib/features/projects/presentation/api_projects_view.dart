@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
+import 'package:workflow_app/core/widgets/export_csv_chip.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/projects/data/projects_repository.dart';
 import 'package:workflow_app/features/projects/presentation/employee_project_related.dart';
+import 'package:workflow_app/features/work/data/employee_exports.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -74,6 +76,8 @@ class _ApiProjectsViewState extends ConsumerState<ApiProjectsView> {
     final query = (search: _search, status: _status, page: _page);
     final result = ref.watch(apiProjectsProvider(query));
     final stats = result.value?.stats;
+    final isEmployee =
+        ref.watch(sessionControllerProvider).value?.portal == Portal.employee;
     String n(int Function(ProjectStats) pick) =>
         stats == null ? '—' : count(pick(stats));
 
@@ -126,6 +130,13 @@ class _ApiProjectsViewState extends ConsumerState<ApiProjectsView> {
                 _page = 1;
               }),
             ),
+            // Employees only: the client has no documented project export.
+            if (isEmployee)
+              ExportCsvChip(
+                download: () => ref
+                    .read(employeeExportsProvider)
+                    .projects(search: _search, status: _status),
+              ),
           ],
         ),
         AsyncSection(
