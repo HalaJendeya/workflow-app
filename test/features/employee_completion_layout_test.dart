@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -143,12 +141,10 @@ void main() {
       BuildContext shell() => tester.element(find.byType(Scaffold).first);
 
       Future<void> check(Widget page, Key key) async {
-        unawaited(
-          Navigator.of(
-            shell(),
-            rootNavigator: true,
-          ).push(MaterialPageRoute<void>(builder: (_) => page)),
-        );
+        Navigator.of(
+          shell(),
+          rootNavigator: true,
+        ).push(MaterialPageRoute<void>(builder: (_) => page));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull, reason: '$key');
         final f = find.byKey(key);
@@ -160,7 +156,8 @@ void main() {
         // Manual review only (SCREENSHOT_DIR set); a no-op otherwise.
         await screenshot(
           tester,
-          '${name.replaceAll(' ', '_')}_${key.toString().replaceAll(RegExp(r'\W'), '')}',
+          '${name.replaceAll(' ', '_')}_'
+          '${key.toString().replaceAll(RegExp(r'\W'), '')}',
         );
         final scroll = find.byType(Scrollable).last;
         for (var i = 0; i < 10; i++) {

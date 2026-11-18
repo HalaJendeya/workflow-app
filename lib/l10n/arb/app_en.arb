@@ -1234,7 +1234,6 @@
   "errorFieldInvalid": "Check this field.",
   "errorSignInBlocked": "This account can't sign in right now. Contact your company admin.",
   "errorSignInFailed": "The email or password is incorrect.",
-  "timesheetSummaryOnly": "Your timesheet totals. Individual entries aren't shown in the app yet.",
   "exportCsv": "Export CSV",
   "exportSaved": "Saved {fileName}.",
   "@exportSaved": {

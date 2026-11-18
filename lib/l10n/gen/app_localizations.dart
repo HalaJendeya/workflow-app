@@ -4346,12 +4346,6 @@ abstract class AppLocalizations {
   /// **'The email or password is incorrect.'**
   String get errorSignInFailed;
 
-  /// No description provided for @timesheetSummaryOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Your timesheet totals. Individual entries aren\'t shown in the app yet.'**
-  String get timesheetSummaryOnly;
-
   /// No description provided for @exportCsv.
   ///
   /// In en, this message translates to:

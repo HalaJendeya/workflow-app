@@ -2384,10 +2384,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorSignInFailed => 'The email or password is incorrect.';
 
   @override
-  String get timesheetSummaryOnly =>
-      'Your timesheet totals. Individual entries aren\'t shown in the app yet.';
-
-  @override
   String get exportCsv => 'Export CSV';
 
   @override

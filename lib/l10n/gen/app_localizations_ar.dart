@@ -2379,10 +2379,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorSignInFailed => 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
 
   @override
-  String get timesheetSummaryOnly =>
-      'إجماليات سجل ساعاتك. لا تُعرض الإدخالات الفردية في التطبيق بعد.';
-
-  @override
   String get exportCsv => 'تصدير CSV';
 
   @override

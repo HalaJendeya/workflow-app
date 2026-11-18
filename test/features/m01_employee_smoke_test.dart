@@ -407,11 +407,15 @@ void main() {
         await _open(tester, screen);
         expect(find.byKey(const Key('api-error')), findsNothing);
         if (screen == 'Timesheets') {
-          // Totals only: the screen says individual entries are not shown,
-          // in product words.
+          // Rows are listed now (with filters); the old "totals only"
+          // notice is gone.
+          expect(
+            find.byKey(const Key('timesheet-status-filter')),
+            findsOneWidget,
+          );
           expect(
             find.textContaining("Individual entries aren't shown"),
-            findsOneWidget,
+            findsNothing,
           );
         } else {
           await _details(tester, screen);

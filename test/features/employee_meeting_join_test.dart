@@ -82,7 +82,7 @@ void main() {
       await expectLater(repo().myJoinRequest(41), throwsA(isA<ApiException>()));
     });
 
-    test('withdraw sends DELETE on the caller\'s own request', () async {
+    test("withdraw sends DELETE on the caller's own request", () async {
       http.reply(200, ok(null));
       await repo().withdrawJoinRequest(41);
       expect(http.last.method, 'DELETE');

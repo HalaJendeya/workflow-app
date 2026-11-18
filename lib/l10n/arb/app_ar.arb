@@ -708,7 +708,6 @@
   "errorFieldInvalid": "تحقّق من هذا الحقل.",
   "errorSignInBlocked": "لا يمكن لهذا الحساب تسجيل الدخول حاليًا. تواصل مع مسؤول شركتك.",
   "errorSignInFailed": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
-  "timesheetSummaryOnly": "إجماليات سجل ساعاتك. لا تُعرض الإدخالات الفردية في التطبيق بعد.",
   "exportCsv": "تصدير CSV",
   "exportSaved": "تم حفظ {fileName}.",
   "exportFailed": "تعذّر التصدير: {reason}",

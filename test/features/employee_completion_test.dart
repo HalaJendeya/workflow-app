@@ -184,7 +184,7 @@ Future<RouteHttpAdapter> pumpEmployeeScreen(
       'GET /api/v1/employee/account': (200, ok({'id': 10, 'name': 'Me'})),
       ...routes,
     },
-    handlers: {for (final e in handlers.entries) e.key: (o) => e.value(o)},
+    handlers: {for (final e in handlers.entries) e.key: e.value},
   );
   final container = ProviderContainer(
     retry: (_, _) => null,
