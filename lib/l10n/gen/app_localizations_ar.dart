@@ -315,8 +315,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get filterRead => 'مقروء';
 
   @override
-  String get featureUnavailable =>
-      'هذا القسم غير متاح بعد — واجهة WorkFlow البرمجية لا توفره.';
+  String get featureUnavailable => 'لا يوجد ما يُعرض هنا بعد.';
 
   @override
   String get roleClient => 'عميل';
@@ -405,8 +404,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get backendPending =>
-      'هذا القسم جاهز لواجهة WorkFlow البرمجية الجديدة. ستظهر البيانات هنا بعد أن ينشر فريق الخادم نقاط الاتصال.';
+  String get backendPending => 'هذا القسم غير متاح بعد.';
 
   @override
   String get selectHint => 'اختر';
@@ -425,7 +423,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get exportReport => 'تصدير التقرير';
 
   @override
-  String get exportPending => 'سيتوفر التصدير عندما يدعمه الخادم.';
+  String get exportPending => 'التصدير غير متاح بعد.';
 
   @override
   String get noRecords => 'لا توجد سجلات مطابقة لهذه الفلاتر';
@@ -1680,8 +1678,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get actionNeedsBackend =>
-      'لم يتم الحفظ: لا يوجد endpoint موثّق لهذا الإجراء على الخادم بعد.';
+  String get actionNeedsBackend => 'تعذّر حفظ هذا التغيير.';
 
   @override
   String get statusUnpaid => 'غير مدفوعة';
@@ -1706,7 +1703,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dashLiveOnly =>
-      'يعرض الخادم أعداد المشاريع فقط؛ أما بقية أقسام اللوحة فتحتاج إلى ردّ موثّق من الخادم.';
+      'تتوفر حاليًا إجماليات المشاريع فقط في هذه اللوحة.';
 
   @override
   String get totalEarned => 'إجمالي المستحق';
@@ -1762,8 +1759,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get meetingCreateUnavailable =>
-      'لا يمكن إنشاء اجتماعات من هذا الحساب — لا توفر واجهة WorkFlow مسار إنشاء لدورك.';
+  String get meetingCreateUnavailable => 'لا يمكن جدولة الاجتماعات من حسابك.';
 
   @override
   String durationSeconds(int h, int m, int s) {
@@ -1807,32 +1803,24 @@ class AppLocalizationsAr extends AppLocalizations {
       'لا يمكن أن يسبق تاريخ الاستحقاق تاريخ الفاتورة';
 
   @override
-  String get invoiceCreateUnavailable =>
-      'لا يمكن إنشاء فواتير من هذا الحساب — لا توفر واجهة WorkFlow مسار إنشاء فاتورة للعملاء.';
+  String get invoiceCreateUnavailable => 'لا يمكن إنشاء الفواتير من حسابك.';
 
   @override
-  String get paymentCreateUnavailable =>
-      'لا يمكن تسجيل دفعات من هذا الحساب — لا توفر واجهة WorkFlow مسار إنشاء دفعة للعملاء.';
+  String get paymentCreateUnavailable => 'لا يمكن تسجيل الدفعات من حسابك.';
 
   @override
-  String get projectCreateUnavailable =>
-      'لا يمكن إنشاء مشاريع من هذا الحساب — لا توفر واجهة WorkFlow مسار إنشاء مشروع لدورك.';
+  String get projectCreateUnavailable => 'لا يمكن إنشاء المشاريع من حسابك.';
 
   @override
   String get taskCreateUnavailable =>
       'يمكن لقائد المشروع فقط إنشاء المهام، وأنت لا تقود أي مشروع.';
 
   @override
-  String get emojiUseKeyboard =>
-      'استخدم زر الرموز التعبيرية في لوحة المفاتيح — لا يوجد في التطبيق منتقٍ للرموز بعد.';
+  String get emojiUseKeyboard => 'استخدم زر الرموز التعبيرية في لوحة المفاتيح.';
 
   @override
   String get voiceNotSupported =>
-      'الرسائل الصوتية غير مدعومة — تقبل واجهة WorkFlow الصور وملفات PDF والنصوص فقط.';
-
-  @override
-  String get conversationCreateUnavailable =>
-      'بدء محادثة غير مربوط بواجهة WorkFlow بعد — هذا النموذج يعمل في الوضع التجريبي فقط.';
+      'الرسائل الصوتية غير متاحة. يمكنك إرسال الصور وملفات PDF والملفات النصية.';
 
   @override
   String get meetingTimeInPast => 'اختر تاريخاً ووقتاً لم يمضيا';
@@ -1846,7 +1834,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get employeeDeleteUnavailable =>
-      'حسابات الموظفين يغلقها مسؤول الشركة — لا تسمح واجهة WorkFlow للموظف بحذف حسابه بنفسه.';
+      'يُغلق مسؤول شركتك حسابات الموظفين. تواصل معه إذا أردت إغلاق حسابك.';
 
   @override
   String get tipEmoji => 'رموز تعبيرية';
@@ -1889,8 +1877,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'هذا الحساب ليس حساب موظف. ارجع واختر عميل.';
 
   @override
-  String get myCompaniesNote =>
-      'الشركات المرتبطة بحسابك. لا يوفّر الخادم بعد حالة عضويتك أو قائمة بالشركات التي يمكنك الانضمام إليها.';
+  String get myCompaniesNote => 'الشركات المرتبطة بحسابك.';
 
   @override
   String get noCompaniesYet => 'حسابك غير مرتبط بأي شركة بعد.';
@@ -1917,8 +1904,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get statusConfirmed => 'مؤكدة';
 
   @override
-  String get paymentRowsNote =>
-      'الدفعات كما يعرضها الخادم. لا يذكر الخادم حالة كل دفعة أو عملتها، لذا يأتي فلتر الحالة والمجاميع أعلاه من الخادم.';
+  String get paymentRowsNote => 'دفعاتك المسجّلة.';
 
   @override
   String get loadMore => 'تحميل المزيد';
@@ -1927,8 +1913,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get paymentSummaryTitle => 'ملخص الدفعة';
 
   @override
-  String get paymentSummaryNote =>
-      'من قائمة الدفعات. لا يوثّق الخادم بعد التفاصيل الكاملة للدفعة، لذا تظهر حقول القائمة هذه فقط.';
+  String get paymentSummaryNote => 'تفاصيل من قائمة دفعاتك.';
 
   @override
   String get loadEarlierMessages => 'تحميل الرسائل الأقدم';
@@ -1938,7 +1923,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get joinedNoMedia =>
-      'انضممت إلى هذا الاجتماع. الصوت والفيديو غير متاحين في التطبيق بعد.';
+      'انضممت إلى هذا الاجتماع. الصوت والفيديو غير متاحين على هذا الجهاز.';
 
   @override
   String get joinRequestPending =>
@@ -2006,7 +1991,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get attachmentNoPreview =>
-      'لا يمكن فتح هذا النوع من الملفات في التطبيق بعد.';
+      'لا يمكن معاينة هذا الملف. احفظه لفتحه في تطبيق آخر.';
 
   @override
   String get attachmentUnavailable => 'لا يمكن فتح هذا المرفق.';
@@ -2099,19 +2084,19 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get joinByCodeNoClientRoute =>
-      'لا يمكن لحسابات العملاء الانضمام بالرمز: لا تتيح واجهة WorkFlow البحث عن الاجتماع بالرمز للعملاء. افتح الاجتماع من قائمة الاجتماعات واضغط انضمام.';
+      'للانضمام، افتح الاجتماع من قائمة الاجتماعات واضغط انضمام.';
 
   @override
   String get joinByCodeNotConnected =>
-      'الانضمام بالرمز غير متصل في التطبيق بعد. افتح الاجتماع من قائمة الاجتماعات واضغط انضمام.';
+      'للانضمام، افتح الاجتماع من قائمة الاجتماعات واضغط انضمام.';
 
   @override
   String get callsInMeetings =>
-      'المكالمات ليست جزءًا من المحادثات في واجهة WorkFlow. الصوت والفيديو يتمّان في الاجتماعات: افتح الاجتماعات وانضم إلى أحدها.';
+      'تتم مكالمات الصوت والفيديو في الاجتماعات. افتح الاجتماعات للانضمام إلى أحدها.';
 
   @override
   String get demoRoomMedia =>
-      'غرفة تجريبية: يعمل الصوت والفيديو في التطبيق الفعلي حيث تتصل الاجتماعات عبر LiveKit.';
+      'غرفة تجريبية: يعمل الصوت والفيديو في التطبيق الفعلي.';
 
   @override
   String get profileImageInvalid =>
@@ -2215,10 +2200,11 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'استُبعدت $count مهمة لأن الخادم لم يؤكد أنها مسندة إليك.',
-      few: 'استُبعدت $count مهام لأن الخادم لم يؤكد أنها مسندة إليك.',
-      two: 'استُبعدت مهمتان لأن الخادم لم يؤكد أنهما مسندتان إليك.',
-      one: 'استُبعدت مهمة واحدة لأن الخادم لم يؤكد أنها مسندة إليك.',
+      other: 'لم تُعرض $count مهمة لأنه تعذّر التأكد من أنها مسندة إليك.',
+      many: 'لم تُعرض $count مهمة لأنه تعذّر التأكد من أنها مسندة إليك.',
+      few: 'لم تُعرض $count مهام لأنه تعذّر التأكد من أنها مسندة إليك.',
+      two: 'لم تُعرض مهمتان لأنه تعذّر التأكد من أنهما مسندتان إليك.',
+      one: 'لم تُعرض مهمة واحدة لأنه تعذّر التأكد من أنها مسندة إليك.',
     );
     return '$_temp0';
   }
@@ -2388,4 +2374,8 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorSignInFailed => 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+
+  @override
+  String get timesheetSummaryOnly =>
+      'إجماليات سجل ساعاتك. لا تُعرض الإدخالات الفردية في التطبيق بعد.';
 }

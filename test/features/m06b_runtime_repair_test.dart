@@ -265,19 +265,24 @@ void main() {
     expect(find.byKey(const Key('notifications-empty')), findsNothing);
   });
 
-  testWidgets('chat call icons explain where calls happen', (tester) async {
+  testWidgets('a live chat shows only controls that work', (tester) async {
     await pumpApi(tester);
     await tester.tap(find.text('Chat').last);
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('conversation-1')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Video call'));
-    await tester.pump();
-    expect(find.textContaining('happen in meetings'), findsOneWidget);
-    expect(find.textContaining('backend'), findsNothing);
+    // Calls happen in meetings; voice messages are not accepted; emoji
+    // come from the keyboard: none of them is a dead button here.
+    expect(find.byTooltip('Video call'), findsNothing);
+    expect(find.byTooltip('Call'), findsNothing);
+    expect(find.byKey(const Key('chat-mic')), findsNothing);
+    expect(find.byKey(const Key('chat-emoji')), findsNothing);
+    // Files and images still attach.
+    expect(find.byKey(const Key('chat-attach')), findsOneWidget);
+    expect(find.byKey(const Key('chat-image')), findsOneWidget);
   });
 
-  testWidgets('join by code says why, without claiming no LiveKit', (
+  testWidgets('API Meetings offers no create or join-by-code it cannot do', (
     tester,
   ) async {
     await pumpApi(tester);
@@ -288,13 +293,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(cat);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('join by code'));
-    await tester.pump();
-    expect(
-      find.textContaining("Client accounts can't join by code"),
-      findsOneWidget,
-    );
+    expect(find.text('join by code'), findsNothing);
+    expect(find.byKey(const Key('create-fab')), findsNothing);
     expect(find.textContaining('LiveKit'), findsNothing);
+    expect(find.textContaining('API'), findsNothing);
   });
 
   group('profile picture', () {

@@ -671,7 +671,7 @@ abstract class AppLocalizations {
   /// No description provided for @featureUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'This section isn’t available yet — the WorkFlow API doesn’t provide it.'**
+  /// **'There\'s nothing to show here yet.'**
   String get featureUnavailable;
 
   /// No description provided for @roleClient.
@@ -785,7 +785,7 @@ abstract class AppLocalizations {
   /// No description provided for @backendPending.
   ///
   /// In en, this message translates to:
-  /// **'This section is ready for the new WorkFlow API. Its data will appear here once the backend team publishes the endpoints.'**
+  /// **'This section isn\'t available yet.'**
   String get backendPending;
 
   /// No description provided for @selectHint.
@@ -821,7 +821,7 @@ abstract class AppLocalizations {
   /// No description provided for @exportPending.
   ///
   /// In en, this message translates to:
-  /// **'Export will be available when the backend supports it.'**
+  /// **'Export isn\'t available yet.'**
   String get exportPending;
 
   /// No description provided for @noRecords.
@@ -3125,7 +3125,7 @@ abstract class AppLocalizations {
   /// No description provided for @actionNeedsBackend.
   ///
   /// In en, this message translates to:
-  /// **'Not saved: this action has no verified server endpoint yet.'**
+  /// **'This change couldn\'t be saved.'**
   String get actionNeedsBackend;
 
   /// No description provided for @statusUnpaid.
@@ -3173,7 +3173,7 @@ abstract class AppLocalizations {
   /// No description provided for @dashLiveOnly.
   ///
   /// In en, this message translates to:
-  /// **'The server reports project counts only; the other dashboard sections need a documented dashboard response.'**
+  /// **'Only project totals are available on this dashboard for now.'**
   String get dashLiveOnly;
 
   /// No description provided for @totalEarned.
@@ -3281,7 +3281,7 @@ abstract class AppLocalizations {
   /// No description provided for @meetingCreateUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Meetings can’t be created from this account — the WorkFlow API has no create route for your role.'**
+  /// **'Meetings can\'t be scheduled from your account.'**
   String get meetingCreateUnavailable;
 
   /// No description provided for @durationSeconds.
@@ -3347,19 +3347,19 @@ abstract class AppLocalizations {
   /// No description provided for @invoiceCreateUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Invoices can’t be created from this account — the WorkFlow API has no invoice create route for clients.'**
+  /// **'Invoices can\'t be created from your account.'**
   String get invoiceCreateUnavailable;
 
   /// No description provided for @paymentCreateUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Payments can’t be recorded from this account — the WorkFlow API has no payment create route for clients.'**
+  /// **'Payments can\'t be recorded from your account.'**
   String get paymentCreateUnavailable;
 
   /// No description provided for @projectCreateUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Projects can’t be created from this account — the WorkFlow API has no project create route for your role.'**
+  /// **'Projects can\'t be created from your account.'**
   String get projectCreateUnavailable;
 
   /// No description provided for @taskCreateUnavailable.
@@ -3371,20 +3371,14 @@ abstract class AppLocalizations {
   /// No description provided for @emojiUseKeyboard.
   ///
   /// In en, this message translates to:
-  /// **'Use your keyboard’s emoji button — the app has no emoji picker yet.'**
+  /// **'Use your keyboard\'s emoji button.'**
   String get emojiUseKeyboard;
 
   /// No description provided for @voiceNotSupported.
   ///
   /// In en, this message translates to:
-  /// **'Voice messages aren’t supported — the WorkFlow API accepts images, PDF and text files only.'**
+  /// **'Voice messages aren\'t available. You can send images, PDFs and text files.'**
   String get voiceNotSupported;
-
-  /// No description provided for @conversationCreateUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Starting a conversation isn’t connected to the WorkFlow API yet — this form only works in demo mode.'**
-  String get conversationCreateUnavailable;
 
   /// No description provided for @meetingTimeInPast.
   ///
@@ -3407,7 +3401,7 @@ abstract class AppLocalizations {
   /// No description provided for @employeeDeleteUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Employee accounts are closed by your company admin — the WorkFlow API doesn’t let employees delete their own account.'**
+  /// **'Your company admin closes employee accounts. Contact them if you want your account closed.'**
   String get employeeDeleteUnavailable;
 
   /// No description provided for @tipEmoji.
@@ -3491,7 +3485,7 @@ abstract class AppLocalizations {
   /// No description provided for @myCompaniesNote.
   ///
   /// In en, this message translates to:
-  /// **'Companies linked to your account. The server doesn\'t report your membership status or list companies you could join yet.'**
+  /// **'Companies linked to your account.'**
   String get myCompaniesNote;
 
   /// No description provided for @noCompaniesYet.
@@ -3545,7 +3539,7 @@ abstract class AppLocalizations {
   /// No description provided for @paymentRowsNote.
   ///
   /// In en, this message translates to:
-  /// **'Payments as the server lists them. It doesn\'t report a payment\'s status or currency on each row, so the status filter and the totals above come from the server.'**
+  /// **'Your recorded payments.'**
   String get paymentRowsNote;
 
   /// No description provided for @loadMore.
@@ -3563,7 +3557,7 @@ abstract class AppLocalizations {
   /// No description provided for @paymentSummaryNote.
   ///
   /// In en, this message translates to:
-  /// **'From the payments list. The server doesn\'t document a payment\'s full details yet, so only these list fields are shown.'**
+  /// **'Details from your payments list.'**
   String get paymentSummaryNote;
 
   /// No description provided for @loadEarlierMessages.
@@ -3581,7 +3575,7 @@ abstract class AppLocalizations {
   /// No description provided for @joinedNoMedia.
   ///
   /// In en, this message translates to:
-  /// **'You joined this meeting. Audio and video aren\'t available in the app yet.'**
+  /// **'You\'ve joined this meeting. Audio and video aren\'t available on this device.'**
   String get joinedNoMedia;
 
   /// No description provided for @joinRequestPending.
@@ -3707,7 +3701,7 @@ abstract class AppLocalizations {
   /// No description provided for @attachmentNoPreview.
   ///
   /// In en, this message translates to:
-  /// **'This file type can\'t be opened in the app yet.'**
+  /// **'This file can\'t be previewed. Save it to open it in another app.'**
   String get attachmentNoPreview;
 
   /// No description provided for @attachmentUnavailable.
@@ -3857,25 +3851,25 @@ abstract class AppLocalizations {
   /// No description provided for @joinByCodeNoClientRoute.
   ///
   /// In en, this message translates to:
-  /// **'Client accounts can\'t join by code: the WorkFlow API has no meeting lookup by code for clients. Open the meeting from Meetings and tap Join.'**
+  /// **'To join, open the meeting from Meetings and tap Join.'**
   String get joinByCodeNoClientRoute;
 
   /// No description provided for @joinByCodeNotConnected.
   ///
   /// In en, this message translates to:
-  /// **'Joining by code isn\'t connected in the app yet. Open the meeting from Meetings and tap Join.'**
+  /// **'To join, open the meeting from Meetings and tap Join.'**
   String get joinByCodeNotConnected;
 
   /// No description provided for @callsInMeetings.
   ///
   /// In en, this message translates to:
-  /// **'Calls aren\'t part of conversations in the WorkFlow API. Voice and video happen in meetings: open Meetings and join one.'**
+  /// **'Voice and video calls happen in meetings. Open Meetings to join one.'**
   String get callsInMeetings;
 
   /// No description provided for @demoRoomMedia.
   ///
   /// In en, this message translates to:
-  /// **'Demo room: audio and video run in the live app, where meetings connect through LiveKit.'**
+  /// **'Demo room: audio and video work in the live app.'**
   String get demoRoomMedia;
 
   /// No description provided for @profileImageInvalid.
@@ -4061,7 +4055,7 @@ abstract class AppLocalizations {
   /// No description provided for @tasksHiddenUnverified.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 task was left out because the server did not confirm it is assigned to you.} other{{count} tasks were left out because the server did not confirm they are assigned to you.}}'**
+  /// **'{count, plural, =1{1 task isn\'t shown because it couldn\'t be confirmed as yours.} other{{count} tasks aren\'t shown because they couldn\'t be confirmed as yours.}}'**
   String tasksHiddenUnverified(int count);
 
   /// No description provided for @taskDetailsStale.
@@ -4345,6 +4339,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The email or password is incorrect.'**
   String get errorSignInFailed;
+
+  /// No description provided for @timesheetSummaryOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Your timesheet totals. Individual entries aren\'t shown in the app yet.'**
+  String get timesheetSummaryOnly;
 }
 
 class _AppLocalizationsDelegate

@@ -27,7 +27,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
   @override
   Widget build(BuildContext context) {
     final demo = ref.watch(demoModeProvider);
-    if (!demo) return ApiInvoicesView(onCreate: () => _openForm(context));
+    if (!demo) return const ApiInvoicesView();
     final l10n = AppLocalizations.of(context);
     final all = ref.watch(invoicesProvider);
     final now = DateTime.now();

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/app/routes.dart';
+import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/features/categories/presentation/categories_screen.dart';
 import 'package:workflow_app/features/dashboard/presentation/client_dashboard_screen.dart';
 import 'package:workflow_app/features/finance/presentation/invoices_screen.dart';
@@ -10,12 +12,13 @@ import 'package:workflow_app/features/projects/presentation/projects_screen.dart
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 /// Client "More" tab: Figma Categories (666:69807).
-class ClientCategoriesScreen extends StatelessWidget {
+class ClientCategoriesScreen extends ConsumerWidget {
   const new({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final demo = ref.watch(demoModeProvider);
     void push(BuildContext c, Widget page) =>
         Navigator.of(c).push(MaterialPageRoute<void>(builder: (_) => page));
 
@@ -97,12 +100,17 @@ class ClientCategoriesScreen extends StatelessWidget {
           ],
         ),
       ],
+      // A client has no create route for meetings, invoices, projects or
+      // payments, and no join-by-code lookup: in API mode none of these
+      // could be completed, so the + is not shown (demo keeps them).
       createActions: [
-        CreateAction(l10n.scheduleMeeting, openScheduleMeeting),
-        CreateAction(l10n.joinByCodeTitle, openJoinByCode),
-        CreateAction(l10n.createInvoice, openInvoiceForm),
-        CreateAction(l10n.addProject, openProjectForm),
-        CreateAction(l10n.addPayment, openPaymentForm),
+        if (demo) ...[
+          CreateAction(l10n.scheduleMeeting, openScheduleMeeting),
+          CreateAction(l10n.joinByCodeTitle, openJoinByCode),
+          CreateAction(l10n.createInvoice, openInvoiceForm),
+          CreateAction(l10n.addProject, openProjectForm),
+          CreateAction(l10n.addPayment, openPaymentForm),
+        ],
       ],
     );
   }

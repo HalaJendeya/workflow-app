@@ -823,8 +823,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                             ),
                           ),
                         ),
-                        _HeaderIcon('chat_phone', l10n.call, pending),
-                        _HeaderIcon('chat_video', l10n.videoCall, pending),
+                        // Calls happen in meetings: a live chat has no
+                        // call buttons (the demo keeps the Figma header).
+                        if (thread == null) ...[
+                          _HeaderIcon('chat_phone', l10n.call, pending),
+                          _HeaderIcon('chat_video', l10n.videoCall, pending),
+                        ],
                         _HeaderIcon(
                           'chat_info',
                           l10n.conversationInfo,
@@ -992,14 +996,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   Row(
                     children: [
                       // 40 px targets (a 20 px icon and the Figma 20 px
-                      // gap), each saying why it is not available yet.
+                      // gap). A live chat shows only what works: files
+                      // and images. Emoji (the keyboard has its own) and
+                      // voice (not accepted by the server) stay in the demo.
                       for (final (key, icon, tip, why) in [
-                        (
-                          'chat-emoji',
-                          'chat_smile',
-                          l10n.tipEmoji,
-                          l10n.emojiUseKeyboard,
-                        ),
+                        if (thread == null)
+                          (
+                            'chat-emoji',
+                            'chat_smile',
+                            l10n.tipEmoji,
+                            l10n.emojiUseKeyboard,
+                          ),
                         (
                           'chat-attach',
                           'chat_attach',
@@ -1012,12 +1019,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                           l10n.tipAttachImage,
                           l10n.attachmentsDemo,
                         ),
-                        (
-                          'chat-mic',
-                          'chat_mic',
-                          l10n.tipVoice,
-                          l10n.voiceNotSupported,
-                        ),
+                        if (thread == null)
+                          (
+                            'chat-mic',
+                            'chat_mic',
+                            l10n.tipVoice,
+                            l10n.voiceNotSupported,
+                          ),
                       ])
                         Tooltip(
                           message: tip,

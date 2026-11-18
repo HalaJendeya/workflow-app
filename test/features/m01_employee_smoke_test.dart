@@ -407,9 +407,12 @@ void main() {
         await _open(tester, screen);
         expect(find.byKey(const Key('api-error')), findsNothing);
         if (screen == 'Timesheets') {
-          // Timesheet rows are not mapped yet (backend gap): the screen
-          // says so instead of listing anything.
-          expect(find.byType(BackendPendingNotice), findsOneWidget);
+          // Totals only: the screen says individual entries are not shown,
+          // in product words.
+          expect(
+            find.textContaining("Individual entries aren't shown"),
+            findsOneWidget,
+          );
         } else {
           await _details(tester, screen);
         }

@@ -78,10 +78,11 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
       title: l10n.paymentsTitle,
       description: l10n.paymentsDescription,
       onSearch: demo ? (v) => setState(() => _query = v) : _onApiSearch,
-      onCreate: () => _openForm(context),
+      // Clients have no payment create or export route: demo only.
+      onCreate: demo ? () => _openForm(context) : null,
       createLabel: l10n.addPayment,
       children: [
-        const ExportReportChip(),
+        if (demo) const ExportReportChip(),
         if (demo) ...[
           MetricGroup(
             metrics: [

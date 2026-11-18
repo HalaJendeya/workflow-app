@@ -91,7 +91,7 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
             })
           : null,
       children: [
-        if (!demo) const BackendPendingNotice(),
+        if (!demo) InfoNotice(text: l10n.timesheetSummaryOnly),
         if (api case AsyncError(:final error))
           ApiErrorCard(
             error: error,

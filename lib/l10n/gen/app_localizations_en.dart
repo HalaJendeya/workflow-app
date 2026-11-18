@@ -317,8 +317,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterRead => 'Read';
 
   @override
-  String get featureUnavailable =>
-      'This section isn’t available yet — the WorkFlow API doesn’t provide it.';
+  String get featureUnavailable => 'There\'s nothing to show here yet.';
 
   @override
   String get roleClient => 'Client';
@@ -401,8 +400,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get backendPending =>
-      'This section is ready for the new WorkFlow API. Its data will appear here once the backend team publishes the endpoints.';
+  String get backendPending => 'This section isn\'t available yet.';
 
   @override
   String get selectHint => 'select';
@@ -421,8 +419,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportReport => 'Export Report';
 
   @override
-  String get exportPending =>
-      'Export will be available when the backend supports it.';
+  String get exportPending => 'Export isn\'t available yet.';
 
   @override
   String get noRecords => 'No records match these filters';
@@ -1682,8 +1679,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get actionNeedsBackend =>
-      'Not saved: this action has no verified server endpoint yet.';
+  String get actionNeedsBackend => 'This change couldn\'t be saved.';
 
   @override
   String get statusUnpaid => 'Unpaid';
@@ -1708,7 +1704,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dashLiveOnly =>
-      'The server reports project counts only; the other dashboard sections need a documented dashboard response.';
+      'Only project totals are available on this dashboard for now.';
 
   @override
   String get totalEarned => 'Total earned';
@@ -1765,7 +1761,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get meetingCreateUnavailable =>
-      'Meetings can’t be created from this account — the WorkFlow API has no create route for your role.';
+      'Meetings can\'t be scheduled from your account.';
 
   @override
   String durationSeconds(int h, int m, int s) {
@@ -1810,31 +1806,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invoiceCreateUnavailable =>
-      'Invoices can’t be created from this account — the WorkFlow API has no invoice create route for clients.';
+      'Invoices can\'t be created from your account.';
 
   @override
   String get paymentCreateUnavailable =>
-      'Payments can’t be recorded from this account — the WorkFlow API has no payment create route for clients.';
+      'Payments can\'t be recorded from your account.';
 
   @override
   String get projectCreateUnavailable =>
-      'Projects can’t be created from this account — the WorkFlow API has no project create route for your role.';
+      'Projects can\'t be created from your account.';
 
   @override
   String get taskCreateUnavailable =>
       'Only a project’s leader can create tasks, and you don’t lead any project.';
 
   @override
-  String get emojiUseKeyboard =>
-      'Use your keyboard’s emoji button — the app has no emoji picker yet.';
+  String get emojiUseKeyboard => 'Use your keyboard\'s emoji button.';
 
   @override
   String get voiceNotSupported =>
-      'Voice messages aren’t supported — the WorkFlow API accepts images, PDF and text files only.';
-
-  @override
-  String get conversationCreateUnavailable =>
-      'Starting a conversation isn’t connected to the WorkFlow API yet — this form only works in demo mode.';
+      'Voice messages aren\'t available. You can send images, PDFs and text files.';
 
   @override
   String get meetingTimeInPast => 'Choose a date and time that haven’t passed';
@@ -1848,7 +1839,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get employeeDeleteUnavailable =>
-      'Employee accounts are closed by your company admin — the WorkFlow API doesn’t let employees delete their own account.';
+      'Your company admin closes employee accounts. Contact them if you want your account closed.';
 
   @override
   String get tipEmoji => 'Emoji';
@@ -1892,8 +1883,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'This account isn\'t an employee account. Go back and choose Client.';
 
   @override
-  String get myCompaniesNote =>
-      'Companies linked to your account. The server doesn\'t report your membership status or list companies you could join yet.';
+  String get myCompaniesNote => 'Companies linked to your account.';
 
   @override
   String get noCompaniesYet => 'Your account isn\'t linked to any company yet.';
@@ -1920,8 +1910,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusConfirmed => 'Confirmed';
 
   @override
-  String get paymentRowsNote =>
-      'Payments as the server lists them. It doesn\'t report a payment\'s status or currency on each row, so the status filter and the totals above come from the server.';
+  String get paymentRowsNote => 'Your recorded payments.';
 
   @override
   String get loadMore => 'Load more';
@@ -1930,8 +1919,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentSummaryTitle => 'Payment summary';
 
   @override
-  String get paymentSummaryNote =>
-      'From the payments list. The server doesn\'t document a payment\'s full details yet, so only these list fields are shown.';
+  String get paymentSummaryNote => 'Details from your payments list.';
 
   @override
   String get loadEarlierMessages => 'Load earlier messages';
@@ -1942,7 +1930,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get joinedNoMedia =>
-      'You joined this meeting. Audio and video aren\'t available in the app yet.';
+      'You\'ve joined this meeting. Audio and video aren\'t available on this device.';
 
   @override
   String get joinRequestPending =>
@@ -2010,7 +1998,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get attachmentNoPreview =>
-      'This file type can\'t be opened in the app yet.';
+      'This file can\'t be previewed. Save it to open it in another app.';
 
   @override
   String get attachmentUnavailable => 'This attachment can\'t be opened.';
@@ -2104,19 +2092,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get joinByCodeNoClientRoute =>
-      'Client accounts can\'t join by code: the WorkFlow API has no meeting lookup by code for clients. Open the meeting from Meetings and tap Join.';
+      'To join, open the meeting from Meetings and tap Join.';
 
   @override
   String get joinByCodeNotConnected =>
-      'Joining by code isn\'t connected in the app yet. Open the meeting from Meetings and tap Join.';
+      'To join, open the meeting from Meetings and tap Join.';
 
   @override
   String get callsInMeetings =>
-      'Calls aren\'t part of conversations in the WorkFlow API. Voice and video happen in meetings: open Meetings and join one.';
+      'Voice and video calls happen in meetings. Open Meetings to join one.';
 
   @override
   String get demoRoomMedia =>
-      'Demo room: audio and video run in the live app, where meetings connect through LiveKit.';
+      'Demo room: audio and video work in the live app.';
 
   @override
   String get profileImageInvalid =>
@@ -2221,8 +2209,8 @@ class AppLocalizationsEn extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          '$count tasks were left out because the server did not confirm they are assigned to you.',
-      one: '1 task was left out because the server did not confirm it is assigned to you.',
+          '$count tasks aren\'t shown because they couldn\'t be confirmed as yours.',
+      one: '1 task isn\'t shown because it couldn\'t be confirmed as yours.',
     );
     return '$_temp0';
   }
@@ -2391,4 +2379,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorSignInFailed => 'The email or password is incorrect.';
+
+  @override
+  String get timesheetSummaryOnly =>
+      'Your timesheet totals. Individual entries aren\'t shown in the app yet.';
 }

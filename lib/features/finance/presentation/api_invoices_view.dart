@@ -44,9 +44,10 @@ String invoiceSortLabel(AppLocalizations l10n, InvoiceSort s) => switch (s) {
 /// Clients have no invoice create, update or delete routes, so records are
 /// read-only here; "Create Invoice" reports that nothing can be saved.
 class ApiInvoicesView extends ConsumerStatefulWidget {
-  const new({required this.onCreate, super.key});
+  const new({this.onCreate, super.key});
 
-  final VoidCallback onCreate;
+  /// Null in API mode: clients have no invoice create route.
+  final VoidCallback? onCreate;
 
   @override
   ConsumerState<ApiInvoicesView> createState() => _ApiInvoicesViewState();
@@ -105,7 +106,6 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
       onCreate: widget.onCreate,
       createLabel: l10n.createInvoice,
       children: [
-        const ExportReportChip(),
         MetricGroup(
           metrics: [
             Metric(

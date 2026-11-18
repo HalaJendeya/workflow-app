@@ -310,10 +310,9 @@ void main() {
       );
       await tester.tap(find.text('Invoices').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('create-fab')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('form-save')), findsNothing);
-      expect(find.textContaining('no invoice create route'), findsOneWidget);
+      // No create route for clients: no button that could only explain.
+      expect(find.byKey(const Key('create-fab')), findsNothing);
+      expect(find.textContaining('Export'), findsNothing);
     });
 
     testWidgets('add payment', (tester) async {
@@ -324,10 +323,8 @@ void main() {
         adapter: RouteHttpAdapter(routes),
       );
       await _openCategory(tester, 'Payments');
-      await tester.tap(find.byKey(const Key('create-fab')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('form-save')), findsNothing);
-      expect(find.textContaining('no payment create route'), findsOneWidget);
+      expect(find.byKey(const Key('create-fab')), findsNothing);
+      expect(find.textContaining('Export'), findsNothing);
     });
 
     testWidgets('add project: not offered to an employee (403 route)', (
@@ -361,7 +358,7 @@ void main() {
       expect(find.byKey(const Key('form-save')), findsNothing);
     });
 
-    testWidgets('the More create menu says the same', (tester) async {
+    testWidgets('the More menu offers no create actions', (tester) async {
       await _pump(
         tester,
         Portal.client,
@@ -370,12 +367,9 @@ void main() {
       );
       await tester.tap(find.text('More').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('create-fab')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Create Invoice'));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('form-save')), findsNothing);
-      expect(find.textContaining('no invoice create route'), findsOneWidget);
+      // None of the client create actions can be completed in API mode.
+      expect(find.byKey(const Key('create-fab')), findsNothing);
+      expect(find.byKey(const Key('preferences-card')), findsOneWidget);
     });
   });
 }

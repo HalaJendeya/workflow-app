@@ -8,7 +8,6 @@ import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
-import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/meetings/application/meeting_media_controller.dart';
@@ -16,8 +15,6 @@ import 'package:workflow_app/features/meetings/data/meetings_repository.dart';
 import 'package:workflow_app/features/meetings/domain/meeting.dart';
 import 'package:workflow_app/features/meetings/presentation/api_meeting_room_screen.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_details_screen.dart';
-import 'package:workflow_app/features/meetings/presentation/meeting_forms.dart'
-    show joinByCodeUnavailable;
 import 'package:workflow_app/features/meetings/presentation/meetings_screen.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -124,35 +121,15 @@ class _ApiMeetingsViewState extends ConsumerState<ApiMeetingsView> {
     String n(int Function(MeetingCounts) pick) =>
         counts.value == null ? '—' : count(pick(counts.value!));
 
-    // U2: an employee (lead or not) has no meeting create route and the
-    // app does not call the by-code lookup yet, so neither action is shown
-    // (M07: unusable actions are hidden). Clients keep the explanation.
-    final employee =
-        ref.watch(sessionControllerProvider).value?.portal == Portal.employee;
+    // Neither role has a meeting create route, and the app has no
+    // join-by-code lookup (clients have none; the employee one is not
+    // wired), so neither action is shown (M07: unusable actions are
+    // hidden). Meetings are joined from their details.
     return ModulePage(
       title: l10n.meetingsTitle,
       description: l10n.meetingsDescription,
       onSearch: _onSearch,
-      onCreate: employee
-          ? null
-          : () => showSnack(context, l10n.meetingCreateUnavailable),
-      createLabel: l10n.scheduleMeeting,
       children: [
-        if (!employee)
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: FilterChipBox(
-              label: l10n.joinByCode,
-              selected: true,
-              onTap: () => showSnack(
-                context,
-                joinByCodeUnavailable(
-                  l10n,
-                  ref.read(sessionControllerProvider).value?.portal,
-                ),
-              ),
-            ),
-          ),
         ModuleCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

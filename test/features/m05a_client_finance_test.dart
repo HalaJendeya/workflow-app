@@ -927,7 +927,7 @@ void main() {
       expect(
         find.descendant(
           of: sheet,
-          matching: find.textContaining("doesn't document a payment's full"),
+          matching: find.text('Details from your payments list.'),
         ),
         findsOneWidget,
       );

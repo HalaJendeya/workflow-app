@@ -356,11 +356,12 @@ void main() {
       expect(find.text('a day ago'), findsOneWidget);
     });
 
-    testWidgets('client tasks card states the API gap instead of data', (
+    testWidgets('client tasks card says there is nothing to show', (
       tester,
     ) async {
       await signedIn(tester);
-      expect(find.textContaining('API doesn’t provide it'), findsOneWidget);
+      expect(find.text("There's nothing to show here yet."), findsOneWidget);
+      expect(find.textContaining('API'), findsNothing);
     });
 
     testWidgets('search filters notifications locally', (tester) async {

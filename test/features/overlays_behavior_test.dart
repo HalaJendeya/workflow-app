@@ -200,7 +200,7 @@ void main() {
     expect(find.textContaining('only works in demo mode'), findsNothing);
   });
 
-  testWidgets('API mode: Schedule meeting from the More menu is refused', (
+  testWidgets('API mode: More offers no Schedule meeting to a client', (
     tester,
   ) async {
     await _pump(
@@ -213,12 +213,9 @@ void main() {
     );
     await tester.tap(find.text('More').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('create-fab')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Schedule meeting').last);
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('meeting-save')), findsNothing);
-    expect(find.textContaining('no create route'), findsOneWidget);
+    // No create route for meetings (or anything else a client could add).
+    expect(find.byKey(const Key('create-fab')), findsNothing);
+    expect(find.text('Schedule meeting'), findsNothing);
   });
 
   testWidgets('employees see why they cannot delete their account', (
