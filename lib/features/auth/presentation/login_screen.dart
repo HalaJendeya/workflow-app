@@ -86,7 +86,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.email],
                   validator: v.email,
-                  errorText: fieldError(_error, 'email'),
+                  errorText: fieldError(context, _error, 'email'),
                 ),
                 WfTextField(
                   key: const Key('login-password'),
@@ -98,7 +98,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   textInputAction: TextInputAction.done,
                   autofillHints: const [AutofillHints.password],
                   validator: v.required,
-                  errorText: fieldError(_error, 'password'),
+                  errorText: fieldError(context, _error, 'password'),
                   onSubmitted: (_) => _submit(),
                 ),
                 Row(

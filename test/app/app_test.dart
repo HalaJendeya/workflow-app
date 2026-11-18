@@ -409,7 +409,7 @@ void main() {
       expect(find.text('Account Type'), findsOneWidget);
       expect(find.byKey(const Key('session-expired')), findsOneWidget);
       expect(
-        find.text('Your session has ended. Please sign in again.'),
+        find.text('Your session has expired. Please sign in again.'),
         findsOneWidget,
       );
     });

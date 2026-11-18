@@ -35,20 +35,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emptyState => 'Nothing here yet';
 
   @override
-  String get errorNetwork => 'Can\'t reach the server. Check your connection.';
+  String get errorNetwork =>
+      'You\'re offline. Check your connection and try again.';
 
   @override
   String get errorSessionExpired =>
-      'Your session has ended. Please sign in again.';
+      'Your session has expired. Please sign in again.';
 
   @override
-  String get errorForbidden => 'You don\'t have access to this.';
+  String get errorForbidden =>
+      'You don\'t have permission to perform this action.';
 
   @override
-  String get errorNotFound => 'This item no longer exists.';
+  String get errorNotFound =>
+      'This item may no longer be available. Refresh and try again.';
 
   @override
-  String get errorValidation => 'Please check the highlighted fields.';
+  String get errorValidation =>
+      'Some details need attention. Check the highlighted fields.';
 
   @override
   String errorRateLimited(int seconds) {
@@ -56,8 +60,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get errorServer =>
-      'Something went wrong on our side. Please try again.';
+  String get errorServer => 'Something went wrong. Please try again later.';
 
   @override
   String get errorUnknown => 'Something went wrong. Please try again.';
@@ -1949,7 +1952,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get leftMeeting => 'You left the meeting.';
 
   @override
-  String get chatReconnecting => 'Can\'t reach the server. Retrying…';
+  String get chatReconnecting => 'Connection lost. Reconnecting…';
 
   @override
   String get messageSending => 'Sending…';
@@ -2284,7 +2287,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get taskNoChanges => 'Nothing changed.';
 
   @override
-  String get serverRejected => 'The server didn’t accept this:';
+  String get serverRejected => 'Please fix the following:';
 
   @override
   String get sortPlannedDate => 'Planned date';
@@ -2366,4 +2369,26 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get errorTimeout =>
+      'This is taking longer than expected. Please try again.';
+
+  @override
+  String get errorConflict =>
+      'This item was changed or can\'t be changed right now. Refresh and try again.';
+
+  @override
+  String get errorBadRequest =>
+      'This request couldn\'t be completed. Check the details and try again.';
+
+  @override
+  String get errorFieldInvalid => 'Check this field.';
+
+  @override
+  String get errorSignInBlocked =>
+      'This account can\'t sign in right now. Contact your company admin.';
+
+  @override
+  String get errorSignInFailed => 'The email or password is incorrect.';
 }

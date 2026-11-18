@@ -149,31 +149,31 @@ abstract class AppLocalizations {
   /// No description provided for @errorNetwork.
   ///
   /// In en, this message translates to:
-  /// **'Can\'t reach the server. Check your connection.'**
+  /// **'You\'re offline. Check your connection and try again.'**
   String get errorNetwork;
 
   /// No description provided for @errorSessionExpired.
   ///
   /// In en, this message translates to:
-  /// **'Your session has ended. Please sign in again.'**
+  /// **'Your session has expired. Please sign in again.'**
   String get errorSessionExpired;
 
   /// No description provided for @errorForbidden.
   ///
   /// In en, this message translates to:
-  /// **'You don\'t have access to this.'**
+  /// **'You don\'t have permission to perform this action.'**
   String get errorForbidden;
 
   /// No description provided for @errorNotFound.
   ///
   /// In en, this message translates to:
-  /// **'This item no longer exists.'**
+  /// **'This item may no longer be available. Refresh and try again.'**
   String get errorNotFound;
 
   /// No description provided for @errorValidation.
   ///
   /// In en, this message translates to:
-  /// **'Please check the highlighted fields.'**
+  /// **'Some details need attention. Check the highlighted fields.'**
   String get errorValidation;
 
   /// No description provided for @errorRateLimited.
@@ -185,7 +185,7 @@ abstract class AppLocalizations {
   /// No description provided for @errorServer.
   ///
   /// In en, this message translates to:
-  /// **'Something went wrong on our side. Please try again.'**
+  /// **'Something went wrong. Please try again later.'**
   String get errorServer;
 
   /// No description provided for @errorUnknown.
@@ -3599,7 +3599,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatReconnecting.
   ///
   /// In en, this message translates to:
-  /// **'Can\'t reach the server. Retrying…'**
+  /// **'Connection lost. Reconnecting…'**
   String get chatReconnecting;
 
   /// No description provided for @messageSending.
@@ -4175,7 +4175,7 @@ abstract class AppLocalizations {
   /// No description provided for @serverRejected.
   ///
   /// In en, this message translates to:
-  /// **'The server didn’t accept this:'**
+  /// **'Please fix the following:'**
   String get serverRejected;
 
   /// No description provided for @sortPlannedDate.
@@ -4309,6 +4309,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =0{No tasks} =1{1 task} other{{count} tasks}}'**
   String taskResultCount(int count);
+
+  /// No description provided for @errorTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'This is taking longer than expected. Please try again.'**
+  String get errorTimeout;
+
+  /// No description provided for @errorConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'This item was changed or can\'t be changed right now. Refresh and try again.'**
+  String get errorConflict;
+
+  /// No description provided for @errorBadRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'This request couldn\'t be completed. Check the details and try again.'**
+  String get errorBadRequest;
+
+  /// No description provided for @errorFieldInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Check this field.'**
+  String get errorFieldInvalid;
+
+  /// No description provided for @errorSignInBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This account can\'t sign in right now. Contact your company admin.'**
+  String get errorSignInBlocked;
+
+  /// No description provided for @errorSignInFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The email or password is incorrect.'**
+  String get errorSignInFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -8,11 +8,11 @@
   "demoModeBanner": "Demo data — nothing is saved to the server",
   "retry": "Retry",
   "emptyState": "Nothing here yet",
-  "errorNetwork": "Can't reach the server. Check your connection.",
-  "errorSessionExpired": "Your session has ended. Please sign in again.",
-  "errorForbidden": "You don't have access to this.",
-  "errorNotFound": "This item no longer exists.",
-  "errorValidation": "Please check the highlighted fields.",
+  "errorNetwork": "You're offline. Check your connection and try again.",
+  "errorSessionExpired": "Your session has expired. Please sign in again.",
+  "errorForbidden": "You don't have permission to perform this action.",
+  "errorNotFound": "This item may no longer be available. Refresh and try again.",
+  "errorValidation": "Some details need attention. Check the highlighted fields.",
   "errorRateLimited": "Too many attempts. Try again in {seconds} seconds.",
   "@errorRateLimited": {
     "placeholders": {
@@ -21,7 +21,7 @@
       }
     }
   },
-  "errorServer": "Something went wrong on our side. Please try again.",
+  "errorServer": "Something went wrong. Please try again later.",
   "errorUnknown": "Something went wrong. Please try again.",
   "accountTypeTitle": "Account Type",
   "accountTypeClientTitle": "client",
@@ -1030,7 +1030,7 @@
   "joinedNoMedia": "You joined this meeting. Audio and video aren't available in the app yet.",
   "joinRequestPending": "Join request sent. The host must admit you before you can join.",
   "leftMeeting": "You left the meeting.",
-  "chatReconnecting": "Can't reach the server. Retrying…",
+  "chatReconnecting": "Connection lost. Reconnecting…",
   "messageSending": "Sending…",
   "messageNotSent": "Not sent",
   "discard": "Discard",
@@ -1177,7 +1177,7 @@
   "taskMonthLocked": "This month’s timesheet is already approved, so the task can’t be changed.",
   "taskAssigneeHint": "As project leader you can assign only members of this project.",
   "taskNoChanges": "Nothing changed.",
-  "serverRejected": "The server didn’t accept this:",
+  "serverRejected": "Please fix the following:",
   "sortPlannedDate": "Planned date",
   "sortTitle": "Title A–Z",
   "projectTasks": "Project tasks",
@@ -1227,5 +1227,11 @@
         "type": "int"
       }
     }
-  }
+  },
+  "errorTimeout": "This is taking longer than expected. Please try again.",
+  "errorConflict": "This item was changed or can't be changed right now. Refresh and try again.",
+  "errorBadRequest": "This request couldn't be completed. Check the details and try again.",
+  "errorFieldInvalid": "Check this field.",
+  "errorSignInBlocked": "This account can't sign in right now. Contact your company admin.",
+  "errorSignInFailed": "The email or password is incorrect."
 }

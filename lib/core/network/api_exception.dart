@@ -5,7 +5,14 @@
 /// deactivated, unverified or never-activated account; 429 carries
 /// `retry_after`.
 enum ApiFailureKind {
+  /// No connection: offline, DNS or connection refused.
   network,
+
+  /// Connected, but no answer in time.
+  timeout,
+
+  /// 400: a malformed request.
+  badRequest,
   unauthorized,
   forbidden,
   notFound,

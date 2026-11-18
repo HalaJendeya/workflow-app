@@ -351,7 +351,10 @@ void main() {
     await _drag(tester, find.byKey(const Key('kanban-1')), _drop('completed'));
     await tester.pumpAndSettle();
     expect(find.text('Task status updated.'), findsNothing);
-    expect(find.text("You don't have access to this."), findsOneWidget);
+    expect(
+      find.text("You don't have permission to perform this action."),
+      findsOneWidget,
+    );
     // Back where it was, not saved anywhere.
     expect(find.byKey(const Key('kanban-1')), findsOneWidget);
     expect(find.byKey(const Key('kanban-pending')), findsNothing);

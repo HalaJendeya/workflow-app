@@ -53,6 +53,10 @@ class ApiEnvelope {
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.transformTimeout:
+        return ApiException(
+          kind: ApiFailureKind.timeout,
+          message: error.message ?? 'Timed out',
+        );
       case DioExceptionType.connectionError:
         return ApiException(
           kind: ApiFailureKind.network,
@@ -112,6 +116,7 @@ class ApiEnvelope {
   }
 
   static ApiFailureKind _kindFor(int? status) => switch (status) {
+    400 => ApiFailureKind.badRequest,
     401 => ApiFailureKind.unauthorized,
     403 => ApiFailureKind.forbidden,
     404 => ApiFailureKind.notFound,

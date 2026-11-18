@@ -365,8 +365,12 @@ class _PersonalInfoCardState extends ConsumerState<_PersonalInfoCard> {
     final l10n = AppLocalizations.of(context);
     final portal =
         ref.watch(sessionControllerProvider).value?.portal ?? Portal.client;
-    final emailError = _serverErrors['email']?.first;
-    final nameError = _serverErrors['name']?.first;
+    String? serverError(String field) => switch (_serverErrors[field]) {
+      [final m, ...] => safeServerMessage(l10n, m) ?? l10n.errorFieldInvalid,
+      _ => null,
+    };
+    final emailError = serverError('email');
+    final nameError = serverError('name');
     return ModuleCard(
       child: Form(
         key: _form,
@@ -544,7 +548,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
       showSnack(context, l10n.passwordChanged);
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _currentError = e.firstErrorFor('old_password'));
+      setState(() => _currentError = safeFieldError(l10n, e, 'old_password'));
       showSnack(context, localizedError(l10n, e));
     } finally {
       if (mounted) setState(() => _saving = false);

@@ -172,8 +172,10 @@ class AuthValidators {
 }
 
 /// Shows a failed request: field errors stay on the form; anything else is a
-/// localized snackbar. 403/422 server messages are shown as given because
-/// they explain the reason (unverified email, deactivated account, ...).
+/// localized snackbar. On sign-in, 401 means wrong credentials (not an
+/// expired session) and 403 an account that may not sign in (unverified,
+/// deactivated). The server's reason is shown when it is safe and in the
+/// UI's language; otherwise a localized sentence with the next step.
 void showAuthError(BuildContext context, Object error) {
   final l10n = AppLocalizations.of(context);
   var text = localizedError(l10n, error);
@@ -183,17 +185,22 @@ void showAuthError(BuildContext context, Object error) {
       Portal.employee => l10n.wrongPortalEmployee,
     };
   }
-  if (error is ApiException &&
-      (error.kind == ApiFailureKind.forbidden ||
-          (error.kind == ApiFailureKind.validation &&
-              error.fieldErrors.isEmpty) ||
-          error.kind == ApiFailureKind.unauthorized)) {
-    text = error.message;
+  if (error is ApiException) {
+    final reason = safeServerMessage(l10n, error.message);
+    if (error.kind == ApiFailureKind.unauthorized) {
+      text = reason ?? l10n.errorSignInFailed;
+    } else if (error.kind == ApiFailureKind.forbidden) {
+      text = reason ?? l10n.errorSignInBlocked;
+    } else if (error.kind == ApiFailureKind.validation &&
+        error.fieldErrors.isEmpty) {
+      text = reason ?? l10n.errorValidation;
+    }
   }
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text(text)));
 }
 
-String? fieldError(Object? error, String field) =>
-    error is ApiException ? error.firstErrorFor(field) : null;
+/// The form message for [field] (see [safeFieldError]).
+String? fieldError(BuildContext context, Object? error, String field) =>
+    safeFieldError(AppLocalizations.of(context), error, field);

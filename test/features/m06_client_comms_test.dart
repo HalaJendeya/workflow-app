@@ -750,7 +750,10 @@ void main() {
       await tester.enterText(find.byKey(const Key('conversation-title')), 'X');
       await tester.tap(find.byKey(const Key('conversation-title-save')));
       await tester.pumpAndSettle();
-      expect(find.text("You don't have access to this."), findsOneWidget);
+      expect(
+        find.text("You don't have permission to perform this action."),
+        findsOneWidget,
+      );
       expect(gets('/api/v1/client/conversations/1'), 1, reason: 'no reload');
       expect(find.byKey(const Key('conversation-rename')), findsOneWidget);
     });
@@ -808,7 +811,10 @@ void main() {
       // A refused file says why; nothing is shown from it.
       await tester.tap(find.byKey(const Key('attachment-78')));
       await tester.pumpAndSettle();
-      expect(find.text("You don't have access to this."), findsOneWidget);
+      expect(
+        find.text("You don't have permission to perform this action."),
+        findsOneWidget,
+      );
       expect(find.byType(AlertDialog), findsNothing);
     });
 
@@ -1097,7 +1103,10 @@ void main() {
       await tester.ensureVisible(create);
       await tester.tap(create);
       await tester.pumpAndSettle();
-      expect(find.text("You don't have access to this."), findsOneWidget);
+      expect(
+        find.text("You don't have permission to perform this action."),
+        findsOneWidget,
+      );
       expect(create, findsOneWidget);
       expect(find.byKey(const Key('chat-input')), findsNothing);
     });
@@ -1178,7 +1187,10 @@ void main() {
       await openMeeting(tester);
       await tester.tap(find.byKey(const Key('meeting-join')));
       await tester.pumpAndSettle();
-      expect(find.text("You don't have access to this."), findsOneWidget);
+      expect(
+        find.text("You don't have permission to perform this action."),
+        findsOneWidget,
+      );
       expect(find.byKey(const Key('meeting-join')), findsOneWidget);
     });
 

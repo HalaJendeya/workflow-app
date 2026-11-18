@@ -35,19 +35,23 @@ class AppLocalizationsAr extends AppLocalizations {
   String get emptyState => 'لا يوجد شيء هنا بعد';
 
   @override
-  String get errorNetwork => 'تعذر الوصول إلى الخادم. تحقق من اتصالك.';
+  String get errorNetwork =>
+      'أنت غير متصل بالإنترنت. تحقّق من اتصالك وحاول مرة أخرى.';
 
   @override
-  String get errorSessionExpired => 'انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.';
+  String get errorSessionExpired =>
+      'انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.';
 
   @override
-  String get errorForbidden => 'ليست لديك صلاحية الوصول إلى هذا.';
+  String get errorForbidden => 'ليست لديك صلاحية لتنفيذ هذا الإجراء.';
 
   @override
-  String get errorNotFound => 'هذا العنصر لم يعد موجودًا.';
+  String get errorNotFound =>
+      'ربما لم يعد هذا العنصر متاحًا. حدّث الصفحة وحاول مرة أخرى.';
 
   @override
-  String get errorValidation => 'يرجى مراجعة الحقول المحددة.';
+  String get errorValidation =>
+      'بعض البيانات تحتاج إلى مراجعة. تحقّق من الحقول المميّزة.';
 
   @override
   String errorRateLimited(int seconds) {
@@ -55,7 +59,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get errorServer => 'حدث خطأ من جهتنا. يرجى المحاولة مرة أخرى.';
+  String get errorServer => 'حدث خطأ ما. يرجى المحاولة مرة أخرى لاحقًا.';
 
   @override
   String get errorUnknown => 'حدث خطأ ما. يرجى المحاولة مرة أخرى.';
@@ -1944,8 +1948,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get leftMeeting => 'غادرت الاجتماع.';
 
   @override
-  String get chatReconnecting =>
-      'تعذّر الوصول إلى الخادم. جارٍ إعادة المحاولة…';
+  String get chatReconnecting => 'انقطع الاتصال. جارٍ إعادة الاتصال…';
 
   @override
   String get messageSending => 'جارٍ الإرسال…';
@@ -2278,7 +2281,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get taskNoChanges => 'لم يتغير شيء.';
 
   @override
-  String get serverRejected => 'لم يقبل الخادم ما يلي:';
+  String get serverRejected => 'يرجى تصحيح ما يلي:';
 
   @override
   String get sortPlannedDate => 'تاريخ العمل';
@@ -2363,4 +2366,26 @@ class AppLocalizationsAr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get errorTimeout =>
+      'يستغرق هذا وقتًا أطول من المتوقع. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get errorConflict =>
+      'تغيّر هذا العنصر أو لا يمكن تعديله الآن. حدّث الصفحة وحاول مرة أخرى.';
+
+  @override
+  String get errorBadRequest =>
+      'تعذّر إكمال هذا الطلب. تحقّق من البيانات وحاول مرة أخرى.';
+
+  @override
+  String get errorFieldInvalid => 'تحقّق من هذا الحقل.';
+
+  @override
+  String get errorSignInBlocked =>
+      'لا يمكن لهذا الحساب تسجيل الدخول حاليًا. تواصل مع مسؤول شركتك.';
+
+  @override
+  String get errorSignInFailed => 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
 }

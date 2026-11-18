@@ -100,7 +100,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.name],
                 validator: v.required,
-                errorText: fieldError(_error, 'name'),
+                errorText: fieldError(context, _error, 'name'),
               ),
               WfTextField(
                 key: const Key('register-email'),
@@ -112,7 +112,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.email],
                 validator: v.email,
-                errorText: fieldError(_error, 'email'),
+                errorText: fieldError(context, _error, 'email'),
               ),
               WfTextField(
                 key: const Key('register-password'),
@@ -123,7 +123,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 obscure: true,
                 autofillHints: const [AutofillHints.newPassword],
                 validator: v.password(kMinPasswordLength),
-                errorText: fieldError(_error, 'password'),
+                errorText: fieldError(context, _error, 'password'),
               ),
               Row(
                 children: [

@@ -82,7 +82,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             controller: _email,
             keyboardType: TextInputType.emailAddress,
             validator: AuthValidators(l10n).email,
-            errorText: fieldError(_error, 'email'),
+            errorText: fieldError(context, _error, 'email'),
             onSubmitted: (_) => _submit(),
           ),
         ),
@@ -169,7 +169,7 @@ class _VerifyCodeScreenState extends ConsumerState<VerifyCodeScreen> {
       }
     } on Object catch (e) {
       if (!mounted) return;
-      setState(() => _localError = fieldError(e, 'otp'));
+      setState(() => _localError = fieldError(context, e, 'otp'));
       showAuthError(context, e);
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -381,7 +381,7 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
                 obscure: true,
                 autofillHints: const [AutofillHints.newPassword],
                 validator: v.password(kMinPasswordLength),
-                errorText: fieldError(_error, 'password'),
+                errorText: fieldError(context, _error, 'password'),
               ),
               WfTextField(
                 key: const Key('confirm-password'),

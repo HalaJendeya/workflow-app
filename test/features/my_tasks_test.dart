@@ -381,7 +381,10 @@ void main() {
     await _tap(tester, find.byKey(const Key('task-change-status')));
     await _tap(tester, find.byKey(const Key('status-completed')));
     // The refusal is reported (localized), not swallowed.
-    expect(find.text("You don't have access to this."), findsOneWidget);
+    expect(
+      find.text("You don't have permission to perform this action."),
+      findsOneWidget,
+    );
     expect(
       find.descendant(
         of: find.byKey(const Key('task-details-status')),

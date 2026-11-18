@@ -440,7 +440,10 @@ void main() {
     await tester.tap(find.byKey(const Key('move-completed')));
     await tester.pumpAndSettle();
     expect(find.text('Task status updated.'), findsNothing);
-    expect(find.text("You don't have access to this."), findsOneWidget);
+    expect(
+      find.text("You don't have permission to perform this action."),
+      findsOneWidget,
+    );
   });
 
   testWidgets('backlog tab lists the first backlog page and sprints', (

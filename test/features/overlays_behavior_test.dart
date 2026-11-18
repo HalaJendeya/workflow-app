@@ -275,7 +275,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Mark all as read'));
     await tester.pumpAndSettle();
-    expect(find.text("You don't have access to this."), findsOneWidget);
+    expect(
+      find.text("You don't have permission to perform this action."),
+      findsOneWidget,
+    );
     expect(find.text('Something went wrong. Please try again.'), findsNothing);
   });
 

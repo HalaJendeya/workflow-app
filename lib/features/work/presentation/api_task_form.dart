@@ -349,10 +349,15 @@ class _SaveError extends StatelessWidget {
     final (String text, List<String> details) = switch (e) {
       ApiException(kind: ApiFailureKind.forbidden) => (l10n.taskLeadOnly, []),
       ApiException(kind: ApiFailureKind.conflict) => (l10n.taskMonthLocked, []),
-      ApiException(kind: ApiFailureKind.validation, :final fieldErrors) => (
-        l10n.serverRejected,
-        [for (final m in fieldErrors.values) ...m],
-      ),
+      // The server's field messages when they are safe and in the UI's
+      // language; otherwise the localized "check the fields" sentence.
+      ApiException(kind: ApiFailureKind.validation) => switch (safeFieldErrors(
+        l10n,
+        e,
+      )) {
+        final List<String> d when d.isNotEmpty => (l10n.serverRejected, d),
+        _ => (l10n.errorValidation, <String>[]),
+      },
       _ => (localizedError(l10n, e), <String>[]),
     };
     return ModuleCard(
