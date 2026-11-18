@@ -30,7 +30,6 @@ Map<String, (int, Object?)> _routes(String portal) => {
     200,
     ok({
       ...m.meetingJson(
-        status: 'live',
         type: 'scheduled',
         scheduledAt: '2026-10-22T08:30:00.000000Z',
         myInvitation: portal == 'employee'
