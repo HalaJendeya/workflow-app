@@ -767,15 +767,32 @@ void main() {
     ) async {
       final server = await _pump(tester);
       await _openTasks(tester);
-      await _tap(tester, find.byKey(const Key('tasks-project-filter')));
-      await _tap(tester, find.text('Mobile').last);
-      final filtered = server.where('GET', '/api/v1/employee/tasks').last;
-      expect(filtered.uri.queryParameters['project_id'], '5');
-      await _tap(tester, find.byKey(const Key('tasks-sort')));
-      await _tap(tester, find.text('Planned date').last);
-      final sorted = server.where('GET', '/api/v1/employee/tasks').last;
-      expect(sorted.uri.queryParameters['sort'], '-task_date');
-      expect(sorted.uri.queryParameters['project_id'], '5');
+      // Project and sort live in one sheet and are applied together: one
+      // request with both, not one per choice.
+      final before = server.where('GET', '/api/v1/employee/tasks').length;
+      await _tap(tester, find.byKey(const Key('task-filters')));
+      await _tap(tester, find.byKey(const Key('filter-project-5')));
+      await _tap(tester, find.byKey(const Key('filter-sort-plannedDate')));
+      expect(server.where('GET', '/api/v1/employee/tasks').length, before);
+      await _tap(tester, find.byKey(const Key('task-filters-apply')));
+      final sent = server.where('GET', '/api/v1/employee/tasks');
+      final rows = sent
+          .skip(before)
+          .where((r) => r.uri.queryParameters['per_page'] != '1')
+          .toList();
+      expect(rows, hasLength(1));
+      expect(rows.single.uri.queryParameters['project_id'], '5');
+      expect(rows.single.uri.queryParameters['sort'], '-task_date');
+      expect(rows.single.uri.queryParameters['page'], '1');
+      // Both shown as active filters, with a way back.
+      expect(find.byKey(const Key('active-filter-project')), findsOneWidget);
+      expect(find.byKey(const Key('active-filter-sort')), findsOneWidget);
+      expect(find.text('Filters (2)'), findsOneWidget);
+      await _tap(tester, find.byKey(const Key('reset-filters')));
+      final reset = server.where('GET', '/api/v1/employee/tasks').last;
+      expect(reset.uri.queryParameters.containsKey('project_id'), isFalse);
+      expect(reset.uri.queryParameters.containsKey('sort'), isFalse);
+      expect(find.byKey(const Key('active-filter-project')), findsNothing);
     });
   });
 

@@ -66,9 +66,22 @@ class _Server {
   /// Fail `GET /employee/tasks/{id}`.
   bool failDetails = false;
 
+  /// Whether the signed-in account leads a project (`led=1`): Team tasks
+  /// is offered only then.
+  bool leads = false;
+
   late final adapter = RouteHttpAdapter(
     const {},
     handlers: {
+      'GET /api/v1/employee/projects/options': (o) {
+        final led = '${o.queryParameters['led']}' == '1';
+        return (
+          200,
+          ok([
+            if (!led || leads) {'id': 2, 'title': 'Portal', 'leader_id': null},
+          ]),
+        );
+      },
       'GET /api/v1/employee/tasks': (o) {
         final rows = _rows(o).where((t) {
           final a = o.queryParameters['assigned_to'];
@@ -173,6 +186,7 @@ class _Auth implements AuthRepository {
 Future<(_Server, _Auth)> _pump(
   WidgetTester tester, {
   Size size = const Size(390, 844),
+  bool leads = false,
 }) async {
   useViewport(tester, size);
   await loadAppFonts();
@@ -186,7 +200,7 @@ Future<(_Server, _Auth)> _pump(
       portal: Portal.employee,
     ).toStorage(),
   );
-  final server = _Server();
+  final server = _Server()..leads = leads;
   final auth = _Auth();
   await tester.pumpWidget(
     ProviderScope(
@@ -282,7 +296,7 @@ void main() {
   testWidgets('Team tasks drops the filter; back to My Tasks restores it', (
     tester,
   ) async {
-    final (server, _) = await _pump(tester);
+    final (server, _) = await _pump(tester, leads: true);
     await _openTasks(tester);
     await _tap(tester, find.byKey(const Key('task-scope-team')));
     expect(find.byKey(const Key('api-task-4')), findsOneWidget);

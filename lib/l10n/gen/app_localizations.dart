@@ -4249,6 +4249,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use at most {max} characters.'**
   String validationTooLong(int max);
+
+  /// No description provided for @taskFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get taskFilters;
+
+  /// No description provided for @taskFiltersActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters ({count})'**
+  String taskFiltersActive(int count);
+
+  /// No description provided for @taskFiltersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter tasks'**
+  String get taskFiltersTitle;
+
+  /// No description provided for @resetFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset filters'**
+  String get resetFilters;
+
+  /// No description provided for @showResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Show results'**
+  String get showResults;
+
+  /// No description provided for @filterProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get filterProject;
+
+  /// No description provided for @sortBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get sortBy;
+
+  /// No description provided for @anyPriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Any priority'**
+  String get anyPriority;
+
+  /// No description provided for @removeFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove filter: {label}'**
+  String removeFilter(String label);
+
+  /// No description provided for @taskResultCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No tasks} =1{1 task} other{{count} tasks}}'**
+  String taskResultCount(int count);
 }
 
 class _AppLocalizationsDelegate

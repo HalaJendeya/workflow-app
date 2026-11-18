@@ -64,6 +64,7 @@ class ModulePage extends StatelessWidget {
     required this.description,
     required this.children,
     this.searchHint,
+    this.searchFieldKey,
     this.onSearch,
     this.onCreate,
     this.createLabel,
@@ -75,6 +76,9 @@ class ModulePage extends StatelessWidget {
   final String description;
   final List<Widget> children;
   final String? searchHint;
+
+  /// Key of the masthead search field, for tests and analytics.
+  final Key? searchFieldKey;
   final ValueChanged<String>? onSearch;
   final VoidCallback? onCreate;
   final String? createLabel;
@@ -122,6 +126,7 @@ class ModulePage extends StatelessWidget {
           title: title,
           description: description,
           searchHint: searchHint,
+          searchFieldKey: searchFieldKey,
           onSearch: onSearch,
         ),
       ),
@@ -167,6 +172,7 @@ class ModuleMasthead extends StatelessWidget {
     required this.title,
     required this.description,
     this.searchHint,
+    this.searchFieldKey,
     this.onSearch,
     super.key,
   });
@@ -174,6 +180,7 @@ class ModuleMasthead extends StatelessWidget {
   final String title;
   final String description;
   final String? searchHint;
+  final Key? searchFieldKey;
   final ValueChanged<String>? onSearch;
 
   @override
@@ -244,6 +251,7 @@ class ModuleMasthead extends StatelessWidget {
               if (onSearch != null) ...[
                 const SizedBox(height: 20),
                 WfSearchBox(
+                  fieldKey: searchFieldKey,
                   hint: searchHint ?? AppLocalizations.of(context).searchHint,
                   onChanged: onSearch!,
                   radius: AppRadii.input,

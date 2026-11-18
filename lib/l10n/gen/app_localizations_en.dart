@@ -2323,4 +2323,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String validationTooLong(int max) {
     return 'Use at most $max characters.';
   }
+
+  @override
+  String get taskFilters => 'Filters';
+
+  @override
+  String taskFiltersActive(int count) {
+    return 'Filters ($count)';
+  }
+
+  @override
+  String get taskFiltersTitle => 'Filter tasks';
+
+  @override
+  String get resetFilters => 'Reset filters';
+
+  @override
+  String get showResults => 'Show results';
+
+  @override
+  String get filterProject => 'Project';
+
+  @override
+  String get sortBy => 'Sort by';
+
+  @override
+  String get anyPriority => 'Any priority';
+
+  @override
+  String removeFilter(String label) {
+    return 'Remove filter: $label';
+  }
+
+  @override
+  String taskResultCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tasks',
+      one: '1 task',
+      zero: 'No tasks',
+    );
+    return '$_temp0';
+  }
 }

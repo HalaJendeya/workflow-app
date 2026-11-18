@@ -1196,5 +1196,36 @@
         "type": "int"
       }
     }
+  },
+  "taskFilters": "Filters",
+  "taskFiltersActive": "Filters ({count})",
+  "@taskFiltersActive": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "taskFiltersTitle": "Filter tasks",
+  "resetFilters": "Reset filters",
+  "showResults": "Show results",
+  "filterProject": "Project",
+  "sortBy": "Sort by",
+  "anyPriority": "Any priority",
+  "removeFilter": "Remove filter: {label}",
+  "@removeFilter": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "taskResultCount": "{count, plural, =0{No tasks} =1{1 task} other{{count} tasks}}",
+  "@taskResultCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

@@ -608,6 +608,9 @@ void main() {
       expect(find.byKey(const Key('task-t1')), findsNothing);
       // Search combines with the status filter.
       await tab(tester, 'all');
+      // One search, in the masthead at the top of the page.
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 4000));
+      await tester.pumpAndSettle();
       final search = find.byKey(const Key('tasks-search'));
       await _reveal(tester, search);
       await tester.enterText(search, 'Redis');

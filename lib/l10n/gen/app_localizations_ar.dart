@@ -2317,4 +2317,50 @@ class AppLocalizationsAr extends AppLocalizations {
   String validationTooLong(int max) {
     return 'استخدم $max حرفًا كحد أقصى.';
   }
+
+  @override
+  String get taskFilters => 'الفلاتر';
+
+  @override
+  String taskFiltersActive(int count) {
+    return 'الفلاتر ($count)';
+  }
+
+  @override
+  String get taskFiltersTitle => 'تصفية المهام';
+
+  @override
+  String get resetFilters => 'إعادة ضبط الفلاتر';
+
+  @override
+  String get showResults => 'عرض النتائج';
+
+  @override
+  String get filterProject => 'المشروع';
+
+  @override
+  String get sortBy => 'الترتيب حسب';
+
+  @override
+  String get anyPriority => 'أي أولوية';
+
+  @override
+  String removeFilter(String label) {
+    return 'إزالة الفلتر: $label';
+  }
+
+  @override
+  String taskResultCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مهمة',
+      many: '$count مهمة',
+      few: '$count مهام',
+      two: 'مهمتان',
+      one: 'مهمة واحدة',
+      zero: 'لا توجد مهام',
+    );
+    return '$_temp0';
+  }
 }

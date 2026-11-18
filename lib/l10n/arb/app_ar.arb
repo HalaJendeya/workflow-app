@@ -691,5 +691,15 @@
   "sprintActive": "نشط",
   "sprintTasksEmpty": "لا توجد مهام في هذا السبرنت.",
   "youLeadProject": "أنت قائد هذا المشروع",
-  "validationTooLong": "استخدم {max} حرفًا كحد أقصى."
+  "validationTooLong": "استخدم {max} حرفًا كحد أقصى.",
+  "taskFilters": "الفلاتر",
+  "taskFiltersActive": "الفلاتر ({count})",
+  "taskFiltersTitle": "تصفية المهام",
+  "resetFilters": "إعادة ضبط الفلاتر",
+  "showResults": "عرض النتائج",
+  "filterProject": "المشروع",
+  "sortBy": "الترتيب حسب",
+  "anyPriority": "أي أولوية",
+  "removeFilter": "إزالة الفلتر: {label}",
+  "taskResultCount": "{count, plural, =0{لا توجد مهام} =1{مهمة واحدة} =2{مهمتان} few{{count} مهام} many{{count} مهمة} other{{count} مهمة}}"
 }

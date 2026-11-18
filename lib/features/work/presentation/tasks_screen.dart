@@ -17,6 +17,7 @@ import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/features/work/presentation/api_sprint_view.dart';
 import 'package:workflow_app/features/work/presentation/api_task_form.dart';
 import 'package:workflow_app/features/work/presentation/task_details_screen.dart';
+import 'package:workflow_app/features/work/presentation/task_filters.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
@@ -109,12 +110,14 @@ Future<void> openTaskForm(BuildContext context, {WorkTask? existing}) async {
   await openApiTaskForm(context);
 }
 
-/// Status chips of Figma "Tasks Management" (node 729:24295).
-enum TaskStatusTab { all, inProgress, inReview, completed }
+/// Status chips of Figma "Tasks Management" (node 729:24295), plus "To do":
+/// the status most of an employee's open work is in.
+enum TaskStatusTab { all, todo, inProgress, inReview, completed }
 
 /// The documented `status` list filter for [tab] (`null`: no filter).
 ApiTaskStatus? apiStatusOf(TaskStatusTab tab) => switch (tab) {
   TaskStatusTab.all => null,
+  TaskStatusTab.todo => ApiTaskStatus.todo,
   TaskStatusTab.inProgress => ApiTaskStatus.inProgress,
   TaskStatusTab.inReview => ApiTaskStatus.inReview,
   TaskStatusTab.completed => ApiTaskStatus.completed,
@@ -125,6 +128,7 @@ ApiTaskStatus? apiStatusOf(TaskStatusTab tab) => switch (tab) {
 /// another status.
 bool demoTaskInTab(WorkTask t, TaskStatusTab tab) => switch (tab) {
   TaskStatusTab.all => true,
+  TaskStatusTab.todo => t.status == TaskStatus.todo,
   TaskStatusTab.inProgress => t.status == TaskStatus.inProgress,
   TaskStatusTab.inReview => false,
   TaskStatusTab.completed => t.status == TaskStatus.completed,
@@ -132,12 +136,15 @@ bool demoTaskInTab(WorkTask t, TaskStatusTab tab) => switch (tab) {
 
 String taskTabLabel(AppLocalizations l10n, TaskStatusTab tab) => switch (tab) {
   TaskStatusTab.all => l10n.allTasks,
+  TaskStatusTab.todo => l10n.toDo,
   TaskStatusTab.inProgress => l10n.statusInProgress,
   TaskStatusTab.inReview => l10n.underReview,
   TaskStatusTab.completed => l10n.statusCompleted,
 };
 
-/// Figma "Tasks Management" (729:24059).
+/// Figma "Tasks Management" (729:24059), content first: one search (the
+/// masthead's), My/Team only for someone who leads a project, the status
+/// chips, and one "Filters" sheet for project, priority, assignee and sort.
 class TasksScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -150,6 +157,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   String _query = '';
   TaskScope _scope = TaskScope.mine;
   TaskStatusTab _tab = TaskStatusTab.all;
+  TaskFilters _filters = const TaskFilters();
+  int _page = 0;
   Timer? _debounce;
 
   @override
@@ -175,32 +184,51 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     }
   }
 
-  String? _project;
-  String? _assignee;
-  TaskPriority? _priority;
-  int _page = 0;
-
-  /// API mode: the documented `project_id` filter and `sort`.
-  int? _apiProject;
-  TaskSort _sort = TaskSort.newest;
+  /// Every filter change starts on page 1: a kept page number past the
+  /// result's last page showed an empty list with no pager.
+  void _set({TaskScope? scope, TaskStatusTab? tab, TaskFilters? filters}) =>
+      setState(() {
+        if (scope != null && scope != _scope) {
+          _scope = scope;
+          // Assignees exist only in the team view.
+          _filters = _filters.without(assignee: true);
+        }
+        if (tab != null) _tab = tab;
+        if (filters != null) _filters = filters;
+        _page = 0;
+      });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final demo = ref.watch(demoModeProvider);
-    final mine = _scope == TaskScope.mine;
+    // Team tasks only for someone who leads a project (and the demo): for
+    // everyone else the backend answers with their own tasks, so the
+    // switch showed the same list twice.
+    final canTeam = demo || ref.watch(ledProjectIdsProvider).isNotEmpty;
+    final scope = canTeam ? _scope : TaskScope.mine;
+    final mine = scope == TaskScope.mine;
+    final q = _query.trim().toLowerCase();
+
     // Demo: My Tasks are the demo account's (the API filters by
     // `assigned_to` and checks every row; see BoardRepository.tasks).
     final all = [
       for (final t in ref.watch(workTasksProvider))
         if (!mine || t.assignee == demoSelf) t,
     ];
-    final q = _query.trim().toLowerCase();
     final filtered = all.where((t) {
       if (!demoTaskInTab(t, _tab)) return false;
-      if (_project != null && t.project != _project) return false;
-      if (!mine && _assignee != null && t.assignee != _assignee) return false;
-      if (_priority != null && t.priority != _priority) return false;
+      if (_filters.project != null && t.project != _filters.project) {
+        return false;
+      }
+      if (!mine &&
+          _filters.assignee != null &&
+          t.assignee != _filters.assignee) {
+        return false;
+      }
+      if (_filters.priority != null && t.priority != _filters.priority) {
+        return false;
+      }
       return q.isEmpty ||
           '${t.title} ${t.code} ${t.project} ${t.assignee}'
               .toLowerCase()
@@ -216,61 +244,124 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     final budget = all.fold<double>(0, (s, t) => s + t.amount);
     // API mode: figures from `stats` of GET /employee/tasks. The employee
     // role gets no cost/currency, so budget utilisation has no source.
-    final api = demo ? null : ref.watch(scopedTaskStatsProvider(_scope));
-    // Creating is offered only to a project leader (API) and in the demo.
-    final canCreate = demo || ref.watch(ledProjectIdsProvider).isNotEmpty;
+    final api = demo ? null : ref.watch(scopedTaskStatsProvider(scope));
     final stats = api?.value;
-    String tabCount(TaskStatusTab tab) {
-      if (demo) return '${all.where((t) => demoTaskInTab(t, tab)).length}';
-      if (stats == null) return '—';
+    // Creating is offered only to a project leader (API) and in the demo.
+    final canCreate = canTeam;
+
+    // Projects for the sheet: the documented options list (API) or the
+    // demo tasks' projects. A failed options load only leaves it out.
+    final projects = demo
+        ? [
+            for (final p in {for (final t in all) t.project}) (p as Object, p),
+          ]
+        : [
+            for (final p
+                in ref.watch(projectOptionsProvider).value ??
+                    const <ProjectOption>[])
+              (p.id as Object, p.title),
+          ];
+    String projectLabel(Object id) =>
+        projects.where((p) => p.$1 == id).firstOrNull?.$2 ?? '#$id';
+
+    // The status counts are totals for the scope. With a search or a
+    // narrowing filter they no longer describe the list, so they hide.
+    final narrowed = q.isNotEmpty || _filters.narrows;
+    String tabLabel(TaskStatusTab tab) {
+      final label = taskTabLabel(l10n, tab);
+      if (narrowed) return label;
+      if (demo) {
+        return '$label ${all.where((t) => demoTaskInTab(t, tab)).length}';
+      }
+      if (stats == null) return label;
       final n = switch (tab) {
         TaskStatusTab.all => stats.total,
+        TaskStatusTab.todo => stats.byStatus['todo'],
         TaskStatusTab.inProgress => stats.byStatus['in_progress'],
         TaskStatusTab.inReview => stats.byStatus['in_review'],
         TaskStatusTab.completed => stats.byStatus['completed'],
       };
-      return '${n ?? '—'}';
+      return n == null ? label : '$label $n';
+    }
+
+    final activeFilters = [
+      if (_filters.project case final p?)
+        ActiveFilter(
+          'project',
+          projectLabel(p),
+          () => _set(filters: _filters.without(project: true)),
+        ),
+      if (_filters.priority case final p?)
+        ActiveFilter(
+          'priority',
+          priorityLabel(l10n, p),
+          () => _set(filters: _filters.without(priority: true)),
+        ),
+      if (_filters.assignee case final a? when !mine)
+        ActiveFilter(
+          'assignee',
+          a,
+          () => _set(filters: _filters.without(assignee: true)),
+        ),
+      if (_filters.sort != TaskSort.newest)
+        ActiveFilter(
+          'sort',
+          taskSortLabel(l10n, _filters.sort),
+          () => _set(filters: _filters.without(sort: true)),
+        ),
+    ];
+
+    Future<void> openFilters() async {
+      final picked = await showTaskFilterSheet(
+        context,
+        current: _filters,
+        projects: projects,
+        priorityLabel: (p) => priorityLabel(l10n, p),
+        assignees: demo && !mine
+            ? [
+                for (final a in {for (final t in all) t.assignee}) a,
+              ]
+            : const [],
+        // The demo list has no server-side order to change.
+        sortable: !demo,
+      );
+      // Unchanged: no new request, no page reset.
+      if (picked != null && picked != _filters) _set(filters: picked);
     }
 
     return ModulePage(
       title: l10n.tasksManagement,
       description: l10n.tasksManagementBody,
-      // A new search starts on page 1: in API mode a kept page number past
-      // the result's last page showed an empty list with no pager.
+      searchHint: l10n.searchTasksHint,
+      searchFieldKey: const Key('tasks-search'),
       onSearch: _onSearch,
       onCreate: canCreate
           ? () => demo ? openTaskForm(context) : openApiTaskForm(context)
           : null,
       createLabel: l10n.addTask,
       children: [
-        // Whose tasks: the employee's own first. "Team tasks" is every
-        // task the backend lets this account see (`tasks.view`).
-        ChipRow(
-          key: const Key('task-scope'),
-          children: [
-            for (final (scope, label) in [
-              (TaskScope.mine, l10n.myTasks),
-              (TaskScope.team, l10n.teamTasks),
-            ])
-              Semantics(
-                selected: _scope == scope,
-                child: FilterChipBox(
-                  key: Key('task-scope-${scope.name}'),
+        if (canTeam)
+          // Whose tasks: the employee's own first. "Team tasks" is every
+          // task of the projects this account leads (`tasks.view`).
+          ChipRow(
+            key: const Key('task-scope'),
+            children: [
+              for (final (s, label) in [
+                (TaskScope.mine, l10n.myTasks),
+                (TaskScope.team, l10n.teamTasks),
+              ])
+                FilterChipBox(
+                  key: Key('task-scope-${s.name}'),
                   label: label,
-                  selected: _scope == scope,
-                  onTap: () => setState(() {
-                    _scope = scope;
-                    _assignee = null;
-                    _page = 0;
-                  }),
+                  selected: scope == s,
+                  onTap: () => _set(scope: s),
                 ),
-              ),
-          ],
-        ),
+            ],
+          ),
         if (api case AsyncError(:final error))
           ApiErrorCard(
             error: error,
-            onRetry: () => ref.invalidate(scopedTaskStatsProvider(_scope)),
+            onRetry: () => ref.invalidate(scopedTaskStatsProvider(scope)),
           ),
         MetricGroup(
           metrics: [
@@ -279,10 +370,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               value: demo ? '$active' : '${stats?.active ?? '—'}',
             ),
             if (demo)
-              Metric(
-                label: l10n.totalBudgetUtilization,
-                value: demo ? money(budget) : '—',
-              ),
+              Metric(label: l10n.totalBudgetUtilization, value: money(budget)),
             Metric(
               label: l10n.loggedHours,
               value: demo
@@ -293,91 +381,51 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             ),
           ],
         ),
-        ChipRow(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            for (final tab in TaskStatusTab.values)
-              FilterChipBox(
-                key: Key('task-tab-${tab.name}'),
-                label: '${taskTabLabel(l10n, tab)} ${tabCount(tab)}',
-                selected: _tab == tab,
-                onTap: () => setState(() {
-                  _tab = tab;
-                  _page = 0;
-                }),
-              ),
+            ChipRow(
+              key: const Key('task-status'),
+              children: [
+                for (final tab in TaskStatusTab.values)
+                  FilterChipBox(
+                    key: Key('task-tab-${tab.name}'),
+                    label: tabLabel(tab),
+                    selected: _tab == tab,
+                    onTap: () {
+                      if (tab != _tab) _set(tab: tab);
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TaskFilterBar(
+              count: _filters.count,
+              active: activeFilters,
+              canReset: _tab != TaskStatusTab.all,
+              onOpen: openFilters,
+              onReset: () =>
+                  _set(tab: TaskStatusTab.all, filters: const TaskFilters()),
+            ),
           ],
         ),
         if (!demo)
           _ApiTaskRows(
             query: TaskQuery(
-              scope: _scope,
+              scope: scope,
               search: _query,
               status: apiStatusOf(_tab),
-              priority: _priority,
+              priority: _filters.priority,
               page: _page + 1,
-              projectId: _apiProject,
-              sort: _sort,
+              projectId: _filters.project as int?,
+              sort: _filters.sort,
             ),
-            onSearch: _onSearch,
-            onPriority: (p) => setState(() {
-              _priority = p;
-              _page = 0;
-            }),
-            onProject: (p) => setState(() {
-              _apiProject = p;
-              _page = 0;
-            }),
-            onSort: (s) => setState(() {
-              _sort = s;
-              _page = 0;
-            }),
+            showCount: narrowed || _tab != TaskStatusTab.all,
             onPage: (p) => setState(() => _page = p),
           )
         else ...[
-          WfSearchBox(
-            fieldKey: const Key('tasks-search'),
-            hint: l10n.searchTasksHint,
-            onChanged: _onSearch,
-          ),
-          ChipRow(
-            children: [
-              DropdownChip<String?>(
-                value: _project,
-                options: [
-                  null,
-                  ...{for (final t in all) t.project},
-                ],
-                labelOf: (p) => p ?? l10n.allProjects,
-                onChanged: (p) => setState(() {
-                  _project = p;
-                  _page = 0;
-                }),
-              ),
-              if (!mine)
-                DropdownChip<String?>(
-                  value: _assignee,
-                  options: [
-                    null,
-                    ...{for (final t in all) t.assignee},
-                  ],
-                  labelOf: (p) => p ?? l10n.allAssignees,
-                  onChanged: (p) => setState(() {
-                    _assignee = p;
-                    _page = 0;
-                  }),
-                ),
-              DropdownChip<TaskPriority?>(
-                value: _priority,
-                options: const [null, ...TaskPriority.values],
-                labelOf: (p) =>
-                    p == null ? l10n.priorityLevel : priorityLabel(l10n, p),
-                onChanged: (p) => setState(() {
-                  _priority = p;
-                  _page = 0;
-                }),
-              ),
-            ],
-          ),
+          if (narrowed || _tab != TaskStatusTab.all)
+            _ResultCount(filtered.length),
           if (visible.isEmpty)
             EmptyNotice(
               text: mine && all.isEmpty ? l10n.noTasksAssigned : l10n.noRecords,
@@ -407,6 +455,24 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       ],
     );
   }
+}
+
+/// "3 tasks" over a filtered list.
+class _ResultCount extends StatelessWidget {
+  const new(this.count);
+  final int count;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    liveRegion: true,
+    child: Text(
+      AppLocalizations.of(context).taskResultCount(count),
+      key: const Key('task-result-count'),
+      style: AppTextStyles.mobileXsSemiBold.copyWith(
+        color: AppColors.textSecondary,
+      ),
+    ),
+  );
 }
 
 /// Create/edit task form. Figma shows the Create action but no form frame,
@@ -544,128 +610,107 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
   }
 }
 
-/// Task rows of `GET /employee/tasks`, with server-side search, priority
-/// and project filters, sort and pagination. Projects come from the
-/// documented `GET /employee/projects/options`; an assignee filter would
-/// need the undocumented `facets` shape, so it is not offered.
-class _ApiTaskRows extends ConsumerWidget {
+/// Task rows of `GET /employee/tasks` for one [TaskQuery] (search, status,
+/// priority, project, sort and page are all sent to the server). While a
+/// new filter loads, the previous rows stay on screen under a thin progress
+/// bar instead of being replaced by a spinner.
+class _ApiTaskRows extends ConsumerStatefulWidget {
   const new({
     required this.query,
-    required this.onSearch,
-    required this.onPriority,
-    required this.onProject,
-    required this.onSort,
     required this.onPage,
+    this.showCount = false,
   });
 
   final TaskQuery query;
-  final ValueChanged<String> onSearch;
-  final ValueChanged<TaskPriority?> onPriority;
-  final ValueChanged<int?> onProject;
-  final ValueChanged<TaskSort> onSort;
   final ValueChanged<int> onPage;
+  final bool showCount;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ApiTaskRows> createState() => _ApiTaskRowsState();
+}
+
+class _ApiTaskRowsState extends ConsumerState<_ApiTaskRows> {
+  TaskList? _last;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final query = widget.query;
     final value = ref.watch(apiTasksProvider(query));
-    // The filter is offered once the options load; a failure leaves it out
-    // rather than blocking the list.
-    final projects =
-        ref.watch(projectOptionsProvider).value ?? const <ProjectOption>[];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        WfSearchBox(
-          fieldKey: const Key('tasks-search'),
-          hint: l10n.searchTasksHint,
-          onChanged: onSearch,
-        ),
-        const SizedBox(height: 20),
-        ChipRow(
-          children: [
-            if (projects.isNotEmpty)
-              DropdownChip<int?>(
-                key: const Key('tasks-project-filter'),
-                value: query.projectId,
-                options: [null, for (final p in projects) p.id],
-                labelOf: (id) => id == null
-                    ? l10n.allProjects
-                    : projects.where((p) => p.id == id).firstOrNull?.title ??
-                          '#$id',
-                onChanged: onProject,
-              ),
-            DropdownChip<TaskPriority?>(
-              value: query.priority,
-              options: const [null, ...TaskPriority.values],
-              labelOf: (p) =>
-                  p == null ? l10n.priorityLevel : priorityLabel(l10n, p),
-              onChanged: onPriority,
-            ),
-            DropdownChip<TaskSort>(
-              key: const Key('tasks-sort'),
-              value: query.sort,
-              options: TaskSort.values,
-              labelOf: (s) => switch (s) {
-                TaskSort.newest => l10n.sortNewest,
-                TaskSort.plannedDate => l10n.sortPlannedDate,
-                TaskSort.title => l10n.sortTitle,
-              },
-              onChanged: onSort,
-            ),
+    if (value.value case final v?) _last = v;
+    final previous = value.isLoading && !value.hasValue ? _last : null;
+    if (value.hasValue || previous != null) {
+      final list = value.value ?? previous!;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (previous != null) ...[
+            const LinearProgressIndicator(key: Key('tasks-refreshing')),
+            const SizedBox(height: 8),
           ],
-        ),
-        const SizedBox(height: 20),
-        AsyncSection(
-          value: value,
-          onRetry: () => ref.invalidate(apiTasksProvider(query)),
-          builder: (list) => Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (list.hidden > 0) ...[
-                ModuleCard(
-                  key: const Key('tasks-hidden-notice'),
-                  child: Text(
-                    l10n.tasksHiddenUnverified(list.hidden),
-                    style: AppTextStyles.mobileXsRegular.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-              if (list.page.items.isEmpty && list.hidden == 0)
-                EmptyNotice(
-                  text: query.scope == TaskScope.mine && !query.filtered
-                      ? l10n.noTasksAssigned
-                      : l10n.noRecords,
-                ),
-              for (final t in list.page.items) ...[
-                TaskCard(
-                  key: Key('api-task-${t.id}'),
-                  title: t.title,
-                  // Only what the server sent; the API has no due date
-                  // (`task_date` is the planned work day, shown in details).
-                  description: t.description,
-                  status: StatusBadge(
-                    label: apiTaskStatusLabel(l10n, t.status),
-                    tone: apiTaskStatusTone(t.status),
-                  ),
-                  onOpen: () => openApiTaskDetails(context, t),
-                ),
-                const SizedBox(height: 12),
-              ],
-              if (list.page.lastPage > 1)
-                Pager(
-                  page: list.page.currentPage - 1,
-                  pageSize: list.page.perPage,
-                  total: list.page.total,
-                  onPage: onPage,
-                ),
-            ],
-          ),
-        ),
-      ],
+          if (widget.showCount && previous == null) ...[
+            _ResultCount(list.page.total),
+            const SizedBox(height: 12),
+          ],
+          ..._rows(context, l10n, list, query),
+        ],
+      );
+    }
+    return AsyncSection(
+      value: value,
+      onRetry: () => ref.invalidate(apiTasksProvider(query)),
+      builder: (list) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: _rows(context, l10n, list, query),
+      ),
     );
   }
+
+  List<Widget> _rows(
+    BuildContext context,
+    AppLocalizations l10n,
+    TaskList list,
+    TaskQuery query,
+  ) => [
+    if (list.hidden > 0) ...[
+      ModuleCard(
+        key: const Key('tasks-hidden-notice'),
+        child: Text(
+          l10n.tasksHiddenUnverified(list.hidden),
+          style: AppTextStyles.mobileXsRegular.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
+    ],
+    if (list.page.items.isEmpty && list.hidden == 0)
+      EmptyNotice(
+        text: query.scope == TaskScope.mine && !query.filtered
+            ? l10n.noTasksAssigned
+            : l10n.noRecords,
+      ),
+    for (final t in list.page.items) ...[
+      TaskCard(
+        key: Key('api-task-${t.id}'),
+        title: t.title,
+        // Only what the server sent; the API has no due date
+        // (`task_date` is the planned work day, shown in details).
+        description: t.description,
+        status: StatusBadge(
+          label: apiTaskStatusLabel(l10n, t.status),
+          tone: apiTaskStatusTone(t.status),
+        ),
+        onOpen: () => openApiTaskDetails(context, t),
+      ),
+      const SizedBox(height: 12),
+    ],
+    if (list.page.lastPage > 1)
+      Pager(
+        page: list.page.currentPage - 1,
+        pageSize: list.page.perPage,
+        total: list.page.total,
+        onPage: widget.onPage,
+      ),
+  ];
 }
