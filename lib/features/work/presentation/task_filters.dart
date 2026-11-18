@@ -109,166 +109,192 @@ Future<TaskFilters?> showTaskFilterSheet(
   useRootNavigator: true,
   isScrollControlled: true,
   showDragHandle: true,
-  builder: (sheet) {
-    var draft = current;
-    return StatefulBuilder(
-      builder: (context, setState) {
-        final l10n = AppLocalizations.of(context);
-        Widget section(String title, List<Widget> chips) => Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+  // The draft lives in a State, not in this builder: Android sends new
+  // window metrics (insets, keyboard) while the sheet is open, the route
+  // runs this builder again, and a local variable here went back to
+  // [current], so on the emulator no choice ever stuck.
+  builder: (sheet) => _DraftHolder(
+    initial: current,
+    builder: (context, draft, setDraft) {
+      final l10n = AppLocalizations.of(context);
+      Widget section(String title, List<Widget> chips) => Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: AppTextStyles.mobileBaseSemiBold.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            ChipRow(children: chips),
+          ],
+        ),
+      );
+      Widget choice<T>(String key, String label, T value, T selected) =>
+          FilterChipBox(
+            key: Key('filter-$key'),
+            label: label,
+            selected: value == selected,
+            onTap: () => setDraft(_withValue(draft, value)),
+          );
+      return SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            key: const Key('task-filter-sheet'),
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                title,
-                style: AppTextStyles.mobileBaseSemiBold.copyWith(
-                  color: AppColors.textPrimary,
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 20, 16),
+                child: Text(
+                  l10n.taskFiltersTitle,
+                  style: AppTextStyles.mobileLgSemiBold.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              ChipRow(children: chips),
-            ],
-          ),
-        );
-        Widget choice<T>(String key, String label, T value, T selected) =>
-            FilterChipBox(
-              key: Key('filter-$key'),
-              label: label,
-              selected: value == selected,
-              onTap: () => setState(() => draft = _withValue(draft, value)),
-            );
-        return SafeArea(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-            ),
-            child: Column(
-              key: const Key('task-filter-sheet'),
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 20, 16),
-                  child: Text(
-                    l10n.taskFiltersTitle,
-                    style: AppTextStyles.mobileLgSemiBold.copyWith(
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-                Flexible(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        section(l10n.fieldStatus, [
-                          for (final tab in TaskStatusTab.values)
-                            choice<TaskStatusTab>(
-                              'status-${tab.name}',
-                              switch (countsApply && !draft.narrowsBeyondStatus
-                                  ? statusCount?.call(tab)
-                                  : null) {
-                                final n? => '${statusLabel(tab)} $n',
-                                null => statusLabel(tab),
-                              },
-                              tab,
-                              draft.status,
-                            ),
-                        ]),
-                        if (projects.isNotEmpty)
-                          section(l10n.filterProject, [
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      section(l10n.fieldStatus, [
+                        for (final tab in TaskStatusTab.values)
+                          choice<TaskStatusTab>(
+                            'status-${tab.name}',
+                            switch (countsApply && !draft.narrowsBeyondStatus
+                                ? statusCount?.call(tab)
+                                : null) {
+                              final n? => '${statusLabel(tab)} $n',
+                              null => statusLabel(tab),
+                            },
+                            tab,
+                            draft.status,
+                          ),
+                      ]),
+                      if (projects.isNotEmpty)
+                        section(l10n.filterProject, [
+                          choice<_Project>(
+                            'project-all',
+                            l10n.allProjects,
+                            const _Project(null),
+                            _Project(draft.project),
+                          ),
+                          for (final (id, title) in projects)
                             choice<_Project>(
-                              'project-all',
-                              l10n.allProjects,
-                              const _Project(null),
+                              'project-$id',
+                              title,
+                              _Project(id),
                               _Project(draft.project),
                             ),
-                            for (final (id, title) in projects)
-                              choice<_Project>(
-                                'project-$id',
-                                title,
-                                _Project(id),
-                                _Project(draft.project),
-                              ),
-                          ]),
-                        section(l10n.priority, [
+                        ]),
+                      section(l10n.priority, [
+                        choice<_Priority>(
+                          'priority-any',
+                          l10n.anyPriority,
+                          const _Priority(null),
+                          _Priority(draft.priority),
+                        ),
+                        for (final p in TaskPriority.values)
                           choice<_Priority>(
-                            'priority-any',
-                            l10n.anyPriority,
-                            const _Priority(null),
+                            'priority-${p.name}',
+                            priorityLabel(p),
+                            _Priority(p),
                             _Priority(draft.priority),
                           ),
-                          for (final p in TaskPriority.values)
-                            choice<_Priority>(
-                              'priority-${p.name}',
-                              priorityLabel(p),
-                              _Priority(p),
-                              _Priority(draft.priority),
-                            ),
-                        ]),
-                        if (assignees.isNotEmpty)
-                          section(l10n.assignee, [
+                      ]),
+                      if (assignees.isNotEmpty)
+                        section(l10n.assignee, [
+                          choice<_Assignee>(
+                            'assignee-all',
+                            l10n.allAssignees,
+                            const _Assignee(null),
+                            _Assignee(draft.assignee),
+                          ),
+                          for (final a in assignees)
                             choice<_Assignee>(
-                              'assignee-all',
-                              l10n.allAssignees,
-                              const _Assignee(null),
+                              'assignee-$a',
+                              a,
+                              _Assignee(a),
                               _Assignee(draft.assignee),
                             ),
-                            for (final a in assignees)
-                              choice<_Assignee>(
-                                'assignee-$a',
-                                a,
-                                _Assignee(a),
-                                _Assignee(draft.assignee),
-                              ),
-                          ]),
-                        if (sortable)
-                          section(l10n.sortBy, [
-                            for (final s in TaskSort.values)
-                              choice<TaskSort>(
-                                'sort-${s.name}',
-                                taskSortLabel(l10n, s),
-                                s,
-                                draft.sort,
-                              ),
-                          ]),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                  child: Row(
-                    children: [
-                      TextButton(
-                        key: const Key('task-filters-reset'),
-                        onPressed: draft.isDefault
-                            ? null
-                            : () => setState(() => draft = const TaskFilters()),
-                        child: Text(l10n.resetFilters),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: WfPrimaryButton(
-                          key: const Key('task-filters-apply'),
-                          label: l10n.showResults,
-                          height: 48,
-                          textStyle: AppTextStyles.mobileBaseSemiBold,
-                          onPressed: () => Navigator.of(sheet).pop(draft),
-                        ),
-                      ),
+                        ]),
+                      if (sortable)
+                        section(l10n.sortBy, [
+                          for (final s in TaskSort.values)
+                            choice<TaskSort>(
+                              'sort-${s.name}',
+                              taskSortLabel(l10n, s),
+                              s,
+                              draft.sort,
+                            ),
+                        ]),
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: Row(
+                  children: [
+                    TextButton(
+                      key: const Key('task-filters-reset'),
+                      onPressed: draft.isDefault
+                          ? null
+                          : () => setDraft(const TaskFilters()),
+                      child: Text(l10n.resetFilters),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: WfPrimaryButton(
+                        key: const Key('task-filters-apply'),
+                        label: l10n.showResults,
+                        height: 48,
+                        textStyle: AppTextStyles.mobileBaseSemiBold,
+                        onPressed: () => Navigator.of(sheet).pop(draft),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        );
-      },
-    );
-  },
+        ),
+      );
+    },
+  ),
 );
+
+/// Holds the sheet's draft across rebuilds of the route's builder.
+class _DraftHolder extends StatefulWidget {
+  const new({required this.initial, required this.builder});
+
+  final TaskFilters initial;
+  final Widget Function(
+    BuildContext context,
+    TaskFilters draft,
+    ValueChanged<TaskFilters> setDraft,
+  )
+  builder;
+
+  @override
+  State<_DraftHolder> createState() => _DraftHolderState();
+}
+
+class _DraftHolderState extends State<_DraftHolder> {
+  late TaskFilters _draft = widget.initial;
+
+  @override
+  Widget build(BuildContext context) =>
+      widget.builder(context, _draft, (next) => setState(() => _draft = next));
+}
 
 // Wrappers so "no choice" (null) of each kind is a distinct value.
 @immutable

@@ -292,6 +292,32 @@ void main() {
     expect(find.byKey(const Key('task-result-count')), findsOneWidget);
   });
 
+  // Emulator acceptance (Android 16): choices did not stick. Android sends
+  // new window metrics (insets, IME) while the sheet is open, the sheet's
+  // builder ran again, and the draft went back to the applied filters.
+  testWidgets('choices survive a metrics change while the sheet is open', (
+    tester,
+  ) async {
+    final server = await _pump(tester);
+    await _tap(tester, find.byKey(const Key('task-filters')));
+    await _tap(tester, find.byKey(const Key('filter-status-inProgress')));
+    await _tap(tester, find.byKey(const Key('filter-project-5')));
+    // What Android does: new insets/padding reach MediaQuery.
+    tester.view.viewInsets = const FakeViewPadding(bottom: 1);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpAndSettle();
+    tester.view.padding = const FakeViewPadding(top: 48, bottom: 96);
+    addTearDown(tester.view.resetPadding);
+    await tester.pumpAndSettle();
+    await _tap(tester, find.byKey(const Key('filter-sort-title')));
+    await _tap(tester, find.byKey(const Key('task-filters-apply')));
+    final q = server.rowQueries.last;
+    expect(q['status'], 'in_progress');
+    expect(q['project_id'], 5);
+    expect(q['sort'], 'title');
+    expect(find.text('Filters (3)'), findsOneWidget);
+  });
+
   testWidgets('removing one active filter keeps the others', (tester) async {
     final server = await _pump(tester);
     await _applyFilters(tester, ['project-5', 'priority-high']);
