@@ -575,8 +575,21 @@ void main() {
   });
 
   group('pre-M03 Tasks and Timesheets alignment', () {
-    Future<void> tab(WidgetTester tester, String name) =>
-        _tap(tester, find.byKey(Key('task-tab-$name')));
+    // Status lives in the Filters sheet: open it, pick, apply.
+    Future<void> tab(WidgetTester tester, String name) async {
+      await _tap(tester, find.byKey(const Key('task-filters')));
+      await _tap(tester, find.byKey(Key('filter-status-$name')));
+      await _tap(tester, find.byKey(const Key('task-filters-apply')));
+    }
+
+    // The scope's status totals, read in the sheet, which closes unchanged.
+    Future<void> expectCounts(WidgetTester tester, List<String> labels) async {
+      await _tap(tester, find.byKey(const Key('task-filters')));
+      for (final label in labels) {
+        expect(find.text(label), findsOneWidget, reason: label);
+      }
+      await _tap(tester, find.byKey(const Key('task-filters-apply')));
+    }
 
     testWidgets('demo Tasks: status chips count, filter and reset paging', (
       tester,
@@ -587,14 +600,14 @@ void main() {
       await _tap(tester, find.byKey(const Key('task-scope-team')));
       // Six demo tasks: three in progress, one completed, none in review
       // (demo tasks have no review state).
-      for (final label in [
+      // No status chips on the screen any more.
+      expect(find.byKey(const Key('task-status')), findsNothing);
+      await expectCounts(tester, [
         'All Tasks 6',
         'In Progress 3',
         'Under Review 0',
         'Completed 1',
-      ]) {
-        expect(find.text(label), findsOneWidget);
-      }
+      ]);
       // Page 2 of all tasks, then a filter: back to page 1 of the result.
       await _tap(tester, find.widgetWithText(ChoiceChip, '2'));
       expect(find.byKey(const Key('task-t5')), findsOneWidget);
@@ -633,14 +646,12 @@ void main() {
       );
       await _open(tester, 'Tasks');
       // Counts come from `stats` of GET /employee/tasks.
-      for (final label in [
+      await expectCounts(tester, [
         'All Tasks 13',
         'In Progress 13',
         'Under Review 0',
         'Completed 0',
-      ]) {
-        expect(find.text(label), findsOneWidget);
-      }
+      ]);
       RequestOptions lastRows() => server!.requests.lastWhere(
         (r) =>
             r.uri.path == '/api/v1/employee/tasks' &&

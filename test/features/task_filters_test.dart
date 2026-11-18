@@ -16,7 +16,7 @@ import '../helpers/route_http_adapter.dart';
 import '../helpers/viewport.dart';
 
 /// Content-first Tasks (API mode): one search, My/Team only for a lead,
-/// status chips, and one Filters sheet for project, priority and sort.
+/// and one Filters sheet for status, project, priority and sort.
 /// Every filter is still sent to `GET /employee/tasks`; a change starts on
 /// page 1; the sheet sends one request for all its choices. Mocked HTTP.
 
@@ -203,11 +203,15 @@ void main() {
     expect(server.rowQueries.last.containsKey('assigned_to'), isFalse);
   });
 
-  testWidgets('one search field; status chips show server counts', (
+  testWidgets('one search field; status sits in the sheet with server counts', (
     tester,
   ) async {
     final server = await _pump(tester);
     expect(find.byType(TextField), findsOneWidget);
+    // Redmi 8 acceptance: no always-visible status chips on the screen.
+    expect(find.byKey(const Key('task-status')), findsNothing);
+    expect(find.text('All Tasks 24'), findsNothing);
+    await _tap(tester, find.byKey(const Key('task-filters')));
     for (final label in [
       'All Tasks 24',
       'To do 8',
@@ -218,14 +222,54 @@ void main() {
     ]) {
       expect(find.text(label), findsOneWidget, reason: label);
     }
-    await _tap(tester, find.byKey(const Key('task-tab-todo')));
+    await _tap(tester, find.byKey(const Key('filter-status-todo')));
+    await _tap(tester, find.byKey(const Key('task-filters-apply')));
     expect(server.rowQueries.last['status'], 'todo');
     expect(server.rowQueries.last['page'], 1);
     expect(find.text('8 tasks'), findsOneWidget);
-    // The same chip again sends nothing.
+    expect(find.text('Filters (1)'), findsOneWidget);
+    expect(find.byKey(const Key('active-filter-status')), findsOneWidget);
+    // The same choice again sends nothing.
     final n = server.rowQueries.length;
-    await _tap(tester, find.byKey(const Key('task-tab-todo')));
+    await _applyFilters(tester, ['status-todo']);
     expect(server.rowQueries.length, n);
+  });
+
+  testWidgets('status counts hide in the sheet once a project is drafted', (
+    tester,
+  ) async {
+    await _pump(tester);
+    await _tap(tester, find.byKey(const Key('task-filters')));
+    expect(find.text('Completed 8'), findsOneWidget);
+    await _tap(tester, find.byKey(const Key('filter-project-5')));
+    // Scope totals no longer describe a project's list.
+    expect(find.text('Completed 8'), findsNothing);
+    expect(find.text('Completed'), findsWidgets);
+  });
+
+  testWidgets('status, project, priority and sort go in one request', (
+    tester,
+  ) async {
+    final server = await _pump(tester);
+    final before = server.rowQueries.length;
+    await _applyFilters(tester, [
+      'status-inProgress',
+      'project-2',
+      'priority-low',
+      'sort-title',
+    ]);
+    expect(server.rowQueries.length, before + 1);
+    final q = server.rowQueries.last;
+    expect(q['status'], 'in_progress');
+    expect(q['project_id'], 2);
+    expect(q['priority'], 'low');
+    expect(q['sort'], 'title');
+    expect(q['assigned_to'], 10);
+    expect(find.text('Filters (4)'), findsOneWidget);
+    // Removing the status chip keeps the rest.
+    await _tap(tester, find.byTooltip('Remove filter: In Progress'));
+    expect(server.rowQueries.last.containsKey('status'), isFalse);
+    expect(server.rowQueries.last['project_id'], 2);
   });
 
   testWidgets('the sheet applies project, priority and sort in one request', (
@@ -245,9 +289,6 @@ void main() {
       expect(find.byKey(Key('active-filter-$k')), findsOneWidget);
     }
     expect(find.text('Mobile'), findsWidgets);
-    // Counts are totals for the scope: hidden once the list is narrowed.
-    expect(find.text('All Tasks'), findsOneWidget);
-    expect(find.text('All Tasks 24'), findsNothing);
     expect(find.byKey(const Key('task-result-count')), findsOneWidget);
   });
 
@@ -290,8 +331,11 @@ void main() {
     tester,
   ) async {
     final server = await _pump(tester);
-    await _tap(tester, find.byKey(const Key('task-tab-completed')));
-    await _applyFilters(tester, ['project-2', 'sort-plannedDate']);
+    await _applyFilters(tester, [
+      'status-completed',
+      'project-2',
+      'sort-plannedDate',
+    ]);
     await _tap(tester, find.byKey(const Key('reset-filters')));
     final q = server.rowQueries.last;
     for (final k in ['status', 'project_id', 'priority', 'sort']) {
@@ -299,7 +343,7 @@ void main() {
     }
     expect(q['assigned_to'], 10);
     expect(find.byKey(const Key('reset-filters')), findsNothing);
-    expect(find.text('All Tasks 24'), findsOneWidget);
+    expect(find.text('Filters'), findsOneWidget);
   });
 
   testWidgets('the sheet Reset clears the draft before applying', (

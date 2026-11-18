@@ -110,10 +110,6 @@ Future<void> openTaskForm(BuildContext context, {WorkTask? existing}) async {
   await openApiTaskForm(context);
 }
 
-/// Status chips of Figma "Tasks Management" (node 729:24295), plus "To do":
-/// the status most of an employee's open work is in.
-enum TaskStatusTab { all, todo, inProgress, inReview, completed }
-
 /// The documented `status` list filter for [tab] (`null`: no filter).
 ApiTaskStatus? apiStatusOf(TaskStatusTab tab) => switch (tab) {
   TaskStatusTab.all => null,
@@ -143,8 +139,10 @@ String taskTabLabel(AppLocalizations l10n, TaskStatusTab tab) => switch (tab) {
 };
 
 /// Figma "Tasks Management" (729:24059), content first: one search (the
-/// masthead's), My/Team only for someone who leads a project, the status
-/// chips, and one "Filters" sheet for project, priority, assignee and sort.
+/// masthead's), My/Team only for someone who leads a project, and one
+/// "Filters" sheet for status, project, priority, assignee and sort. The
+/// Redmi 8 acceptance run found always-visible status chips next to the
+/// Filters button distracting, so status moved into the sheet too.
 class TasksScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -156,7 +154,6 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   static const _pageSize = 4;
   String _query = '';
   TaskScope _scope = TaskScope.mine;
-  TaskStatusTab _tab = TaskStatusTab.all;
   TaskFilters _filters = const TaskFilters();
   int _page = 0;
   Timer? _debounce;
@@ -186,17 +183,15 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
   /// Every filter change starts on page 1: a kept page number past the
   /// result's last page showed an empty list with no pager.
-  void _set({TaskScope? scope, TaskStatusTab? tab, TaskFilters? filters}) =>
-      setState(() {
-        if (scope != null && scope != _scope) {
-          _scope = scope;
-          // Assignees exist only in the team view.
-          _filters = _filters.without(assignee: true);
-        }
-        if (tab != null) _tab = tab;
-        if (filters != null) _filters = filters;
-        _page = 0;
-      });
+  void _set({TaskScope? scope, TaskFilters? filters}) => setState(() {
+    if (scope != null && scope != _scope) {
+      _scope = scope;
+      // Assignees exist only in the team view.
+      _filters = _filters.without(assignee: true);
+    }
+    if (filters != null) _filters = filters;
+    _page = 0;
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -217,7 +212,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         if (!mine || t.assignee == demoSelf) t,
     ];
     final filtered = all.where((t) {
-      if (!demoTaskInTab(t, _tab)) return false;
+      if (!demoTaskInTab(t, _filters.status)) return false;
       if (_filters.project != null && t.project != _filters.project) {
         return false;
       }
@@ -264,27 +259,30 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     String projectLabel(Object id) =>
         projects.where((p) => p.$1 == id).firstOrNull?.$2 ?? '#$id';
 
-    // The status counts are totals for the scope. With a search or a
-    // narrowing filter they no longer describe the list, so they hide.
+    // A result count shows over a searched or narrowed list.
     final narrowed = q.isNotEmpty || _filters.narrows;
-    String tabLabel(TaskStatusTab tab) {
-      final label = taskTabLabel(l10n, tab);
-      if (narrowed) return label;
-      if (demo) {
-        return '$label ${all.where((t) => demoTaskInTab(t, tab)).length}';
-      }
-      if (stats == null) return label;
-      final n = switch (tab) {
+
+    // The scope's total per status, for the sheet's status choices (the
+    // sheet hides them once anything else narrows the list).
+    int? statusCount(TaskStatusTab tab) {
+      if (demo) return all.where((t) => demoTaskInTab(t, tab)).length;
+      if (stats == null) return null;
+      return switch (tab) {
         TaskStatusTab.all => stats.total,
         TaskStatusTab.todo => stats.byStatus['todo'],
         TaskStatusTab.inProgress => stats.byStatus['in_progress'],
         TaskStatusTab.inReview => stats.byStatus['in_review'],
         TaskStatusTab.completed => stats.byStatus['completed'],
       };
-      return n == null ? label : '$label $n';
     }
 
     final activeFilters = [
+      if (_filters.status != TaskStatusTab.all)
+        ActiveFilter(
+          'status',
+          taskTabLabel(l10n, _filters.status),
+          () => _set(filters: _filters.without(status: true)),
+        ),
       if (_filters.project case final p?)
         ActiveFilter(
           'project',
@@ -317,6 +315,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         current: _filters,
         projects: projects,
         priorityLabel: (p) => priorityLabel(l10n, p),
+        statusLabel: (s) => taskTabLabel(l10n, s),
+        statusCount: statusCount,
+        countsApply: q.isEmpty,
         assignees: demo && !mine
             ? [
                 for (final a in {for (final t in all) t.assignee}) a,
@@ -381,51 +382,28 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             ),
           ],
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ChipRow(
-              key: const Key('task-status'),
-              children: [
-                for (final tab in TaskStatusTab.values)
-                  FilterChipBox(
-                    key: Key('task-tab-${tab.name}'),
-                    label: tabLabel(tab),
-                    selected: _tab == tab,
-                    onTap: () {
-                      if (tab != _tab) _set(tab: tab);
-                    },
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TaskFilterBar(
-              count: _filters.count,
-              active: activeFilters,
-              canReset: _tab != TaskStatusTab.all,
-              onOpen: openFilters,
-              onReset: () =>
-                  _set(tab: TaskStatusTab.all, filters: const TaskFilters()),
-            ),
-          ],
+        TaskFilterBar(
+          count: _filters.count,
+          active: activeFilters,
+          onOpen: openFilters,
+          onReset: () => _set(filters: const TaskFilters()),
         ),
         if (!demo)
           _ApiTaskRows(
             query: TaskQuery(
               scope: scope,
               search: _query,
-              status: apiStatusOf(_tab),
+              status: apiStatusOf(_filters.status),
               priority: _filters.priority,
               page: _page + 1,
               projectId: _filters.project as int?,
               sort: _filters.sort,
             ),
-            showCount: narrowed || _tab != TaskStatusTab.all,
+            showCount: narrowed,
             onPage: (p) => setState(() => _page = p),
           )
         else ...[
-          if (narrowed || _tab != TaskStatusTab.all)
-            _ResultCount(filtered.length),
+          if (narrowed) _ResultCount(filtered.length),
           if (visible.isEmpty)
             EmptyNotice(
               text: mine && all.isEmpty ? l10n.noTasksAssigned : l10n.noRecords,

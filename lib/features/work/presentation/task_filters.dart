@@ -6,17 +6,25 @@ import 'package:workflow_app/features/work/data/board_repository.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
-/// The less-used task filters, kept together in one sheet: project,
-/// priority, assignee (demo team view) and sort. Status and scope stay on
+/// Status chips of Figma "Tasks Management" (node 729:24295), plus "To do":
+/// the status most of an employee's open work is in. Since the Redmi 8
+/// acceptance run they live in the Filters sheet, not on the screen.
+enum TaskStatusTab { all, todo, inProgress, inReview, completed }
+
+/// Every task filter, kept together in one sheet: status, project,
+/// priority, assignee (demo team view) and sort. Scope (My/Team) stays on
 /// the screen; search stays in the masthead.
 @immutable
 class TaskFilters {
   const new({
+    this.status = TaskStatusTab.all,
     this.project,
     this.priority,
     this.assignee,
     this.sort = TaskSort.newest,
   });
+
+  final TaskStatusTab status;
 
   /// API: a project id (`project_id`); demo: a project name.
   final Object? project;
@@ -26,12 +34,18 @@ class TaskFilters {
   /// `newest` is the server's default and is not sent.
   final TaskSort sort;
 
+  /// Filters other than status that narrow the list. The status counts are
+  /// totals for the scope, so they show only while this is false.
+  bool get narrowsBeyondStatus =>
+      project != null || priority != null || assignee != null;
+
   /// Filters that narrow the list (sort only reorders it).
-  bool get narrows => project != null || priority != null || assignee != null;
+  bool get narrows => status != TaskStatusTab.all || narrowsBeyondStatus;
 
   /// What the Filters button counts: everything that differs from the
-  /// defaults, sort included.
+  /// defaults, status and sort included.
   int get count =>
+      (status != TaskStatusTab.all ? 1 : 0) +
       (project != null ? 1 : 0) +
       (priority != null ? 1 : 0) +
       (assignee != null ? 1 : 0) +
@@ -40,11 +54,13 @@ class TaskFilters {
   bool get isDefault => count == 0;
 
   TaskFilters without({
+    bool status = false,
     bool project = false,
     bool priority = false,
     bool assignee = false,
     bool sort = false,
   }) => TaskFilters(
+    status: status ? TaskStatusTab.all : this.status,
     project: project ? null : this.project,
     priority: priority ? null : this.priority,
     assignee: assignee ? null : this.assignee,
@@ -54,13 +70,14 @@ class TaskFilters {
   @override
   bool operator ==(Object other) =>
       other is TaskFilters &&
+      other.status == status &&
       other.project == project &&
       other.priority == priority &&
       other.assignee == assignee &&
       other.sort == sort;
 
   @override
-  int get hashCode => Object.hash(project, priority, assignee, sort);
+  int get hashCode => Object.hash(status, project, priority, assignee, sort);
 }
 
 String taskSortLabel(AppLocalizations l10n, TaskSort s) => switch (s) {
@@ -69,14 +86,22 @@ String taskSortLabel(AppLocalizations l10n, TaskSort s) => switch (s) {
   TaskSort.title => l10n.sortTitle,
 };
 
-/// One sheet for project, priority, assignee and sort. Choices are drafted
-/// and applied together with "Show results", so picking three options
-/// sends one request, not three. Returns null when dismissed.
+/// One sheet for status, project, priority, assignee and sort. Choices are
+/// drafted and applied together with "Show results", so picking three
+/// options sends one request, not three. Returns null when dismissed, and
+/// the list stays as it was.
+///
+/// [statusCount] gives the scope's total for a status (null: unknown). The
+/// totals describe the whole scope, so they show only while the draft
+/// narrows nothing else and [countsApply] (no search) holds.
 Future<TaskFilters?> showTaskFilterSheet(
   BuildContext context, {
   required TaskFilters current,
   required List<(Object, String)> projects,
   required String Function(TaskPriority) priorityLabel,
+  required String Function(TaskStatusTab) statusLabel,
+  int? Function(TaskStatusTab)? statusCount,
+  bool countsApply = true,
   List<String> assignees = const [],
   bool sortable = true,
 }) => showModalBottomSheet<TaskFilters>(
@@ -137,6 +162,20 @@ Future<TaskFilters?> showTaskFilterSheet(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        section(l10n.fieldStatus, [
+                          for (final tab in TaskStatusTab.values)
+                            choice<TaskStatusTab>(
+                              'status-${tab.name}',
+                              switch (countsApply && !draft.narrowsBeyondStatus
+                                  ? statusCount?.call(tab)
+                                  : null) {
+                                final n? => '${statusLabel(tab)} $n',
+                                null => statusLabel(tab),
+                              },
+                              tab,
+                              draft.status,
+                            ),
+                        ]),
                         if (projects.isNotEmpty)
                           section(l10n.filterProject, [
                             choice<_Project>(
@@ -262,35 +301,15 @@ class _Assignee {
   int get hashCode => name.hashCode;
 }
 
-TaskFilters _withValue(TaskFilters f, Object? v) => switch (v) {
-  _Project(:final id) => TaskFilters(
-    project: id,
-    priority: f.priority,
-    assignee: f.assignee,
-    sort: f.sort,
-  ),
-  _Priority(:final p) => TaskFilters(
-    project: f.project,
-    priority: p,
-    assignee: f.assignee,
-    sort: f.sort,
-  ),
-  _Assignee(:final name) => TaskFilters(
-    project: f.project,
-    priority: f.priority,
-    assignee: name,
-    sort: f.sort,
-  ),
-  final TaskSort s => TaskFilters(
-    project: f.project,
-    priority: f.priority,
-    assignee: f.assignee,
-    sort: s,
-  ),
-  _ => f,
-};
+TaskFilters _withValue(TaskFilters f, Object? v) => TaskFilters(
+  status: v is TaskStatusTab ? v : f.status,
+  project: v is _Project ? v.id : f.project,
+  priority: v is _Priority ? v.p : f.priority,
+  assignee: v is _Assignee ? v.name : f.assignee,
+  sort: v is TaskSort ? v : f.sort,
+);
 
-/// An applied filter, shown under the status chips with a remove button.
+/// An applied filter, shown beside the Filters button with a remove button.
 class ActiveFilter {
   const new(this.key, this.label, this.onRemove);
   final String key;
@@ -306,7 +325,6 @@ class TaskFilterBar extends StatelessWidget {
     required this.active,
     required this.onOpen,
     required this.onReset,
-    this.canReset = false,
     super.key,
   });
 
@@ -314,9 +332,6 @@ class TaskFilterBar extends StatelessWidget {
   final List<ActiveFilter> active;
   final VoidCallback onOpen;
   final VoidCallback onReset;
-
-  /// Also true when only the status chip differs from "All".
-  final bool canReset;
 
   @override
   Widget build(BuildContext context) {
@@ -372,7 +387,7 @@ class TaskFilterBar extends StatelessWidget {
         ),
         for (final f in active)
           _ActiveChip(key: Key('active-filter-${f.key}'), filter: f),
-        if (canReset || on)
+        if (on)
           TextButton(
             key: const Key('reset-filters'),
             onPressed: onReset,
