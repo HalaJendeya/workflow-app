@@ -29,17 +29,26 @@ import '../helpers/viewport.dart';
 
 late List<String> _exits;
 
+/// What the app last told Android with `setFrameworkHandlesBack`.
+bool? _frameworkHandlesBack;
+
 Future<void> _pump(WidgetTester tester, Portal portal) async {
   useViewport(tester, const Size(390, 844));
   await loadAppFonts();
   _exits = [];
+  _frameworkHandlesBack = null;
   tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
     SystemChannels.platform,
     (call) async {
       if (call.method == 'SystemNavigator.pop') _exits.add(call.method);
+      if (call.method == 'SystemNavigator.setFrameworkHandlesBack') {
+        _frameworkHandlesBack = call.arguments as bool;
+      }
       return null;
     },
   );
+  // A running app: the framework reports Back handling only once resumed.
+  tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
   addTearDown(
     () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       SystemChannels.platform,
@@ -70,8 +79,16 @@ Future<void> _pump(WidgetTester tester, Portal portal) async {
   await tester.pumpAndSettle();
 }
 
-/// Android system Back.
+/// Android system Back as Android 13+ delivers it with predictive back (on
+/// by default when targeting API 36): if the app last said it cannot handle
+/// Back, the system closes the app without asking Flutter. The emulator run
+/// (Android 16) found More → Tasks → Task Details → Back → Back closed the
+/// app this way; the Redmi 8 (older Android) always asks Flutter.
 Future<void> _back(WidgetTester tester) async {
+  if (_frameworkHandlesBack == false) {
+    _exits.add('system closed the app');
+    return;
+  }
   await tester.binding.handlePopRoute();
   await tester.pumpAndSettle();
 }

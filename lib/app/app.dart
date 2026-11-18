@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -37,6 +39,29 @@ class _WorkFlowAppState extends ConsumerState<WorkFlowApp>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  /// Tells Android that the app handles Back, always.
+  ///
+  /// With predictive back (Android 13+, on by default when targeting API
+  /// 36) Android asks Flutter about Back only while the framework says it
+  /// can pop; otherwise the system closes the app itself. The framework
+  /// derives that from the last [NavigationNotification], and the router's
+  /// root navigator reports "can't pop" without knowing a tab's own stack
+  /// or the tab history in `AppShell`. On the Android 16 emulator, More →
+  /// Tasks → Task Details → Back → Back closed the app, as did Back on a
+  /// tab opened from More. Claiming Back routes every press through the
+  /// router; when nothing handles it, Flutter exits the app itself
+  /// (`SystemNavigator.pop`), so Back on Home still leaves the app.
+  bool _claimBack(NavigationNotification notification) {
+    switch (WidgetsBinding.instance.lifecycleState) {
+      case null || AppLifecycleState.detached:
+        // The engine isn't ready to be told yet.
+        break;
+      case _:
+        unawaited(SystemNavigator.setFrameworkHandlesBack(true));
+    }
+    return true;
   }
 
   Brightness _brightness(AppPreferences prefs) => prefs.brightness(
@@ -83,6 +108,7 @@ class _WorkFlowAppState extends ConsumerState<WorkFlowApp>
         );
     });
     return MaterialApp.router(
+      onNavigationNotification: _claimBack,
       scaffoldMessengerKey: _messenger,
       debugShowCheckedModeBanner: !isMock,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
