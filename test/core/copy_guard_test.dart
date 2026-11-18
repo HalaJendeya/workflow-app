@@ -21,7 +21,7 @@ void main() {
   final technical = RegExp(
     r'\bAPI\b|\bapi\b|backend|endpoint|\broutes?\b|\bHTTP\b|LiveKit|JSON|'
     r'exception|stack ?trace|\b[45]0[0-9]\b|not implemented|واجهة برمجية|'
-    r'نقاط الاتصال|الواجهة البرمجية|واجهة WorkFlow',
+    'نقاط الاتصال|الواجهة البرمجية|واجهة WorkFlow',
     caseSensitive: false,
   );
 
