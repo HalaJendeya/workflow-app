@@ -242,6 +242,21 @@ void main() {
       expect(_exits, hasLength(1));
     });
 
+    testWidgets('re-tapping the current tab returns to its first screen', (
+      tester,
+    ) async {
+      await _pump(tester, Portal.employee);
+      await _more(tester, 'Meetings');
+      _onTop(MeetingsScreen);
+      await _bar(tester, 'More');
+      _onTop(EmployeeCategoriesScreen);
+      // Another tab and back keeps what was open there.
+      await _more(tester, 'Tasks');
+      await _bar(tester, 'Chat');
+      await _bar(tester, 'More');
+      _onTop(TasksScreen);
+    });
+
     testWidgets('a sheet closes first on Back, the tab stays', (tester) async {
       await _pump(tester, Portal.employee);
       await _more(tester, 'Tasks');

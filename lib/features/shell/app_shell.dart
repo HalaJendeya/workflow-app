@@ -80,11 +80,27 @@ class _AppShellState extends State<AppShell> {
         bottomNavigationBar: WfNavigationSurface(
           destinations: widget.destinations,
           currentIndex: shell.currentIndex,
-          onSelect: (i) =>
-              shell.goBranch(i, initialLocation: i == shell.currentIndex),
+          onSelect: _select,
         ),
       ),
     );
+  }
+
+  /// Another tab: switch to it as the user left it. The current tab: back
+  /// to its first screen. `goBranch(initialLocation: true)` alone left
+  /// screens pushed with `Navigator.push` (Tasks, Meetings or Dashboard
+  /// opened from More) on top, so re-tapping More did nothing (emulator
+  /// acceptance run).
+  void _select(int tab) {
+    final shell = widget.navigationShell;
+    if (tab != shell.currentIndex) {
+      shell.goBranch(tab);
+      return;
+    }
+    shell.route.branches[tab].navigatorKey.currentState?.popUntil(
+      (route) => route.isFirst,
+    );
+    shell.goBranch(tab, initialLocation: true);
   }
 }
 
