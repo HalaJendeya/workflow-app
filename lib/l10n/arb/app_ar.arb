@@ -263,6 +263,7 @@
   "searchMeetingsHint": "ابحث في الاجتماعات أو الشركات أو الرمز...",
   "codeTypeParticipants": "الرمز · النوع · المشاركون",
   "details": "التفاصيل",
+  "meetingTiming": "التوقيت",
   "detailsBody": "سجلات الجلسة ومعايير الاجتماع",
   "meetingId": "معرّف الاجتماع",
   "fieldType": "النوع",

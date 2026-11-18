@@ -596,27 +596,6 @@ class ApiMeetingDetailsScreen extends ConsumerWidget {
     final h16 = AppTextStyles.mobileLgSemiBold.copyWith(
       color: AppColors.textPrimary,
     );
-    final secondary = AppTextStyles.mobileXsRegular.copyWith(
-      color: AppColors.textSecondary,
-    );
-    final fmt = DateFormat('M/d/y, h:mm:ss a');
-    String at(DateTime? t) => t == null ? '—' : fmt.format(t);
-    Widget field(String label, String value) => Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: secondary),
-          const SizedBox(height: 4),
-          ContentText(
-            value,
-            style: AppTextStyles.mobileBaseSemiBold.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
 
     return ModulePage(
       title: l10n.meetingsTitle,
@@ -637,72 +616,53 @@ class ApiMeetingDetailsScreen extends ConsumerWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ModuleCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ContentText(m.title, style: h16),
-                      const SizedBox(height: 4),
-                      Text(l10n.detailsBody, style: secondary),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          StatusBadge(
-                            label: '${l10n.meetingId}: ${m.code}',
-                            tone: BadgeTone.info,
-                          ),
-                          StatusBadge(
-                            label: meetingStatusLabel(l10n, s),
-                            tone: meetingTone(s),
-                          ),
-                        ],
-                      ),
-                      field(l10n.fieldType, switch (m.type) {
-                        ApiMeetingType.instant => l10n.meetingTypeInstant,
-                        ApiMeetingType.scheduled => l10n.meetingScheduled,
-                        ApiMeetingType.other => '—',
-                      }),
-                      field(l10n.scheduledAt, at(m.scheduledAt)),
-                      field(
-                        l10n.privacy,
-                        m.isPrivate ? l10n.private : l10n.public,
-                      ),
-                      field(l10n.startedAt, at(m.startedAt)),
-                      field(l10n.endedAt, at(m.endedAt)),
-                      field(l10n.fieldProject, m.projectTitle ?? '—'),
-                      field(l10n.duration, secondsLabel(l10n, m.runSeconds)),
-                      field(l10n.createdBy, m.creatorName ?? '—'),
-                      field(
-                        l10n.peakParticipants,
-                        '${m.peakParticipants ?? '—'}',
-                      ),
-                      field(
-                        l10n.maxParticipants,
-                        '${m.maxParticipants ?? '—'}',
-                      ),
-                      const SizedBox(height: 16),
-                      Text(l10n.features, style: secondary),
-                      const SizedBox(height: 8),
-                      ChipRow(
-                        children: [
-                          for (final f in MeetingFeature.values)
-                            FilterChipBox(
-                              label: featureLabel(l10n, f),
-                              selected: features.contains(f),
-                              onTap: () {},
-                            ),
-                        ],
-                      ),
-                      field(
-                        l10n.description,
-                        m.description?.trim().isNotEmpty ?? false
-                            ? m.description!
-                            : '—',
-                      ),
-                    ],
-                  ),
+                MeetingFactsCard(
+                  title: m.title,
+                  badges: [
+                    StatusBadge(
+                      label: '${l10n.meetingId}: ${m.code}',
+                      tone: BadgeTone.info,
+                    ),
+                    StatusBadge(
+                      label: meetingStatusLabel(l10n, s),
+                      tone: meetingTone(s),
+                    ),
+                  ],
+                  timing: [
+                    DetailField(
+                      l10n.scheduledAt,
+                      meetingTimeLabel(m.scheduledAt),
+                    ),
+                    DetailField(
+                      l10n.duration,
+                      secondsLabel(l10n, m.runSeconds),
+                    ),
+                    DetailField(l10n.startedAt, meetingTimeLabel(m.startedAt)),
+                    DetailField(l10n.endedAt, meetingTimeLabel(m.endedAt)),
+                  ],
+                  info: [
+                    DetailField(l10n.fieldType, switch (m.type) {
+                      ApiMeetingType.instant => l10n.meetingTypeInstant,
+                      ApiMeetingType.scheduled => l10n.meetingScheduled,
+                      ApiMeetingType.other => '—',
+                    }),
+                    DetailField(
+                      l10n.privacy,
+                      m.isPrivate ? l10n.private : l10n.public,
+                    ),
+                    DetailField(l10n.fieldProject, m.projectTitle ?? '—'),
+                    DetailField(l10n.createdBy, m.creatorName ?? '—'),
+                    DetailField(
+                      l10n.peakParticipants,
+                      '${m.peakParticipants ?? '—'}',
+                    ),
+                    DetailField(
+                      l10n.maxParticipants,
+                      '${m.maxParticipants ?? '—'}',
+                    ),
+                  ],
+                  features: features,
+                  description: m.description,
                 ),
                 if (inv != null) ...[
                   const SizedBox(height: 20),
@@ -854,64 +814,32 @@ class _ParticipantsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final value = ref.watch(apiParticipantsProvider(meetingId));
-    final secondary = AppTextStyles.mobileXsRegular.copyWith(
-      color: AppColors.textSecondary,
-    );
     final total = value.value?.total;
     return ModuleCard(
       key: const Key('participants'),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            '${l10n.participants} (${total ?? '—'})',
-            style: AppTextStyles.mobileLgSemiBold.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          FilterChipBox(
-            label: l10n.refreshList,
-            selected: true,
-            onTap: () => ref.invalidate(apiParticipantsProvider(meetingId)),
+          MeetingSectionHeader(
+            title: '${l10n.participants} (${total ?? '—'})',
+            onRefresh: () => ref.invalidate(apiParticipantsProvider(meetingId)),
           ),
           AsyncSection(
             value: value,
             onRetry: () => ref.invalidate(apiParticipantsProvider(meetingId)),
             builder: (page) => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (page.items.isEmpty) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
                   EmptyNotice(text: l10n.noRecords),
                 ],
-                for (var i = 0; i < page.items.length; i++) ...[
-                  const SizedBox(height: 16),
-                  Text('#${i + 1} · ${l10n.user}', style: secondary),
-                  const SizedBox(height: 4),
-                  Text(
-                    page.items[i].name,
-                    style: AppTextStyles.mobileBaseSemiBold.copyWith(
-                      color: AppColors.textPrimary,
-                    ),
+                for (final p in page.items)
+                  MeetingParticipantRow(
+                    name: p.name,
+                    isHost: p.isHost,
+                    isConnected: p.isConnected,
                   ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      if (page.items[i].isHost)
-                        StatusBadge(label: l10n.host, tone: BadgeTone.info),
-                      StatusBadge(
-                        label: page.items[i].isConnected
-                            ? l10n.connected
-                            : l10n.disconnected,
-                        tone: page.items[i].isConnected
-                            ? BadgeTone.success
-                            : BadgeTone.warning,
-                      ),
-                    ],
-                  ),
-                ],
               ],
             ),
           ),

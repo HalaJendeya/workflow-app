@@ -683,6 +683,98 @@ class DetailField {
   final String value;
 }
 
+/// Short label/value metadata that uses the available width. It packs as
+/// many columns as fit cells of [minCellWidth] at the current text size,
+/// up to four: two on a 360 dp phone, three or four on a tablet. When only
+/// one fits (320 dp with large text) each field becomes one line, label at
+/// the start and value at the end, instead of a label stacked over a value.
+class DetailGrid extends StatelessWidget {
+  const new(this.fields, {this.minCellWidth = 132, super.key});
+
+  final List<DetailField> fields;
+  final double minCellWidth;
+
+  static const double _gap = AppSpacing.md;
+
+  /// Columns that fit [width] with cells of [minCell] (text-scaled) wide.
+  static int columnsFor(double width, double minCell) =>
+      ((width + _gap) / (minCell + _gap)).floor().clamp(1, 4);
+
+  @override
+  Widget build(BuildContext context) {
+    final label = AppTextStyles.mobileXsRegular.copyWith(
+      color: AppColors.textSecondary,
+    );
+    final value = AppTextStyles.mobileBaseSemiBold.copyWith(
+      color: AppColors.textPrimary,
+    );
+    return LayoutBuilder(
+      builder: (context, box) {
+        final cell = MediaQuery.textScalerOf(context).scale(minCellWidth);
+        final columns = columnsFor(box.maxWidth, cell);
+        if (columns == 1) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final (i, f) in fields.indexed)
+                Padding(
+                  padding: EdgeInsets.only(top: i == 0 ? 0 : AppSpacing.sm),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: Text(f.label, style: label)),
+                      const SizedBox(width: AppSpacing.sm),
+                      Flexible(
+                        flex: 2,
+                        child: ContentText(
+                          f.value,
+                          style: value,
+                          textAlign: TextAlign.end,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var r = 0; r < fields.length; r += columns)
+              Padding(
+                padding: EdgeInsets.only(top: r == 0 ? 0 : AppSpacing.md),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var c = 0; c < columns; c++) ...[
+                      if (c > 0) const SizedBox(width: _gap),
+                      Expanded(
+                        child: r + c < fields.length
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(fields[r + c].label, style: label),
+                                  const SizedBox(height: AppSpacing.xs),
+                                  ContentText(
+                                    fields[r + c].value,
+                                    style: value,
+                                  ),
+                                ],
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 /// "Content card" record: blue reference + status, big amount, subtitle,
 /// two-column details, then "View Details" with edit/delete actions.
 class RecordCard extends StatelessWidget {

@@ -371,6 +371,7 @@
   "searchMeetingsHint": "Search meetings, companies, or code...",
   "codeTypeParticipants": "Code · Type · Participants",
   "details": "Details",
+  "meetingTiming": "Timing",
   "detailsBody": "Comprehensive session logs and meeting parameters",
   "meetingId": "Meeting ID",
   "fieldType": "Type",

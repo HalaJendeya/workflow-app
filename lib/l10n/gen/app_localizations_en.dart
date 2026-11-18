@@ -869,6 +869,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get details => 'Details';
 
   @override
+  String get meetingTiming => 'Timing';
+
+  @override
   String get detailsBody => 'Comprehensive session logs and meeting parameters';
 
   @override

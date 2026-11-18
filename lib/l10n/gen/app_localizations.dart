@@ -1676,6 +1676,12 @@ abstract class AppLocalizations {
   /// **'Details'**
   String get details;
 
+  /// No description provided for @meetingTiming.
+  ///
+  /// In en, this message translates to:
+  /// **'Timing'**
+  String get meetingTiming;
+
   /// No description provided for @detailsBody.
   ///
   /// In en, this message translates to:

@@ -873,6 +873,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get details => 'التفاصيل';
 
   @override
+  String get meetingTiming => 'التوقيت';
+
+  @override
   String get detailsBody => 'سجلات الجلسة ومعايير الاجتماع';
 
   @override
