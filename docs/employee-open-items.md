@@ -64,6 +64,17 @@ contract/product.**
 
 F8 (notification filter leaks into the Home card), F9 (RTL punctuation of server text), U1 (More **+** overlaps the Appearance row), U2 (unusable meeting actions offered to non-leads), U3 (Arabic date comma). Details: `docs/employee-device-acceptance.md` §3. **Fixed locally, not pushed or device-verified:** F8 `54e7055`, F9 `50a6cdd` (+ `85c925a`), U1 `5f4291f`, U2 `575e4f0`, U3 `2aae5e5`, tests `35bac2e`. Re-check F8, F9 and the More screen on the Redmi 8. Mutation readiness: `docs/employee-mutation-readiness.md`.
 
+## O7 — Android 16 emulator acceptance (2026-11-18)
+
+The Team Lead and Regular Employee were tested in API mode (read-only), and
+the Client in mock mode only. Four emulator-only defects were fixed:
+filter choices lost (`f6d3bc0`), predictive Back closing the app
+(`4691964`), tab re-tap (`dd08c75`) and the Arabic Back arrow (`ae1aaf7`).
+These fixes are **still pending verification on the Redmi 8**.
+Cross-account mutation workflows were not executed, S1/S2 remain
+unresolved, and overall E2E is not complete. Details:
+`docs/android-emulator-acceptance.md` §11.
+
 ## Already fixed in `a662c3a` (for reference)
 
 - F1: task details parse.

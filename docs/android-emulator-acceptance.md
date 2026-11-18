@@ -158,7 +158,19 @@ emulator was starved; it was not an app crash.
 - `flutter build apk --debug` (API mode, `BUILD_SHA=ae1aaf7`): built and
   installed on the emulator.
 
-## 11. Still open
+## 11. QA status (owner-reviewed, 2026-11-18)
+
+| Area | Status |
+|---|---|
+| Team Lead | Android Emulator, API mode: **tested** (read-only) |
+| Regular Employee | Android Emulator, API mode: **tested** (read-only) |
+| Client | Android Emulator, **mock only**: tested. Not tested against the live API |
+| Redmi 8 | **Pending:** the emulator fixes (`f6d3bc0`, `4691964`, `dd08c75`, `ae1aaf7`) are not yet verified on the physical device |
+| Cross-account mutation workflows | **Not executed** (no task, status, chat, meeting, invitation or notification writes) |
+| S1 / S2 | **Unresolved** backend security blockers (`backend-security-issues-s1-s2.md`) |
+| Overall E2E | **Not complete** |
+
+## 12. Still open
 
 - Live **Client** acceptance (needs a Client QA account).
 - Physical Redmi 8 re-check of D1 and D3 (D2 does not occur on its Android
