@@ -1262,5 +1262,43 @@
   "timesheetOutOfSync": "This timesheet was saved before some of its tasks changed, so its stored total may differ from the tasks below.",
   "timesheetCountedHelp": "Tasks in review or completed, dated in this month, count toward it.",
   "timesheetNoTasks": "No tasks are counted in this timesheet.",
-  "noTimesheetsYet": "You have no timesheets yet."
+  "noTimesheetsYet": "You have no timesheets yet.",
+  "myReport": "My report",
+  "myReportBody": "Your tasks, time, timesheets and meetings for a month or a year.",
+  "previousPeriod": "Previous period",
+  "nextPeriod": "Next period",
+  "reportTasksDone": "Tasks completed",
+  "reportOf": "{done} of {total}",
+  "@reportOf": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "reportTasksOf": "{done} of {total} tasks done",
+  "@reportTasksOf": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "reportMeetingsAttended": "Meetings attended",
+  "reportEarnings": "Earnings",
+  "reportTasksByStatus": "Tasks by status",
+  "reportNoTasks": "No tasks are dated in this period.",
+  "reportNoProjects": "No projects in this period.",
+  "reportNoTimesheets": "No timesheets in this period.",
+  "reportNoMeetings": "No meetings in this period.",
+  "reportLeader": "Leader",
+  "reportMember": "Member",
+  "reportAssignee": "Assignee",
+  "reportAttended": "Attended"
 }

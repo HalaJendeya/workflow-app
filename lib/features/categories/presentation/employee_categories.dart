@@ -6,6 +6,7 @@ import 'package:workflow_app/features/categories/presentation/categories_screen.
 import 'package:workflow_app/features/dashboard/presentation/employee_dashboard_screen.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_forms.dart';
 import 'package:workflow_app/features/meetings/presentation/meetings_screen.dart';
+import 'package:workflow_app/features/reports/presentation/employee_report_screen.dart';
 import 'package:workflow_app/features/work/data/work_options.dart';
 import 'package:workflow_app/features/work/presentation/tasks_screen.dart';
 import 'package:workflow_app/features/work/presentation/timesheets_screen.dart';
@@ -37,6 +38,14 @@ class EmployeeCategoriesScreen extends ConsumerWidget {
               icon: 'cat_item_dashboard',
               onOpen: (c) => push(c, const EmployeeDashboardScreen()),
             ),
+            // The employee's own report (`GET /employee/report`); the
+            // Overview card is "dashboards & reports" in Figma (729:46743).
+            if (!demo)
+              CategoryItem(
+                label: l10n.myReport,
+                icon: 'cat_item_report',
+                onOpen: (c) => push(c, const EmployeeReportScreen()),
+              ),
           ],
         ),
         CategorySection(

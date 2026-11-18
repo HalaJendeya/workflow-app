@@ -4435,6 +4435,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You have no timesheets yet.'**
   String get noTimesheetsYet;
+
+  /// No description provided for @myReport.
+  ///
+  /// In en, this message translates to:
+  /// **'My report'**
+  String get myReport;
+
+  /// No description provided for @myReportBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your tasks, time, timesheets and meetings for a month or a year.'**
+  String get myReportBody;
+
+  /// No description provided for @previousPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous period'**
+  String get previousPeriod;
+
+  /// No description provided for @nextPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Next period'**
+  String get nextPeriod;
+
+  /// No description provided for @reportTasksDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks completed'**
+  String get reportTasksDone;
+
+  /// No description provided for @reportOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total}'**
+  String reportOf(int done, int total);
+
+  /// No description provided for @reportTasksOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} tasks done'**
+  String reportTasksOf(int done, int total);
+
+  /// No description provided for @reportMeetingsAttended.
+  ///
+  /// In en, this message translates to:
+  /// **'Meetings attended'**
+  String get reportMeetingsAttended;
+
+  /// No description provided for @reportEarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Earnings'**
+  String get reportEarnings;
+
+  /// No description provided for @reportTasksByStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks by status'**
+  String get reportTasksByStatus;
+
+  /// No description provided for @reportNoTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks are dated in this period.'**
+  String get reportNoTasks;
+
+  /// No description provided for @reportNoProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'No projects in this period.'**
+  String get reportNoProjects;
+
+  /// No description provided for @reportNoTimesheets.
+  ///
+  /// In en, this message translates to:
+  /// **'No timesheets in this period.'**
+  String get reportNoTimesheets;
+
+  /// No description provided for @reportNoMeetings.
+  ///
+  /// In en, this message translates to:
+  /// **'No meetings in this period.'**
+  String get reportNoMeetings;
+
+  /// No description provided for @reportLeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Leader'**
+  String get reportLeader;
+
+  /// No description provided for @reportMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get reportMember;
+
+  /// No description provided for @reportAssignee.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignee'**
+  String get reportAssignee;
+
+  /// No description provided for @reportAttended.
+  ///
+  /// In en, this message translates to:
+  /// **'Attended'**
+  String get reportAttended;
 }
 
 class _AppLocalizationsDelegate

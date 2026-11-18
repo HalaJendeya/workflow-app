@@ -2430,4 +2430,63 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noTimesheetsYet => 'لا توجد لديك سجلات ساعات بعد.';
+
+  @override
+  String get myReport => 'تقريري';
+
+  @override
+  String get myReportBody =>
+      'مهامك ووقتك وسجلات ساعاتك واجتماعاتك لشهر أو سنة.';
+
+  @override
+  String get previousPeriod => 'الفترة السابقة';
+
+  @override
+  String get nextPeriod => 'الفترة التالية';
+
+  @override
+  String get reportTasksDone => 'المهام المكتملة';
+
+  @override
+  String reportOf(int done, int total) {
+    return '$done من $total';
+  }
+
+  @override
+  String reportTasksOf(int done, int total) {
+    return '$done من $total مهام مكتملة';
+  }
+
+  @override
+  String get reportMeetingsAttended => 'الاجتماعات التي حضرتها';
+
+  @override
+  String get reportEarnings => 'الأرباح';
+
+  @override
+  String get reportTasksByStatus => 'المهام حسب الحالة';
+
+  @override
+  String get reportNoTasks => 'لا توجد مهام مؤرّخة في هذه الفترة.';
+
+  @override
+  String get reportNoProjects => 'لا توجد مشاريع في هذه الفترة.';
+
+  @override
+  String get reportNoTimesheets => 'لا توجد سجلات ساعات في هذه الفترة.';
+
+  @override
+  String get reportNoMeetings => 'لا توجد اجتماعات في هذه الفترة.';
+
+  @override
+  String get reportLeader => 'قائد';
+
+  @override
+  String get reportMember => 'عضو';
+
+  @override
+  String get reportAssignee => 'مكلّف';
+
+  @override
+  String get reportAttended => 'حضرت';
 }

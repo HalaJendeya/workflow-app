@@ -2435,4 +2435,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noTimesheetsYet => 'You have no timesheets yet.';
+
+  @override
+  String get myReport => 'My report';
+
+  @override
+  String get myReportBody =>
+      'Your tasks, time, timesheets and meetings for a month or a year.';
+
+  @override
+  String get previousPeriod => 'Previous period';
+
+  @override
+  String get nextPeriod => 'Next period';
+
+  @override
+  String get reportTasksDone => 'Tasks completed';
+
+  @override
+  String reportOf(int done, int total) {
+    return '$done of $total';
+  }
+
+  @override
+  String reportTasksOf(int done, int total) {
+    return '$done of $total tasks done';
+  }
+
+  @override
+  String get reportMeetingsAttended => 'Meetings attended';
+
+  @override
+  String get reportEarnings => 'Earnings';
+
+  @override
+  String get reportTasksByStatus => 'Tasks by status';
+
+  @override
+  String get reportNoTasks => 'No tasks are dated in this period.';
+
+  @override
+  String get reportNoProjects => 'No projects in this period.';
+
+  @override
+  String get reportNoTimesheets => 'No timesheets in this period.';
+
+  @override
+  String get reportNoMeetings => 'No meetings in this period.';
+
+  @override
+  String get reportLeader => 'Leader';
+
+  @override
+  String get reportMember => 'Member';
+
+  @override
+  String get reportAssignee => 'Assignee';
+
+  @override
+  String get reportAttended => 'Attended';
 }
