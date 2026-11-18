@@ -17,6 +17,7 @@ import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/notifications/application/notifications_controller.dart';
 import 'package:workflow_app/features/notifications/data/notifications_repository.dart';
 import 'package:workflow_app/features/notifications/domain/app_notification.dart';
+import 'package:workflow_app/features/notifications/presentation/notification_navigation.dart';
 import 'package:workflow_app/features/profile/data/profile_repository.dart';
 import 'package:workflow_app/features/shell/workspace_header.dart';
 import 'package:workflow_app/features/work/data/board_repository.dart';
@@ -357,15 +358,15 @@ class _NotificationsPanelState extends ConsumerState<_NotificationsPanel> {
                   : relativeTime(l10n, n.createdAt!),
               body: n.message,
               unread: !n.isRead,
-              onTap: n.isRead
+              opens: openableTarget(ref, n) != null,
+              onTap: n.isRead && openableTarget(ref, n) == null
                   ? null
-                  : () async {
-                      try {
-                        await controller.markRead(n.id);
-                      } on Object catch (e) {
-                        if (context.mounted) _snack(context, e);
-                      }
-                    },
+                  : () => openNotification(
+                      context,
+                      ref,
+                      n,
+                      markRead: () => controller.markRead(n.id),
+                    ),
             ),
             const SizedBox(height: 14),
           ],
@@ -677,17 +678,16 @@ class _NotificationsCard extends ConsumerWidget {
                           : relativeTime(l10n, n.createdAt!),
                       body: n.message,
                       unread: !n.isRead,
-                      onTap: n.isRead
+                      opens: openableTarget(ref, n) != null,
+                      onTap: n.isRead && openableTarget(ref, n) == null
                           ? null
-                          : () async {
-                              try {
-                                await ref
-                                    .read(provider.notifier)
-                                    .markRead(n.id);
-                              } on Object catch (e) {
-                                if (context.mounted) _snack(context, e);
-                              }
-                            },
+                          : () => openNotification(
+                              context,
+                              ref,
+                              n,
+                              markRead: () =>
+                                  ref.read(provider.notifier).markRead(n.id),
+                            ),
                     ),
                     const SizedBox(height: 14),
                   ],
@@ -710,6 +710,7 @@ class _RecordCard extends StatelessWidget {
     this.body,
     this.status,
     this.unread = false,
+    this.opens = false,
     this.onTap,
     super.key,
   });
@@ -719,6 +720,10 @@ class _RecordCard extends StatelessWidget {
   final String? body;
   final String? status;
   final bool unread;
+
+  /// Tapping opens a page (a notification's task, chat or meeting): a
+  /// chevron at the end says so.
+  final bool opens;
   final VoidCallback? onTap;
 
   @override
@@ -749,6 +754,16 @@ class _RecordCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   shape: BoxShape.circle,
+                ),
+              ),
+            if (opens)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(start: 4),
+                child: Icon(
+                  Icons.chevron_right,
+                  key: const Key('notification-opens'),
+                  size: 20,
+                  color: AppColors.textSecondary,
                 ),
               ),
           ],

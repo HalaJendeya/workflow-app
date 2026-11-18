@@ -68,6 +68,28 @@ class AppNotification {
   final Json? subject;
   final Json? actor;
 
+  /// What tapping the item opens, from `subject {type, id}`. The
+  /// collection asserts only that `subject` is present; the live server
+  /// (2026-11-17/18, read-only) sent `task` (`task_assigned`),
+  /// `conversation` (`chat_message`) and `meeting` (`meeting_invited`)
+  /// with a numeric id. Any other type, or no id, opens nothing.
+  NotificationTarget? get target {
+    final s = subject;
+    if (s == null) return null;
+    final id = switch (s['id']) {
+      final int i => i,
+      final String v => int.tryParse(v),
+      _ => null,
+    };
+    if (id == null) return null;
+    return switch (s['type']) {
+      'task' => (kind: NotificationTargetKind.task, id: id),
+      'conversation' => (kind: NotificationTargetKind.conversation, id: id),
+      'meeting' => (kind: NotificationTargetKind.meeting, id: id),
+      _ => null,
+    };
+  }
+
   AppNotification markedRead(DateTime? at) => AppNotification(
     id: id,
     isRead: true,
@@ -83,6 +105,10 @@ class AppNotification {
     actor: actor,
   );
 }
+
+enum NotificationTargetKind { task, conversation, meeting }
+
+typedef NotificationTarget = ({NotificationTargetKind kind, int id});
 
 class NotificationInbox {
   const new({
