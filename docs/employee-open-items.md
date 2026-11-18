@@ -42,9 +42,9 @@ contract/product.**
 | Feature | Contract | Live check | Notes |
 |---|---|---|---|
 | Employee Reports | `GET /employee/report` (`year`, `month` or `from`/`to`, paged tasks) | 200 for both accounts: `{employee, period, summary, projects, tasks, timesheets, meetings}` | No screen. Needs a Figma frame and an owner decision. |
-| Timesheet rows and details | `GET /employee/timesheets` rows; `GET /timesheets/{id}`, `/timesheets/{id}/details` | 200; row and details shapes observed (E3) | The screen shows only the summary and an outdated "endpoints not published" banner. |
+| Timesheet rows and details | `GET /employee/timesheets` rows; `GET /timesheets/{id}`, `/timesheets/{id}/details` | 200; row and details shapes observed (E3) | The screen shows only the totals, with a plain note that individual entries are not shown yet (the outdated banner was replaced on 2026-11-18). |
 | Notification tap → open subject | Rows carry `subject {type, id}` | Live: `task`, `conversation` | Tapping only marks the item read (M10). |
-| Meetings: join by code | `GET /employee/meetings/by-code/{code}` | not called | The chip says "unavailable" in API mode. |
+| Meetings: join by code | `GET /employee/meetings/by-code/{code}` | not called | Not offered in API mode (chip and More action hidden since 2026-11-18). |
 | Meetings: own join request status/cancel | `GET/DELETE /employee/meetings/{id}/join-request` | 404 when there is none (expected) | Only the 202 "waiting for host" state is handled. |
 | WhatsApp settings | see O2 | 404 | Not built; blocked by O2. |
 | CSV exports | `projects/export`, `tasks/export`, `sprints/backlog/export`, `timesheets/export` | not called | Needs a save/share decision (E15). |
