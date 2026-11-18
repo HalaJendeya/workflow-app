@@ -159,7 +159,6 @@ class _ApiTaskFormScreenState extends ConsumerState<ApiTaskFormScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final led = ref.watch(ledProjectsProvider);
-    final people = ref.watch(peopleOptionsProvider);
     final projects = led.value ?? const <ProjectOption>[];
     final project =
         _project ?? (projects.length == 1 ? projects.single.id : null);
@@ -167,6 +166,11 @@ class _ApiTaskFormScreenState extends ConsumerState<ApiTaskFormScreen> {
     final sprints = project == null
         ? null
         : ref.watch(sprintOptionsProvider(project));
+    // Only the project's members may be assigned (422 otherwise).
+    final members = project == null
+        ? null
+        : ref.watch(projectMembersProvider(project));
+    final people = members?.value ?? const <PersonOption>[];
     final projectTitle =
         projects.where((p) => p.id == project).firstOrNull?.title ??
         widget.existing?.projectTitle;
@@ -175,10 +179,7 @@ class _ApiTaskFormScreenState extends ConsumerState<ApiTaskFormScreen> {
       for (final s in sprints?.value ?? const <SprintOption>[]) s.id,
     ];
     if (_sprint != null && !sprintIds.contains(_sprint)) sprintIds.add(_sprint);
-    final personIds = <int?>[
-      null,
-      for (final p in people.value ?? const <PersonOption>[]) p.userId,
-    ];
+    final personIds = <int?>[null, for (final p in people) p.userId];
     if (_assignee != null && !personIds.contains(_assignee)) {
       personIds.add(_assignee);
     }
@@ -194,10 +195,7 @@ class _ApiTaskFormScreenState extends ConsumerState<ApiTaskFormScreen> {
 
     String personLabel(int? id) {
       if (id == null) return l10n.unassigned;
-      return (people.value ?? const <PersonOption>[])
-              .where((p) => p.userId == id)
-              .firstOrNull
-              ?.name ??
+      return people.where((p) => p.userId == id).firstOrNull?.name ??
           widget.existing?.assigneeName ??
           '#$id';
     }
@@ -228,8 +226,9 @@ class _ApiTaskFormScreenState extends ConsumerState<ApiTaskFormScreen> {
             labelOf: (id) => projects.firstWhere((p) => p.id == id).title,
             onChanged: (v) => setState(() {
               _project = v;
-              // A sprint belongs to one project.
+              // A sprint and the assignee belong to one project.
               _sprint = null;
+              _assignee = null;
             }),
           ),
         TextInputField(
@@ -257,17 +256,26 @@ class _ApiTaskFormScreenState extends ConsumerState<ApiTaskFormScreen> {
           required: false,
           onChanged: (v) => setState(() => _sprint = v),
         ),
-        SelectField<int?>(
-          key: ValueKey(('assignee', personIds.length)),
-          label: l10n.assignee,
-          value: _assignee,
-          options: personIds,
-          labelOf: personLabel,
-          required: false,
-          onChanged: (v) => setState(() => _assignee = v),
-        ),
+        if (members case AsyncError(:final error))
+          ApiErrorCard(
+            key: const Key('task-members-error'),
+            error: error,
+            onRetry: () => ref.invalidate(projectMembersProvider(project!)),
+          )
+        else
+          SelectField<int?>(
+            key: ValueKey(('assignee', project, personIds.length)),
+            label: l10n.assignee,
+            value: _assignee,
+            options: personIds,
+            labelOf: personLabel,
+            required: false,
+            onChanged: (v) => setState(() => _assignee = v),
+          ),
         Text(
-          l10n.taskAssigneeHint,
+          project == null
+              ? l10n.taskAssigneeProjectFirst
+              : l10n.taskAssigneeHint,
           style: AppTextStyles.mobileXsRegular.copyWith(
             color: AppColors.textSecondary,
           ),

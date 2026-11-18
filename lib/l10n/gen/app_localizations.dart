@@ -4351,6 +4351,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your timesheet totals. Individual entries aren\'t shown in the app yet.'**
   String get timesheetSummaryOnly;
+
+  /// No description provided for @exportCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'Export CSV'**
+  String get exportCsv;
+
+  /// No description provided for @exportSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {fileName}.'**
+  String exportSaved(String fileName);
+
+  /// No description provided for @exportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t export: {reason}'**
+  String exportFailed(String reason);
+
+  /// No description provided for @taskAssigneeProjectFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a project first to see who can be assigned.'**
+  String get taskAssigneeProjectFirst;
+
+  /// No description provided for @payHourly.
+  ///
+  /// In en, this message translates to:
+  /// **'Hourly'**
+  String get payHourly;
+
+  /// No description provided for @payMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get payMonthly;
+
+  /// No description provided for @timesheetDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Timesheet details'**
+  String get timesheetDetails;
+
+  /// No description provided for @countedHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted time'**
+  String get countedHours;
+
+  /// No description provided for @countedTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted tasks'**
+  String get countedTasks;
+
+  /// No description provided for @period.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get period;
+
+  /// No description provided for @timesheetOutOfSync.
+  ///
+  /// In en, this message translates to:
+  /// **'This timesheet was saved before some of its tasks changed, so its stored total may differ from the tasks below.'**
+  String get timesheetOutOfSync;
+
+  /// No description provided for @timesheetCountedHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks in review or completed, dated in this month, count toward it.'**
+  String get timesheetCountedHelp;
+
+  /// No description provided for @timesheetNoTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks are counted in this timesheet.'**
+  String get timesheetNoTasks;
+
+  /// No description provided for @noTimesheetsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'You have no timesheets yet.'**
+  String get noTimesheetsYet;
 }
 
 class _AppLocalizationsDelegate

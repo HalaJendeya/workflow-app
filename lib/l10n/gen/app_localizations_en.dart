@@ -2386,4 +2386,53 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get timesheetSummaryOnly =>
       'Your timesheet totals. Individual entries aren\'t shown in the app yet.';
+
+  @override
+  String get exportCsv => 'Export CSV';
+
+  @override
+  String exportSaved(String fileName) {
+    return 'Saved $fileName.';
+  }
+
+  @override
+  String exportFailed(String reason) {
+    return 'Couldn\'t export: $reason';
+  }
+
+  @override
+  String get taskAssigneeProjectFirst =>
+      'Choose a project first to see who can be assigned.';
+
+  @override
+  String get payHourly => 'Hourly';
+
+  @override
+  String get payMonthly => 'Monthly';
+
+  @override
+  String get timesheetDetails => 'Timesheet details';
+
+  @override
+  String get countedHours => 'Counted time';
+
+  @override
+  String get countedTasks => 'Counted tasks';
+
+  @override
+  String get period => 'Period';
+
+  @override
+  String get timesheetOutOfSync =>
+      'This timesheet was saved before some of its tasks changed, so its stored total may differ from the tasks below.';
+
+  @override
+  String get timesheetCountedHelp =>
+      'Tasks in review or completed, dated in this month, count toward it.';
+
+  @override
+  String get timesheetNoTasks => 'No tasks are counted in this timesheet.';
+
+  @override
+  String get noTimesheetsYet => 'You have no timesheets yet.';
 }

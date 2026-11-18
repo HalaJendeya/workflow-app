@@ -2381,4 +2381,53 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get timesheetSummaryOnly =>
       'إجماليات سجل ساعاتك. لا تُعرض الإدخالات الفردية في التطبيق بعد.';
+
+  @override
+  String get exportCsv => 'تصدير CSV';
+
+  @override
+  String exportSaved(String fileName) {
+    return 'تم حفظ $fileName.';
+  }
+
+  @override
+  String exportFailed(String reason) {
+    return 'تعذّر التصدير: $reason';
+  }
+
+  @override
+  String get taskAssigneeProjectFirst =>
+      'اختر مشروعًا أولًا لرؤية من يمكن إسناد المهمة إليه.';
+
+  @override
+  String get payHourly => 'بالساعة';
+
+  @override
+  String get payMonthly => 'شهري';
+
+  @override
+  String get timesheetDetails => 'تفاصيل سجل الساعات';
+
+  @override
+  String get countedHours => 'الوقت المحتسب';
+
+  @override
+  String get countedTasks => 'المهام المحتسبة';
+
+  @override
+  String get period => 'الفترة';
+
+  @override
+  String get timesheetOutOfSync =>
+      'حُفظ سجل الساعات هذا قبل تغيّر بعض مهامه، لذا قد يختلف إجماليه المحفوظ عن المهام أدناه.';
+
+  @override
+  String get timesheetCountedHelp =>
+      'تُحتسب المهام قيد المراجعة أو المكتملة المؤرّخة في هذا الشهر.';
+
+  @override
+  String get timesheetNoTasks => 'لا توجد مهام محتسبة في سجل الساعات هذا.';
+
+  @override
+  String get noTimesheetsYet => 'لا توجد لديك سجلات ساعات بعد.';
 }

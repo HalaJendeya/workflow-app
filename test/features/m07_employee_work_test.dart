@@ -266,6 +266,16 @@ class _Server implements HttpClientAdapter {
           }),
         );
     }
+    // Live row shape (2026-11-18): `{id, name}`, `id` = users.id.
+    if (o.method == 'GET' && p.startsWith('/tasks/project-employees/')) {
+      return (
+        200,
+        ok([
+          {'id': 10, 'name': 'Me'},
+          {'id': 11, 'name': 'Lina'},
+        ]),
+      );
+    }
     final task = RegExp(r'^/tasks/(\d+)$').firstMatch(p);
     if (task != null) {
       final id = int.parse(task.group(1)!);

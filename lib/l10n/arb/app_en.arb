@@ -1234,5 +1234,33 @@
   "errorFieldInvalid": "Check this field.",
   "errorSignInBlocked": "This account can't sign in right now. Contact your company admin.",
   "errorSignInFailed": "The email or password is incorrect.",
-  "timesheetSummaryOnly": "Your timesheet totals. Individual entries aren't shown in the app yet."
+  "timesheetSummaryOnly": "Your timesheet totals. Individual entries aren't shown in the app yet.",
+  "exportCsv": "Export CSV",
+  "exportSaved": "Saved {fileName}.",
+  "@exportSaved": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "exportFailed": "Couldn't export: {reason}",
+  "@exportFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "taskAssigneeProjectFirst": "Choose a project first to see who can be assigned.",
+  "payHourly": "Hourly",
+  "payMonthly": "Monthly",
+  "timesheetDetails": "Timesheet details",
+  "countedHours": "Counted time",
+  "countedTasks": "Counted tasks",
+  "period": "Period",
+  "timesheetOutOfSync": "This timesheet was saved before some of its tasks changed, so its stored total may differ from the tasks below.",
+  "timesheetCountedHelp": "Tasks in review or completed, dated in this month, count toward it.",
+  "timesheetNoTasks": "No tasks are counted in this timesheet.",
+  "noTimesheetsYet": "You have no timesheets yet."
 }

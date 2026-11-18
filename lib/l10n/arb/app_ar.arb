@@ -708,5 +708,19 @@
   "errorFieldInvalid": "تحقّق من هذا الحقل.",
   "errorSignInBlocked": "لا يمكن لهذا الحساب تسجيل الدخول حاليًا. تواصل مع مسؤول شركتك.",
   "errorSignInFailed": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
-  "timesheetSummaryOnly": "إجماليات سجل ساعاتك. لا تُعرض الإدخالات الفردية في التطبيق بعد."
+  "timesheetSummaryOnly": "إجماليات سجل ساعاتك. لا تُعرض الإدخالات الفردية في التطبيق بعد.",
+  "exportCsv": "تصدير CSV",
+  "exportSaved": "تم حفظ {fileName}.",
+  "exportFailed": "تعذّر التصدير: {reason}",
+  "taskAssigneeProjectFirst": "اختر مشروعًا أولًا لرؤية من يمكن إسناد المهمة إليه.",
+  "payHourly": "بالساعة",
+  "payMonthly": "شهري",
+  "timesheetDetails": "تفاصيل سجل الساعات",
+  "countedHours": "الوقت المحتسب",
+  "countedTasks": "المهام المحتسبة",
+  "period": "الفترة",
+  "timesheetOutOfSync": "حُفظ سجل الساعات هذا قبل تغيّر بعض مهامه، لذا قد يختلف إجماليه المحفوظ عن المهام أدناه.",
+  "timesheetCountedHelp": "تُحتسب المهام قيد المراجعة أو المكتملة المؤرّخة في هذا الشهر.",
+  "timesheetNoTasks": "لا توجد مهام محتسبة في سجل الساعات هذا.",
+  "noTimesheetsYet": "لا توجد لديك سجلات ساعات بعد."
 }

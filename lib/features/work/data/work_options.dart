@@ -94,11 +94,29 @@ class WorkOptionsRepository {
     SprintOption.fromJson,
   );
 
+  /// Every active employee of the company. Not used for assigning: a lead
+  /// may assign only members of the task's project ([projectMembers]).
   Future<List<PersonOption>> people() async => _list(
     ApiEnvelope.unwrapData(
       await _client.get('/api/v1/employee/employees/options'),
     ),
     PersonOption.fromJson,
+  );
+
+  /// `GET /employee/tasks/project-employees/{project}` ("List Task Project
+  /// Employees", `tasks.view`): the people a task on [projectId] may be
+  /// assigned to. The collection asserts only that `data` is a list; the
+  /// rows were read live on 2026-11-18 as `{id, name}`, where `id` is the
+  /// `users.id` that `assigned_to` takes (the lead's own row carries the
+  /// login's user id). A row without a numeric id is an invalid response.
+  Future<List<PersonOption>> projectMembers(int projectId) async => _list(
+    ApiEnvelope.unwrapData(
+      await _client.get('/api/v1/employee/tasks/project-employees/$projectId'),
+    ),
+    (j) => PersonOption(
+      userId: asInt(j['id']) ?? missingField('id'),
+      name: (j['name'] as String?) ?? '#${j['id']}',
+    ),
   );
 }
 
@@ -149,10 +167,15 @@ final FutureProviderFamily<List<SprintOption>, int> sprintOptionsProvider =
       return ref.watch(workOptionsRepositoryProvider).sprints(projectId);
     });
 
-final FutureProvider<List<PersonOption>> peopleOptionsProvider =
-    FutureProvider.autoDispose((ref) {
+/// Who a task on the project may be assigned to (its members). Read only
+/// for projects the user leads, the only ones the task form offers.
+final FutureProviderFamily<List<PersonOption>, int> projectMembersProvider =
+    FutureProvider.autoDispose.family<List<PersonOption>, int>((
+      ref,
+      projectId,
+    ) {
       watchSessionScope(ref);
-      return ref.watch(workOptionsRepositoryProvider).people();
+      return ref.watch(workOptionsRepositoryProvider).projectMembers(projectId);
     });
 
 /// A time of day as `H:i` sends it.
