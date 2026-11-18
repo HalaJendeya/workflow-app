@@ -97,13 +97,11 @@ class EmployeeCategoriesScreen extends ConsumerWidget {
       ],
       createActions: [
         if (canAddTask) CreateAction(l10n.addTask, openTaskForm),
-        // U2: in API mode an employee has no meeting create route and the
-        // app does not call the by-code lookup yet; a non-lead was offered
-        // only these two, neither usable. Without actions there is no +.
-        if (demo) ...[
-          CreateAction(l10n.scheduleMeeting, openScheduleMeeting),
-          CreateAction(l10n.joinByCodeTitle, openJoinByCode),
-        ],
+        // U2: in API mode an employee has no meeting create route, so
+        // Schedule stays demo-only. Join by code uses the employee's
+        // by-code lookup.
+        if (demo) CreateAction(l10n.scheduleMeeting, openScheduleMeeting),
+        CreateAction(l10n.joinByCodeTitle, openJoinByCode),
       ],
     );
   }

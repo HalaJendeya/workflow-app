@@ -1300,5 +1300,15 @@
   "reportLeader": "Leader",
   "reportMember": "Member",
   "reportAssignee": "Assignee",
-  "reportAttended": "Attended"
+  "reportAttended": "Attended",
+  "findMeeting": "Find meeting",
+  "meetingCodeNotFound": "No meeting with this code that you can open. Check the code and try again.",
+  "yourJoinRequest": "Your join request",
+  "joinRequestWaiting": "Waiting for the host",
+  "joinRequestWaitingHint": "The host must admit you before you can enter this meeting.",
+  "checkAgain": "Check again",
+  "withdrawJoinRequest": "Withdraw request",
+  "withdrawJoinRequestTitle": "Withdraw your join request?",
+  "withdrawJoinRequestBody": "The host will no longer see your request. You can ask to join again later.",
+  "joinRequestWithdrawn": "Join request withdrawn."
 }

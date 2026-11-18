@@ -2494,4 +2494,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportAttended => 'Attended';
+
+  @override
+  String get findMeeting => 'Find meeting';
+
+  @override
+  String get meetingCodeNotFound =>
+      'No meeting with this code that you can open. Check the code and try again.';
+
+  @override
+  String get yourJoinRequest => 'Your join request';
+
+  @override
+  String get joinRequestWaiting => 'Waiting for the host';
+
+  @override
+  String get joinRequestWaitingHint =>
+      'The host must admit you before you can enter this meeting.';
+
+  @override
+  String get checkAgain => 'Check again';
+
+  @override
+  String get withdrawJoinRequest => 'Withdraw request';
+
+  @override
+  String get withdrawJoinRequestTitle => 'Withdraw your join request?';
+
+  @override
+  String get withdrawJoinRequestBody =>
+      'The host will no longer see your request. You can ask to join again later.';
+
+  @override
+  String get joinRequestWithdrawn => 'Join request withdrawn.';
 }

@@ -15,6 +15,7 @@ import 'package:workflow_app/features/meetings/data/meetings_repository.dart';
 import 'package:workflow_app/features/meetings/domain/meeting.dart';
 import 'package:workflow_app/features/meetings/presentation/api_meeting_room_screen.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_details_screen.dart';
+import 'package:workflow_app/features/meetings/presentation/meeting_forms.dart';
 import 'package:workflow_app/features/meetings/presentation/meetings_screen.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -121,15 +122,26 @@ class _ApiMeetingsViewState extends ConsumerState<ApiMeetingsView> {
     String n(int Function(MeetingCounts) pick) =>
         counts.value == null ? '—' : count(pick(counts.value!));
 
-    // Neither role has a meeting create route, and the app has no
-    // join-by-code lookup (clients have none; the employee one is not
-    // wired), so neither action is shown (M07: unusable actions are
-    // hidden). Meetings are joined from their details.
+    // Neither role has a meeting create route, so Schedule is not shown.
+    // "Join by code" (Figma 643:38772) is offered to employees, who have
+    // `GET /employee/meetings/by-code/{code}`; clients have no such route.
+    final isEmployee =
+        ref.watch(meetingsRepositoryProvider).portal == Portal.employee;
     return ModulePage(
       title: l10n.meetingsTitle,
       description: l10n.meetingsDescription,
       onSearch: _onSearch,
       children: [
+        if (isEmployee)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: FilterChipBox(
+              key: const Key('meetings-join-by-code'),
+              label: l10n.joinByCode,
+              selected: true,
+              onTap: () => openJoinByCode(context),
+            ),
+          ),
         ModuleCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -701,6 +713,7 @@ class ApiMeetingDetailsScreen extends ConsumerWidget {
             when m.status == ApiMeetingStatus.waiting ||
                 m.status == ApiMeetingStatus.live)
           _JoinCard(meetingId: id, title: m.title),
+        if (isEmployee && meeting.hasValue) _MyJoinRequestCard(meetingId: id),
         _ParticipantsCard(meetingId: id),
         if (isEmployee) _InvitationsCard(meetingId: id),
       ],
@@ -730,12 +743,20 @@ class _JoinCard extends ConsumerWidget {
         key: const Key('meeting-join-card'),
         child: FilledButton(
           key: const Key('meeting-join'),
-          onPressed: () => Navigator.of(context, rootNavigator: true).push(
-            MaterialPageRoute<void>(
-              builder: (_) =>
-                  ApiMeetingRoomScreen(meetingId: meetingId, title: title),
-            ),
-          ),
+          onPressed: () async {
+            await Navigator.of(context, rootNavigator: true).push(
+              MaterialPageRoute<void>(
+                builder: (_) =>
+                    ApiMeetingRoomScreen(meetingId: meetingId, title: title),
+              ),
+            );
+            // The room may have left a join request waiting for the host.
+            if (context.mounted &&
+                ref.read(meetingsRepositoryProvider).portal ==
+                    Portal.employee) {
+              ref.invalidate(myJoinRequestProvider(meetingId));
+            }
+          },
           child: Text(l10n.joinMeeting),
         ),
       );
@@ -799,6 +820,133 @@ class _JoinCard extends ConsumerWidget {
               child: join.busy ? spinner : Text(l10n.joinMeeting),
             ),
           },
+        ],
+      ),
+    );
+  }
+}
+
+/// Employee only: the caller's own request to enter an `approval` meeting
+/// (`GET …/meetings/{id}/join-request`). Nothing is shown when there is
+/// none. A pending request can be checked again or withdrawn
+/// (`DELETE …/join-request`, after a confirmation).
+class _MyJoinRequestCard extends ConsumerStatefulWidget {
+  const new({required this.meetingId});
+
+  final int meetingId;
+
+  @override
+  ConsumerState<_MyJoinRequestCard> createState() => _MyJoinRequestCardState();
+}
+
+class _MyJoinRequestCardState extends ConsumerState<_MyJoinRequestCard> {
+  bool _busy = false;
+
+  Future<void> _withdraw() async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(l10n.withdrawJoinRequestTitle),
+        content: Text(l10n.withdrawJoinRequestBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            key: const Key('join-request-withdraw-confirm'),
+            onPressed: () => Navigator.pop(c, true),
+            child: Text(l10n.withdrawJoinRequest),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(meetingsRepositoryProvider)
+          .withdrawJoinRequest(widget.meetingId);
+      if (!mounted) return;
+      // A fresh Join is offered again.
+      ref
+        ..invalidate(meetingJoinProvider(widget.meetingId))
+        ..invalidate(myJoinRequestProvider(widget.meetingId));
+      showSnack(context, l10n.joinRequestWithdrawn);
+    } on Object catch (e) {
+      if (mounted) showSnack(context, localizedError(l10n, e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final value = ref.watch(myJoinRequestProvider(widget.meetingId));
+    if (value case AsyncError(:final error) when !value.hasValue) {
+      return ApiErrorCard(
+        error: error,
+        onRetry: () => ref.invalidate(myJoinRequestProvider(widget.meetingId)),
+      );
+    }
+    final request = value.value;
+    if (request == null) return const SizedBox.shrink();
+    return ModuleCard(
+      key: const Key('my-join-request'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.yourJoinRequest,
+            style: AppTextStyles.mobileLgSemiBold.copyWith(
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: StatusBadge(
+              label: request.isPending
+                  ? l10n.joinRequestWaiting
+                  : request.status,
+              tone: request.isPending ? BadgeTone.warning : BadgeTone.neutral,
+            ),
+          ),
+          if (request.isPending) ...[
+            const SizedBox(height: 8),
+            Text(
+              l10n.joinRequestWaitingHint,
+              style: AppTextStyles.mobileXsRegular.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton(
+                  key: const Key('join-request-refresh'),
+                  onPressed: _busy || value.isLoading
+                      ? null
+                      : () => ref.invalidate(
+                          myJoinRequestProvider(widget.meetingId),
+                        ),
+                  child: Text(l10n.checkAgain),
+                ),
+                TextButton(
+                  key: const Key('join-request-withdraw'),
+                  onPressed: _busy ? null : _withdraw,
+                  style: TextButton.styleFrom(
+                    foregroundColor: ModuleColors.dangerFg,
+                  ),
+                  child: Text(l10n.withdrawJoinRequest),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

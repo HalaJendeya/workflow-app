@@ -4543,6 +4543,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Attended'**
   String get reportAttended;
+
+  /// No description provided for @findMeeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Find meeting'**
+  String get findMeeting;
+
+  /// No description provided for @meetingCodeNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No meeting with this code that you can open. Check the code and try again.'**
+  String get meetingCodeNotFound;
+
+  /// No description provided for @yourJoinRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Your join request'**
+  String get yourJoinRequest;
+
+  /// No description provided for @joinRequestWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the host'**
+  String get joinRequestWaiting;
+
+  /// No description provided for @joinRequestWaitingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The host must admit you before you can enter this meeting.'**
+  String get joinRequestWaitingHint;
+
+  /// No description provided for @checkAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Check again'**
+  String get checkAgain;
+
+  /// No description provided for @withdrawJoinRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw request'**
+  String get withdrawJoinRequest;
+
+  /// No description provided for @withdrawJoinRequestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw your join request?'**
+  String get withdrawJoinRequestTitle;
+
+  /// No description provided for @withdrawJoinRequestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The host will no longer see your request. You can ask to join again later.'**
+  String get withdrawJoinRequestBody;
+
+  /// No description provided for @joinRequestWithdrawn.
+  ///
+  /// In en, this message translates to:
+  /// **'Join request withdrawn.'**
+  String get joinRequestWithdrawn;
 }
 
 class _AppLocalizationsDelegate

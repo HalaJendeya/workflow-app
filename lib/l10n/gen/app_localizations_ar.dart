@@ -2489,4 +2489,37 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get reportAttended => 'حضرت';
+
+  @override
+  String get findMeeting => 'البحث عن الاجتماع';
+
+  @override
+  String get meetingCodeNotFound =>
+      'لا يوجد اجتماع بهذا الرمز يمكنك فتحه. تحقّق من الرمز وحاول مرة أخرى.';
+
+  @override
+  String get yourJoinRequest => 'طلب انضمامك';
+
+  @override
+  String get joinRequestWaiting => 'بانتظار المضيف';
+
+  @override
+  String get joinRequestWaitingHint =>
+      'يجب أن يقبلك المضيف قبل أن تتمكن من دخول هذا الاجتماع.';
+
+  @override
+  String get checkAgain => 'تحقّق مجددًا';
+
+  @override
+  String get withdrawJoinRequest => 'سحب الطلب';
+
+  @override
+  String get withdrawJoinRequestTitle => 'هل تريد سحب طلب الانضمام؟';
+
+  @override
+  String get withdrawJoinRequestBody =>
+      'لن يرى المضيف طلبك بعد الآن. يمكنك طلب الانضمام مرة أخرى لاحقًا.';
+
+  @override
+  String get joinRequestWithdrawn => 'تم سحب طلب الانضمام.';
 }

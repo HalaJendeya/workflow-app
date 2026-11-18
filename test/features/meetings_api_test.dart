@@ -432,10 +432,9 @@ void main() {
       isEmpty,
     );
 
-    // U2: an employee can neither create a meeting (no route for the
-    // role) nor join by code (the app does not call the by-code route
-    // yet), so neither action is offered; meetings join from details.
-    expect(find.text('join by code'), findsNothing);
+    // An employee cannot create a meeting (no route for the role), so no
+    // Schedule +; Join by code uses the employee's by-code lookup.
+    expect(find.byKey(const Key('meetings-join-by-code')), findsOneWidget);
     expect(find.byKey(const Key('create-fab')), findsNothing);
 
     await tester.ensureVisible(find.byKey(const Key('meeting-41')));

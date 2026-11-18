@@ -362,6 +362,50 @@ class MeetingsRepository {
     );
   }
 
+  /// Employee only: `GET /employee/meetings/by-code/{code}` resolves a
+  /// meeting code to `data {id}` — only for a meeting the caller may
+  /// access; any other code is the generic 404 "Meeting not found" (live
+  /// 2026-11-18). Clients have no such route.
+  Future<int> meetingIdByCode(String code) async {
+    assert(portal == Portal.employee, 'No client route for by-code.');
+    final data = ApiEnvelope.unwrapObject(
+      await _client.get(
+        '$_base/meetings/by-code/${Uri.encodeComponent(code.trim())}',
+      ),
+    );
+    return asInt(data['id']) ?? missingField('id');
+  }
+
+  /// Employee only: `GET /employee/meetings/{id}/join-request`, the
+  /// caller's own request to enter an `approval` meeting (created when a
+  /// join answers 202). Documented fields: `id`, `status`, `meeting_id`.
+  /// `null` when there is none (404 "No join request").
+  Future<MyJoinRequest?> myJoinRequest(int meetingId) async {
+    assert(portal == Portal.employee, 'No client route for join requests.');
+    try {
+      final data = ApiEnvelope.unwrapObject(
+        await _client.get('$_base/meetings/$meetingId/join-request'),
+      );
+      return MyJoinRequest(
+        id: asInt(data['id']) ?? missingField('id'),
+        status: (data['status'] as String?) ?? missingField('status'),
+      );
+    } on ApiException catch (e) {
+      if (e.kind == ApiFailureKind.notFound) return null;
+      rethrow;
+    }
+  }
+
+  /// Employee only: `DELETE /employee/meetings/{id}/join-request`
+  /// ("Withdraw My Join Request" ⚠️, `data` null) — the caller's own
+  /// pending request, after the person confirms.
+  Future<void> withdrawJoinRequest(int meetingId) async {
+    assert(portal == Portal.employee, 'No client route for join requests.');
+    ApiEnvelope.unwrapData(
+      await _client.delete('$_base/meetings/$meetingId/join-request'),
+    );
+  }
+
   /// `POST /{role}/meeting-participants/{id}/leave` (no body).
   Future<void> leave(int participantId) async {
     ApiEnvelope.unwrapObject(
@@ -388,6 +432,17 @@ class Joined extends JoinOutcome {
 /// 202: a join request the host must admit.
 class JoinRequested extends JoinOutcome {
   const new();
+}
+
+/// The caller's own join request. `status` is `pending` while the host
+/// decides; other values are not documented and are shown as given.
+class MyJoinRequest {
+  const new({required this.id, required this.status});
+
+  final int id;
+  final String status;
+
+  bool get isPending => status == 'pending';
 }
 
 /// This account's join state for one meeting. Kept while the session and
@@ -530,6 +585,17 @@ apiMeetingInvitationsProvider = FutureProvider.autoDispose
     .family<ApiPage<ApiInvitation>, int>((ref, id) {
       _scope(ref);
       return ref.watch(meetingsRepositoryProvider).invitations(id);
+    });
+
+/// The employee's own join request for a meeting (`null`: none). Read
+/// again when a join in this session answers 202.
+final FutureProviderFamily<MyJoinRequest?, int> myJoinRequestProvider =
+    FutureProvider.autoDispose.family<MyJoinRequest?, int>((ref, id) {
+      _scope(ref);
+      ref.watch(
+        meetingJoinProvider(id).select((s) => s.outcome is JoinRequested),
+      );
+      return ref.watch(meetingsRepositoryProvider).myJoinRequest(id);
     });
 
 final FutureProvider<ApiPage<ApiInvitation>> apiMyInvitationsProvider =

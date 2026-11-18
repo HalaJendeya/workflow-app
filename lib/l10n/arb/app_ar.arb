@@ -740,5 +740,15 @@
   "reportLeader": "قائد",
   "reportMember": "عضو",
   "reportAssignee": "مكلّف",
-  "reportAttended": "حضرت"
+  "reportAttended": "حضرت",
+  "findMeeting": "البحث عن الاجتماع",
+  "meetingCodeNotFound": "لا يوجد اجتماع بهذا الرمز يمكنك فتحه. تحقّق من الرمز وحاول مرة أخرى.",
+  "yourJoinRequest": "طلب انضمامك",
+  "joinRequestWaiting": "بانتظار المضيف",
+  "joinRequestWaitingHint": "يجب أن يقبلك المضيف قبل أن تتمكن من دخول هذا الاجتماع.",
+  "checkAgain": "تحقّق مجددًا",
+  "withdrawJoinRequest": "سحب الطلب",
+  "withdrawJoinRequestTitle": "هل تريد سحب طلب الانضمام؟",
+  "withdrawJoinRequestBody": "لن يرى المضيف طلبك بعد الآن. يمكنك طلب الانضمام مرة أخرى لاحقًا.",
+  "joinRequestWithdrawn": "تم سحب طلب الانضمام."
 }

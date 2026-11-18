@@ -3,13 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/network/api_exception.dart';
+import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/finance/domain/finance_models.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
+import 'package:workflow_app/features/meetings/data/meetings_repository.dart';
 import 'package:workflow_app/features/meetings/domain/meeting.dart';
+import 'package:workflow_app/features/meetings/presentation/api_meetings_view.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_details_screen.dart'
     show featureLabel;
 import 'package:workflow_app/features/meetings/presentation/meeting_room_screen.dart';
@@ -485,17 +489,44 @@ class _JoinByCodeScreenState extends ConsumerState<JoinByCodeScreen> {
     super.dispose();
   }
 
+  bool _looking = false;
+
+  /// Employee, API mode: `GET /employee/meetings/by-code/{code}` → the
+  /// meeting's details, where it is joined. A code the account may not
+  /// use is the same 404 as an unknown one, so both read "not found".
+  Future<void> _lookUp(AppLocalizations l10n) async {
+    if (_looking) return;
+    setState(() => _looking = true);
+    try {
+      final id = await ref
+          .read(meetingsRepositoryProvider)
+          .meetingIdByCode(_code.text);
+      if (!mounted) return;
+      await Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => ApiMeetingDetailsScreen(id: id),
+        ),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      showSnack(
+        context,
+        e.kind == ApiFailureKind.notFound
+            ? l10n.meetingCodeNotFound
+            : localizedError(l10n, e),
+      );
+    } finally {
+      if (mounted) setState(() => _looking = false);
+    }
+  }
+
   Future<void> _join() async {
     if (!validateAndReveal(_form)) return;
     final l10n = AppLocalizations.of(context);
     if (!ref.read(demoModeProvider)) {
-      showSnack(
-        context,
-        joinByCodeUnavailable(
-          l10n,
-          ref.read(sessionControllerProvider).value?.portal,
-        ),
-      );
+      final portal = ref.read(sessionControllerProvider).value?.portal;
+      if (portal == Portal.employee) return await _lookUp(l10n);
+      showSnack(context, joinByCodeUnavailable(l10n, portal));
       return;
     }
     final code = _code.text.trim().toUpperCase();
@@ -515,11 +546,15 @@ class _JoinByCodeScreenState extends ConsumerState<JoinByCodeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // The by-code route takes only the code; a room password is not part
+    // of the API, so the field is a demo-only part of the Figma frame.
+    final demo = ref.watch(demoModeProvider);
     return FormPage(
       title: l10n.joinByCodeTitle,
       formKey: _form,
       onSave: _join,
-      saveLabel: l10n.joinMeeting,
+      saving: _looking,
+      saveLabel: demo ? l10n.joinMeeting : l10n.findMeeting,
       fields: [
         TextInputField(
           fieldKey: const Key('join-code'),
@@ -527,21 +562,22 @@ class _JoinByCodeScreenState extends ConsumerState<JoinByCodeScreen> {
           controller: _code,
           hint: 'BHU-232-CEK',
         ),
-        TextInputField(
-          label: l10n.roomPassword,
-          controller: _password,
-          hint: 'password123',
-          required: false,
-        ),
+        if (demo)
+          TextInputField(
+            label: l10n.roomPassword,
+            controller: _password,
+            hint: 'password123',
+            required: false,
+          ),
       ],
     );
   }
 }
 
 /// Why "Join by code" cannot join in API mode, for this portal: clients
-/// have no lookup-by-code route at all; employees have
-/// `GET …/meetings/by-code/{code}`, which the app does not call yet. Either
-/// way the meeting can be joined from its details (LiveKit).
+/// have no lookup-by-code route at all (employees use
+/// `GET …/meetings/by-code/{code}` above). The meeting can still be joined
+/// from its details (LiveKit).
 String joinByCodeUnavailable(AppLocalizations l10n, Portal? portal) =>
     portal == Portal.employee
     ? l10n.joinByCodeNotConnected

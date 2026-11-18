@@ -74,15 +74,16 @@ void main() {
   }
 
   group('U2: employee + offers only usable actions', () {
-    testWidgets('API, not a lead: no + at all', (tester) async {
+    // Join by Code became usable for employees (GET …/meetings/by-code);
+    // scheduling still has no employee route.
+    testWidgets('API, not a lead: Join by Code only', (tester) async {
       await pumpMore(tester, demo: false);
-      expect(find.byKey(const Key('create-fab')), findsNothing);
-      expect(find.byKey(const Key('preferences-card')), findsOneWidget);
+      expect(await createActions(tester), ['Join by Code']);
     });
 
-    testWidgets('API, lead: Add task only', (tester) async {
+    testWidgets('API, lead: Add task and Join by Code', (tester) async {
       await pumpMore(tester, demo: false, led: {2});
-      expect(await createActions(tester), ['Add Task']);
+      expect(await createActions(tester), ['Add Task', 'Join by Code']);
     });
 
     testWidgets('demo: every action, saved on the device', (tester) async {
