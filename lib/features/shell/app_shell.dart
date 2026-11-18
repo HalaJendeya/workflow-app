@@ -12,7 +12,16 @@ class NavDestination {
 
 /// Hosts a portal's tabs with the Figma "Navigation surface" (643:40732 for
 /// client, 729:45527 for employee) floating over the content.
-class AppShell extends StatelessWidget {
+///
+/// Android Back follows the tabs the user went through. Tabs are switched
+/// with `go` (the bar, More's Projects/Sprints/Chat entries, dashboard
+/// cards), which leaves no route to pop, so Back on a tab's first screen
+/// used to close the app: More → Projects → Back exited instead of going
+/// back to More (Redmi 8 acceptance run). Now, when nothing is open above
+/// the tab (no pushed screen, sheet or dialog), Back returns to the
+/// previously visited tab, then to Home, and only Home's Back leaves the
+/// app.
+class AppShell extends StatefulWidget {
   const new({
     required this.navigationShell,
     required this.destinations,
@@ -23,18 +32,60 @@ class AppShell extends StatelessWidget {
   final List<NavDestination> destinations;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    extendBody: true,
-    body: navigationShell,
-    bottomNavigationBar: WfNavigationSurface(
-      destinations: destinations,
-      currentIndex: navigationShell.currentIndex,
-      onSelect: (i) => navigationShell.goBranch(
-        i,
-        initialLocation: i == navigationShell.currentIndex,
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  /// Visited tabs per shell route, oldest first, each at most once; the
+  /// last is the current tab. Kept on the route, not in this state: the
+  /// router may rebuild the shell with a new state on a tab switch.
+  static final _history = Expando<List<int>>('visited tabs');
+
+  List<int> get _visited => _history[widget.navigationShell.route] ??= [0];
+
+  void _record(int tab) {
+    final visited = _visited;
+    if (visited.isEmpty || visited.last != tab) {
+      visited
+        ..remove(tab)
+        ..add(tab);
+    }
+  }
+
+  /// Back on a tab's first screen: the previous tab, else Home. Returns
+  /// false (the router's own Back) when something can be popped first.
+  Future<bool> _onBack() async {
+    if (Navigator.of(context, rootNavigator: true).canPop()) return false;
+    final shell = widget.navigationShell;
+    final branch = shell.route.branches[shell.currentIndex];
+    if (branch.navigatorKey.currentState?.canPop() ?? false) return false;
+    if (shell.currentIndex == 0) return false;
+    final visited = _visited;
+    if (visited.isNotEmpty && visited.last == shell.currentIndex) {
+      visited.removeLast();
+    }
+    shell.goBranch(visited.isEmpty ? 0 : visited.last);
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final shell = widget.navigationShell;
+    _record(shell.currentIndex);
+    return BackButtonListener(
+      onBackButtonPressed: _onBack,
+      child: Scaffold(
+        extendBody: true,
+        body: shell,
+        bottomNavigationBar: WfNavigationSurface(
+          destinations: widget.destinations,
+          currentIndex: shell.currentIndex,
+          onSelect: (i) =>
+              shell.goBranch(i, initialLocation: i == shell.currentIndex),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 /// White 28 px-radius surface, 104 px tall, soft upward shadow; five 70 px
