@@ -22,6 +22,9 @@ was sent.
 
 ### After
 
+> Superseded on 2026-11-18. The Redmi 8 run failed the status chips, and
+> status now lives in the Filters sheet. See `ux-redmi8-followup.md`.
+
 1. Masthead search.
 2. My / Team (project leaders only).
 3. Summary card.
