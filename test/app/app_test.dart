@@ -356,11 +356,12 @@ void main() {
       expect(find.text('a day ago'), findsOneWidget);
     });
 
-    testWidgets('client tasks card says there is nothing to show', (
-      tester,
-    ) async {
+    // C1 (2026-11-19): a client has no task route, so the API-mode client
+    // home shows no Tasks card and no "unavailable" notice.
+    testWidgets('client home has no employee Tasks card', (tester) async {
       await signedIn(tester);
-      expect(find.text("There's nothing to show here yet."), findsOneWidget);
+      expect(find.byKey(const Key('home-tasks-card')), findsNothing);
+      expect(find.text("There's nothing to show here yet."), findsNothing);
       expect(find.textContaining('API'), findsNothing);
     });
 

@@ -74,6 +74,12 @@ class OverviewScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final portal =
         ref.watch(sessionControllerProvider).value?.portal ?? Portal.client;
+    // The Figma home (534:30390) shows a Tasks card, but a client account
+    // has no task route: in API mode the card could only say the feature
+    // is unavailable, so a client's home is the masthead and notifications.
+    // Demo mode keeps the Figma layout.
+    final showTasks =
+        portal == Portal.employee || ref.watch(appConfigProvider).isMock;
     return ColoredBox(
       color: AppColors.appBackground,
       // The sky masthead sits behind the status bar at rest; scrolled cards
@@ -102,10 +108,12 @@ class OverviewScreen extends ConsumerWidget {
                   140,
                 ),
                 sliver: SliverList.list(
-                  children: const [
-                    _TasksCard(),
-                    SizedBox(height: AppSpacing.lg),
-                    _NotificationsCard(),
+                  children: [
+                    if (showTasks) ...const [
+                      _TasksCard(),
+                      SizedBox(height: AppSpacing.lg),
+                    ],
+                    const _NotificationsCard(),
                   ],
                 ),
               ),
