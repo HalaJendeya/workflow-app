@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/files/csv_export.dart';
+import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -11,10 +12,14 @@ import 'package:workflow_app/l10n/gen/app_localizations.dart';
 /// route and offers to save it. One request per tap; a second tap while
 /// one is on its way does nothing.
 class ExportCsvChip extends ConsumerStatefulWidget {
-  const new({required this.download, super.key});
+  const new({required this.download, this.label, super.key});
 
   /// Fetches the file with the list's current filters.
   final Future<CsvFile> Function() download;
+
+  /// The chip's text where the screen's Figma frame names it otherwise
+  /// (client finance: "Export Report"); "Export CSV" by default.
+  final String? label;
 
   @override
   ConsumerState<ExportCsvChip> createState() => _ExportCsvChipState();
@@ -35,6 +40,17 @@ class _ExportCsvChipState extends ConsumerState<ExportCsvChip> {
       final file = await widget.download();
       final saved = await ref.read(csvSaverProvider)(file);
       if (saved) say(l10n.exportSaved(file.fileName));
+    } on ApiException catch (e) {
+      // The exports' only documented 422 is "Too many rows to export"
+      // (over 10 000): say how to fix it instead of pointing at form
+      // fields the list does not have.
+      say(
+        l10n.exportFailed(
+          e.kind == ApiFailureKind.validation
+              ? l10n.exportTooManyRows
+              : localizedError(l10n, e),
+        ),
+      );
     } on Object catch (e) {
       say(l10n.exportFailed(localizedError(l10n, e)));
     } finally {
@@ -46,9 +62,10 @@ class _ExportCsvChipState extends ConsumerState<ExportCsvChip> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final color = AppColors.textSecondary;
+    final label = widget.label ?? l10n.exportCsv;
     return Semantics(
       button: true,
-      label: l10n.exportCsv,
+      label: label,
       child: Material(
         color: AppColors.surface,
         shape: RoundedRectangleBorder(
@@ -78,7 +95,7 @@ class _ExportCsvChipState extends ConsumerState<ExportCsvChip> {
                 const SizedBox(width: 6),
                 ExcludeSemantics(
                   child: Text(
-                    l10n.exportCsv,
+                    label,
                     style: AppTextStyles.mobileXsSemiBold.copyWith(
                       color: color,
                     ),

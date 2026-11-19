@@ -312,7 +312,9 @@ void main() {
       await tester.pumpAndSettle();
       // No create route for clients: no button that could only explain.
       expect(find.byKey(const Key('create-fab')), findsNothing);
-      expect(find.textContaining('Export'), findsNothing);
+      // The export is the server's CSV (C11), never the demo placeholder.
+      expect(find.byKey(const Key('invoices-export')), findsOneWidget);
+      expect(find.text('↓ Export Report'), findsNothing);
     });
 
     testWidgets('add payment', (tester) async {
@@ -324,7 +326,9 @@ void main() {
       );
       await _openCategory(tester, 'Payments');
       expect(find.byKey(const Key('create-fab')), findsNothing);
-      expect(find.textContaining('Export'), findsNothing);
+      // The export is the server's CSV (C12), never the demo placeholder.
+      expect(find.byKey(const Key('payments-export')), findsOneWidget);
+      expect(find.text('↓ Export Report'), findsNothing);
     });
 
     testWidgets('add project: not offered to an employee (403 route)', (

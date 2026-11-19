@@ -2387,6 +2387,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get exportTooManyRows =>
+      'عدد الصفوف كبير جدًا. ضيّق عوامل التصفية إلى 10,000 صف أو أقل.';
+
+  @override
   String exportFailed(String reason) {
     return 'تعذّر التصدير: $reason';
   }

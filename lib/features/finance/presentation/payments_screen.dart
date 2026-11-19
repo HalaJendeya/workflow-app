@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
+import 'package:workflow_app/core/widgets/export_csv_chip.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/data/client_finance_repository.dart';
@@ -78,7 +79,8 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
       title: l10n.paymentsTitle,
       description: l10n.paymentsDescription,
       onSearch: demo ? (v) => setState(() => _query = v) : _onApiSearch,
-      // Clients have no payment create or export route: demo only.
+      // Clients have no payment create route: demo only. In API mode the
+      // export chip is the server's CSV (see _apiChildren).
       onCreate: demo ? () => _openForm(context) : null,
       createLabel: l10n.addPayment,
       children: [
@@ -126,6 +128,17 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
       PaymentStatusFilter.pending => l10n.statusPending,
     };
     return [
+      // Figma 643:35269: "↓ Export Report" above the metrics; the server's
+      // export of what the list shows (same filters, every page).
+      Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: ExportCsvChip(
+          key: const Key('payments-export'),
+          label: l10n.exportReport,
+          download: () =>
+              ref.read(clientFinanceRepositoryProvider).paymentsCsv(query),
+        ),
+      ),
       _ApiPaymentMetrics(result: result),
       InfoNotice(
         key: const Key('payment-rows-note'),

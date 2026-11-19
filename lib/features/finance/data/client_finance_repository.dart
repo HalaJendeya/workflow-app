@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:workflow_app/app/providers.dart';
+import 'package:workflow_app/core/files/csv_export.dart';
 import 'package:workflow_app/core/network/api_client.dart';
 import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/network/api_response.dart';
@@ -304,16 +305,7 @@ class ClientFinanceRepository {
     final body = ApiEnvelope.unwrapBody(
       await _client.get(
         '/api/v1/client/invoices',
-        query: {
-          'page': q.page,
-          'per_page': 15,
-          'status': _wire(q.filter),
-          'sort': q.sort.wire,
-          if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
-          if (q.from != null) 'from': _day(q.from!),
-          if (q.to != null) 'to': _day(q.to!),
-          'project_id': ?q.projectId,
-        },
+        query: {'page': q.page, 'per_page': 15, ..._invoiceFilters(q)},
       ),
     );
     final data = body['data'];
@@ -336,12 +328,7 @@ class ClientFinanceRepository {
     final body = ApiEnvelope.unwrapBody(
       await _client.get(
         '/api/v1/client/payments',
-        query: {
-          'page': q.page,
-          if (q.status != PaymentStatusFilter.all) 'status': q.status.name,
-          if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
-          if (q.from != null) 'from': _day(q.from!),
-        },
+        query: {'page': q.page, ..._paymentFilters(q)},
       ),
     );
     final data = body['data'];
@@ -358,6 +345,45 @@ class ClientFinanceRepository {
       ],
     );
   }
+
+  /// The invoice list's query parameters without paging: exactly what
+  /// `GET /client/invoices` and its export accept (`status`, `sort`,
+  /// `search`, `from`, `to`, `project_id`).
+  Json _invoiceFilters(InvoiceQuery q) => {
+    'status': _wire(q.filter),
+    'sort': q.sort.wire,
+    if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
+    if (q.from != null) 'from': _day(q.from!),
+    if (q.to != null) 'to': _day(q.to!),
+    'project_id': ?q.projectId,
+  };
+
+  /// The payment list's query parameters without paging (`status`,
+  /// `search`, `from`).
+  Json _paymentFilters(PaymentQuery q) => {
+    if (q.status != PaymentStatusFilter.all) 'status': q.status.name,
+    if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
+    if (q.from != null) 'from': _day(q.from!),
+  };
+
+  /// `GET /client/invoices/export` (collection, "Added 2026-10-26"): the
+  /// list's filters and sort without paging, as `text/csv; charset=UTF-8`
+  /// with a BOM. More than 10 000 rows answers 422. Read-only.
+  Future<CsvFile> invoicesCsv(InvoiceQuery q) => downloadCsv(
+    _client,
+    '/api/v1/client/invoices/export',
+    fallbackName: 'invoices.csv',
+    query: _invoiceFilters(q),
+  );
+
+  /// `GET /client/payments/export`: the payment list's filters without
+  /// paging, same file rules as [invoicesCsv]. Read-only.
+  Future<CsvFile> paymentsCsv(PaymentQuery q) => downloadCsv(
+    _client,
+    '/api/v1/client/payments/export',
+    fallbackName: 'payments.csv',
+    query: _paymentFilters(q),
+  );
 
   /// One page of the client's projects for the invoice project filter:
   /// `GET /client/projects` with its documented server-side `search` and

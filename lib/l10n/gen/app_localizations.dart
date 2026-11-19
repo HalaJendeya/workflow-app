@@ -4358,6 +4358,12 @@ abstract class AppLocalizations {
   /// **'Saved {fileName}.'**
   String exportSaved(String fileName);
 
+  /// No description provided for @exportTooManyRows.
+  ///
+  /// In en, this message translates to:
+  /// **'too many rows. Narrow the filters to 10,000 rows or fewer.'**
+  String get exportTooManyRows;
+
   /// No description provided for @exportFailed.
   ///
   /// In en, this message translates to:

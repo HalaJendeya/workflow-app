@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
+import 'package:workflow_app/core/widgets/export_csv_chip.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/data/client_finance_repository.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
@@ -106,6 +107,17 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
       onCreate: widget.onCreate,
       createLabel: l10n.createInvoice,
       children: [
+        // Figma 643:36002: "↓ Export Report" above the metrics. It exports
+        // what the list shows (same filters and sort, every page).
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: ExportCsvChip(
+            key: const Key('invoices-export'),
+            label: l10n.exportReport,
+            download: () =>
+                ref.read(clientFinanceRepositoryProvider).invoicesCsv(query),
+          ),
+        ),
         MetricGroup(
           metrics: [
             Metric(

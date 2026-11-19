@@ -2392,6 +2392,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get exportTooManyRows =>
+      'too many rows. Narrow the filters to 10,000 rows or fewer.';
+
+  @override
   String exportFailed(String reason) {
     return 'Couldn\'t export: $reason';
   }
