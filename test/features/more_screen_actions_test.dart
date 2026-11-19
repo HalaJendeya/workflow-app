@@ -102,39 +102,47 @@ void main() {
       ('RTL', const Locale('ar')),
     ]) {
       for (final size in [const Size(360, 740), const Size(320, 640)]) {
-        testWidgets('$name at ${size.width.toInt()} px', (tester) async {
-          await pumpMore(
+        // A regular employee has the + too (Join by Code only).
+        for (final (role, led) in [
+          ('lead', {2}),
+          ('member', <int>{}),
+        ]) {
+          testWidgets('$name, $role at ${size.width.toInt()} px', (
             tester,
-            demo: false,
-            led: {2},
-            locale: locale,
-            size: size,
-          );
-          // The page itself, not the horizontal section pills.
-          final scrollable = find
-              .descendant(
-                of: find.byType(CustomScrollView),
-                matching: find.byType(Scrollable),
-              )
-              .first;
-          await tester.scrollUntilVisible(
-            find.byKey(const Key('settings-appearance')),
-            200,
-            scrollable: scrollable,
-          );
-          // At the end of the page, where the last row sits lowest.
-          await tester.drag(scrollable, const Offset(0, -2000));
-          await tester.pumpAndSettle();
-          final fab = tester.getRect(find.byKey(const Key('create-fab')));
-          for (final key in ['settings-language', 'settings-appearance']) {
-            final row = tester.getRect(find.byKey(Key(key)));
-            expect(
-              row.overlaps(fab),
-              isFalse,
-              reason: '$key $row is under the + button $fab',
+          ) async {
+            await pumpMore(
+              tester,
+              demo: false,
+              led: led,
+              locale: locale,
+              size: size,
             );
-          }
-        });
+            // The page itself, not the horizontal section pills.
+            final scrollable = find
+                .descendant(
+                  of: find.byType(CustomScrollView),
+                  matching: find.byType(Scrollable),
+                )
+                .first;
+            await tester.scrollUntilVisible(
+              find.byKey(const Key('settings-appearance')),
+              200,
+              scrollable: scrollable,
+            );
+            // At the end of the page, where the last row sits lowest.
+            await tester.drag(scrollable, const Offset(0, -2000));
+            await tester.pumpAndSettle();
+            final fab = tester.getRect(find.byKey(const Key('create-fab')));
+            for (final key in ['settings-language', 'settings-appearance']) {
+              final row = tester.getRect(find.byKey(Key(key)));
+              expect(
+                row.overlaps(fab),
+                isFalse,
+                reason: '$key $row is under the + button $fab',
+              );
+            }
+          });
+        }
       }
     }
   });
