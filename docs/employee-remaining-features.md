@@ -46,7 +46,7 @@ requested features every route is documented, usable by the employee role
 | 1 | Timesheet records and details | **Done** (mock-tested; list/details shapes from live) | More → Timesheets: status and month filters, record cards (Figma 729:38123), paging, **View** → tasks grouped by project with counted time, out-of-sync notice; each task opens its details | `d188969` |
 | 2 | Employee Reports | **Done** (no Figma frame — needs design review) | More → Overview → **My report**: month/year with previous/next, figures, tasks by status, period tasks (paged, open details), projects with the user's role, timesheets, meetings | `b4a28e1`, `2332d16` |
 | 3 | Notification navigation | **Done** | Home card and bell panel: tap marks read and opens the task, chat or meeting; a chevron marks items that open something | `8cf658e` |
-| 4 | Join by code; own join request | **Done** (mock-tested) | Meetings list chip and More → Create → **Join by Code** → meeting details. Meeting details: **Your join request** (waiting for host, Check again, Withdraw after confirmation) | `f1bd301` |
+| 4 | Join by code; own join request | **Done** (mock-tested) | Meetings list chip → **Join by Code** → meeting details (removed from More → Create on 2026-11-19: the + holds creation actions only). Meeting details: **Your join request** (waiting for host, Check again, Withdraw after confirmation) | `f1bd301` |
 | 5 | CSV export | **Done** | One **Export CSV** chip beside the filters of Tasks, Projects, Timesheets and the Backlog; the list's current filters, every page; system save dialog | `1314dec` |
 | 6 | Project-member-only assignees | **Done** | Task form assignee list = the chosen project's members; cleared when the project changes; error + Retry if it fails | `ea93973` |
 

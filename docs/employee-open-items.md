@@ -47,7 +47,7 @@ API mode). Details: `docs/employee-remaining-features.md`.
 | Employee Reports | `GET /employee/report` | **Built** — More → Overview → My report. **No Figma frame**: needs design review (E26). |
 | Timesheet rows and details | `GET /employee/timesheets`, `/timesheets/{id}/details` | **Built** — record cards, filters, paging, details by project. |
 | Notification tap → open subject | `subject {type, id}` (observed) | **Built** — task, chat, meeting. A task opened by id offers no status change (E25). |
-| Meetings: join by code | `GET /employee/meetings/by-code/{code}` | **Built** — Meetings chip, More → Create. |
+| Meetings: join by code | `GET /employee/meetings/by-code/{code}` | **Built** — Meetings chip (not in More → Create since 2026-11-19). |
 | Meetings: own join request status/cancel | `GET/DELETE /employee/meetings/{id}/join-request` | **Built** — status, Check again, Withdraw (confirmed). Never run live. |
 | CSV exports | `projects`, `tasks`, `sprints/backlog`, `timesheets` `/export` | **Built** — Export CSV chip, system save dialog. |
 | Assignee list limited to project members | `GET /employee/tasks/project-employees/{p}` | **Built** (E12 closed). |
