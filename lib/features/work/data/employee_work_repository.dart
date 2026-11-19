@@ -69,11 +69,17 @@ class TaskStats {
   final Map<String, int> byStatus;
 }
 
-/// Per-currency row of `totals[]` on `GET /employee/timesheets`.
-typedef TimesheetMoney = ({String code, String symbol, double approved});
+/// Per-currency row of `totals[]` on `GET /employee/timesheets`:
+/// `total` (every status), `approved` and `pending` amounts.
+typedef TimesheetMoney = ({
+  String code,
+  String symbol,
+  double total,
+  double approved,
+});
 
 /// `stats {count, approved, pending, rejected, total_minutes}` and the
-/// approved amount per currency.
+/// amounts per currency (`totals[]`).
 class TimesheetSummary {
   const new({
     required this.count,
@@ -341,6 +347,7 @@ class EmployeeWorkRepository {
             (
               code: (t['code'] as String?) ?? '',
               symbol: (t['symbol'] as String?) ?? (t['code'] as String?) ?? '',
+              total: asDouble(t['total']) ?? missingField('totals.total'),
               approved: asDouble(t['approved']) ?? 0,
             ),
       ],

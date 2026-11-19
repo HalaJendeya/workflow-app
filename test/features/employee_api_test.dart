@@ -134,6 +134,8 @@ void main() {
     final s = await repo().timesheets();
     expect(s.totalMinutes, 600);
     expect(s.money.single.approved, 300);
+    // The whole amount, every status: what "Total salaries" shows.
+    expect(s.money.single.total, 900);
   });
 
   testWidgets('API-mode employee dashboard shows server figures', (

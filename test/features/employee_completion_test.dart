@@ -13,6 +13,7 @@ import 'package:workflow_app/core/storage/session_storage.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
+import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/projects/data/projects_repository.dart';
 import 'package:workflow_app/features/work/data/board_repository.dart';
 import 'package:workflow_app/features/work/data/employee_exports.dart';
@@ -451,6 +452,33 @@ void main() {
       expect(find.text('Pay type'), findsOneWidget);
       expect(find.text('Hourly'), findsOneWidget);
       expect(paths(a), contains('GET /api/v1/employee/timesheets/42/details'));
+    });
+
+    testWidgets('"Total salaries" is the whole amount, not only approved', (
+      tester,
+    ) async {
+      // The live shape: one pending timesheet, so totals[].approved is 0
+      // and totals[].total is the whole amount (root-cause audit B).
+      await pumpEmployeeScreen(
+        tester,
+        const TimesheetsScreen(),
+        handlers: listHandler([timesheetJson(42)]),
+      );
+      final metric = find.byKey(const Key('timesheets-total-pay'));
+      expect(
+        find.descendant(
+          of: metric,
+          matching: find.text(money(2500, symbol: r'$')),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: metric,
+          matching: find.text(money(0, symbol: r'$')),
+        ),
+        findsNothing,
+      );
     });
 
     testWidgets('status and month filters are sent to the server', (

@@ -81,7 +81,9 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
     String apiMoney(TimesheetSummary s) => s.money.isEmpty
         ? '0'
         : s.money
-              .map((m) => money(m.approved, currency: m.code, symbol: m.symbol))
+              // "Total salaries" is `totals[].total` (every status), not
+              // `approved` (root-cause audit B, 2026-11-19).
+              .map((m) => money(m.total, currency: m.code, symbol: m.symbol))
               .join(' · ');
 
     return ModulePage(
@@ -124,6 +126,7 @@ class _TimesheetsScreenState extends ConsumerState<TimesheetsScreen> {
                   : (sum.totalMinutes / 60).toStringAsFixed(1),
             ),
             Metric(
+              key: const Key('timesheets-total-pay'),
               label: l10n.totalSalaries,
               value: demo
                   ? money(salaries)
