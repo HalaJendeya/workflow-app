@@ -1311,5 +1311,11 @@
   "withdrawJoinRequestBody": "The host will no longer see your request. You can ask to join again later.",
   "joinRequestWithdrawn": "Join request withdrawn.",
   "reportLoggedTime": "Logged time",
-  "payType": "Pay type"
+  "payType": "Pay type",
+  "myTasksMetric": "MY TASKS",
+  "@myTasksMetric": {"description": "Employee dashboard figure: dashboard.myTasks, the tasks assigned to the signed-in user (to-do included). Not the Tasks screen 'active' figure."},
+  "sprintPastEnd": "Past end date",
+  "@sprintPastEnd": {"description": "Badge on an active sprint whose end date has passed (the server still reports it active until a lead completes it)."},
+  "joinRequestNoLongerWaiting": "No longer waiting",
+  "@joinRequestNoLongerWaiting": {"description": "Own meeting join request whose status is not pending (the collection documents only pending)."}
 }

@@ -2529,4 +2529,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get payType => 'Pay type';
+
+  @override
+  String get myTasksMetric => 'MY TASKS';
+
+  @override
+  String get sprintPastEnd => 'Past end date';
+
+  @override
+  String get joinRequestNoLongerWaiting => 'No longer waiting';
 }

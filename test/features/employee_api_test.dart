@@ -212,6 +212,17 @@ void main() {
       ),
       findsOneWidget,
     );
+    // `dashboard.myTasks` (assigned to me, to-do included) is not the
+    // Tasks screen's `stats.active` (to-do left out), so it is not called
+    // "Active tasks" (root-cause audit A, 2026-11-19).
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('emp-dash-tasks')),
+        matching: find.text('MY TASKS'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('ACTIVE TASKS'), findsNothing);
     expect(find.text('36.5'), findsOneWidget);
     // Task figures are the user's own, like Active tasks (QA 2026-11-17).
     expect(taskQueries, isNotEmpty);

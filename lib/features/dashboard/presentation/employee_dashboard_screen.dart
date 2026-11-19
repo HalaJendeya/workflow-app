@@ -1038,7 +1038,11 @@ class _ApiEmployeeDashboard extends ConsumerWidget {
                 metrics: [
                   Metric(
                     key: const Key('emp-dash-tasks'),
-                    label: l10n.activeTasks,
+                    // `dashboard.myTasks` counts the user's assigned tasks,
+                    // to-do included; the Tasks screen's "Active tasks" is
+                    // `stats.active`, which leaves to-do out (live,
+                    // 2026-11-19). Two figures, so two names.
+                    label: l10n.myTasksMetric,
                     value: count(s.tasks),
                   ),
                   Metric(

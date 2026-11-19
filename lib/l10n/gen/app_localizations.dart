@@ -4609,6 +4609,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pay type'**
   String get payType;
+
+  /// Employee dashboard figure: dashboard.myTasks, the tasks assigned to the signed-in user (to-do included). Not the Tasks screen 'active' figure.
+  ///
+  /// In en, this message translates to:
+  /// **'MY TASKS'**
+  String get myTasksMetric;
+
+  /// Badge on an active sprint whose end date has passed (the server still reports it active until a lead completes it).
+  ///
+  /// In en, this message translates to:
+  /// **'Past end date'**
+  String get sprintPastEnd;
+
+  /// Own meeting join request whose status is not pending (the collection documents only pending).
+  ///
+  /// In en, this message translates to:
+  /// **'No longer waiting'**
+  String get joinRequestNoLongerWaiting;
 }
 
 class _AppLocalizationsDelegate

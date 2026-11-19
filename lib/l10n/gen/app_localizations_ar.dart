@@ -2524,4 +2524,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get payType => 'نوع الأجر';
+
+  @override
+  String get myTasksMetric => 'مهامي';
+
+  @override
+  String get sprintPastEnd => 'تجاوز تاريخ الانتهاء';
+
+  @override
+  String get joinRequestNoLongerWaiting => 'لم يعد قيد الانتظار';
 }

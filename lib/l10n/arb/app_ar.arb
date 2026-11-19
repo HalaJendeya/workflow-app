@@ -751,5 +751,8 @@
   "withdrawJoinRequestBody": "لن يرى المضيف طلبك بعد الآن. يمكنك طلب الانضمام مرة أخرى لاحقًا.",
   "joinRequestWithdrawn": "تم سحب طلب الانضمام.",
   "reportLoggedTime": "الوقت المسجّل",
-  "payType": "نوع الأجر"
+  "payType": "نوع الأجر",
+  "myTasksMetric": "مهامي",
+  "sprintPastEnd": "تجاوز تاريخ الانتهاء",
+  "joinRequestNoLongerWaiting": "لم يعد قيد الانتظار"
 }
