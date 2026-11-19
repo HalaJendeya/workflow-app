@@ -227,9 +227,47 @@ void main() {
       await tester.tap(find.byKey(const Key('join-request-refresh')));
       await tester.pumpAndSettle();
       expect(reads, 2);
-      // A status other than pending is shown as the server gives it.
-      expect(find.text('admitted'), findsOneWidget);
+      // Only `pending` is documented. Any other status is shown in the
+      // user's language, never as the raw server word (root-cause audit F).
+      expect(find.text('No longer waiting'), findsOneWidget);
+      expect(find.text('admitted'), findsNothing);
       expect(find.byKey(const Key('join-request-withdraw')), findsNothing);
+    });
+
+    testWidgets('live shape, Arabic: pending and an unknown status', (
+      tester,
+    ) async {
+      // GET …/join-request as answered live on 2026-11-19: more keys than
+      // the documented {id, status, meeting_id}. Values are test doubles.
+      Map<String, Object?> live(String status) => {
+        'id': 9,
+        'meeting_id': 41,
+        'status': status,
+        'user': {'id': 10, 'name': 'Me', 'avatar': null},
+        'decided_by': null,
+        'decided_at': null,
+        'created_at': '2026-11-07T10:00:00Z',
+        'updated_at': '2026-11-07T10:00:00Z',
+      };
+      var status = 'pending';
+      await pumpEmployeeScreen(
+        tester,
+        const ApiMeetingDetailsScreen(id: 41),
+        routes: _details(status: 'live'),
+        handlers: {
+          'GET /api/v1/employee/meetings/41/join-request': (_) =>
+              (200, ok(live(status))),
+        },
+        locale: const Locale('ar'),
+      );
+      expect(find.text('بانتظار المضيف'), findsOneWidget);
+      status = 'expired';
+      await tester.ensureVisible(find.byKey(const Key('join-request-refresh')));
+      await tester.tap(find.byKey(const Key('join-request-refresh')));
+      await tester.pumpAndSettle();
+      expect(find.text('لم يعد قيد الانتظار'), findsOneWidget);
+      expect(find.text('expired'), findsNothing);
+      expect(tester.takeException(), isNull);
     });
   });
 }

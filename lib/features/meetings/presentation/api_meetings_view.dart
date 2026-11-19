@@ -908,9 +908,11 @@ class _MyJoinRequestCardState extends ConsumerState<_MyJoinRequestCard> {
           Align(
             alignment: AlignmentDirectional.centerStart,
             child: StatusBadge(
+              // Only `pending` is documented; any other value is shown in
+              // the user's language, never as the raw server word.
               label: request.isPending
                   ? l10n.joinRequestWaiting
-                  : request.status,
+                  : l10n.joinRequestNoLongerWaiting,
               tone: request.isPending ? BadgeTone.warning : BadgeTone.neutral,
             ),
           ),
