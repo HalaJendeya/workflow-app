@@ -406,7 +406,17 @@ class _Board extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (board.daysRemaining != null)
+                  // A sprint stays `active` until a lead completes it, and
+                  // `days_remaining` stops at 0 after the end date (live,
+                  // 2026-11-19): past that date "0 days left" would hide
+                  // that the sprint is overdue.
+                  if (sprint.isPastEnd(DateTime.now()))
+                    StatusBadge(
+                      key: const Key('sprint-past-end'),
+                      label: l10n.sprintPastEnd,
+                      tone: BadgeTone.warning,
+                    )
+                  else if (board.daysRemaining != null)
                     StatusBadge(
                       label: l10n.daysLeft(board.daysRemaining!),
                       tone: BadgeTone.info,

@@ -257,6 +257,19 @@ class ApiSprint {
   final int? taskCount;
   final int? pointsTotal;
   final int? pointsDone;
+
+  /// Still open (not `completed`) after its last day. The status is a
+  /// manual workflow state (Start/Complete Sprint), so the server reports
+  /// such a sprint as `active`.
+  bool isPastEnd(DateTime now) {
+    final end = endDate;
+    if (end == null || status == 'completed') return false;
+    return DateTime(
+      end.year,
+      end.month,
+      end.day,
+    ).isBefore(DateTime(now.year, now.month, now.day));
+  }
 }
 
 List<BoardProject> _projects(Object? v) => [

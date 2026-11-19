@@ -49,6 +49,8 @@ Map<String, dynamic> taskJson(int id, String status) => {
 Map<String, dynamic> board({
   List<Object> tasks = const [],
   bool sprint = true,
+  String endDate = '2026-11-15',
+  int daysRemaining = 8,
 }) => ok({
   'projects': [
     {'id': 2, 'title': 'Portal', 'leader_id': 4, 'leader_name': 'Lead'},
@@ -62,7 +64,7 @@ Map<String, dynamic> board({
           'goal': null,
           'status': 'active',
           'start_date': '2026-11-01',
-          'end_date': '2026-11-15',
+          'end_date': endDate,
         }
       : null,
   'tasks': tasks,
@@ -71,7 +73,7 @@ Map<String, dynamic> board({
     'points_done': 2,
     'percent_done': 25,
     'by_status': {'todo': 0, 'in_progress': 4, 'in_review': 0, 'completed': 2},
-    'days_remaining': 8,
+    'days_remaining': daysRemaining,
     'members': [
       {'id': 10, 'name': 'Lina', 'image': 'x'},
     ],
@@ -330,6 +332,7 @@ void main() {
     WidgetTester tester, {
     List<Object> tasks = const [],
     (int, Object?) move = (200, null),
+    Map<String, dynamic>? kanban,
   }) async {
     tester.view
       ..physicalSize = const Size(390, 1600) * 3
@@ -347,7 +350,7 @@ void main() {
     );
     final adapter = RouteHttpAdapter({
       'GET /api/v1/employee/account': (200, ok({'id': 10, 'name': 'Me'})),
-      'GET /api/v1/employee/kanban': (200, board(tasks: tasks)),
+      'GET /api/v1/employee/kanban': (200, kanban ?? board(tasks: tasks)),
       'GET /api/v1/employee/sprints': (
         200,
         planning(backlog: [taskJson(9, 'backlog')]),
@@ -404,6 +407,60 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('kanban-1')), findsNothing);
     expect(find.text('No tasks in this column'), findsOneWidget);
+  });
+
+  group('sprint end (root-cause audit E)', () {
+    String day(int fromToday) {
+      final d = DateTime.now().add(Duration(days: fromToday));
+      String two(int n) => '$n'.padLeft(2, '0');
+      return '${d.year}-${two(d.month)}-${two(d.day)}';
+    }
+
+    // Live 2026-11-19: both QA sprints were `active` four days after
+    // their end date, with `days_remaining` 0. The status is a manual
+    // workflow state (Start/Complete Sprint), so that is valid server data.
+    testWidgets('an active sprint past its end says so, not 0 days left', (
+      tester,
+    ) async {
+      await pumpBoard(
+        tester,
+        kanban: board(endDate: day(-4), daysRemaining: 0),
+      );
+      expect(find.byKey(const Key('sprint-past-end')), findsOneWidget);
+      expect(find.text('Past end date'), findsOneWidget);
+      expect(find.text('0 Days left'), findsNothing);
+    });
+
+    testWidgets('a sprint still running shows the server days left', (
+      tester,
+    ) async {
+      await pumpBoard(tester, kanban: board(endDate: day(3), daysRemaining: 3));
+      expect(find.text('3 Days left'), findsOneWidget);
+      expect(find.byKey(const Key('sprint-past-end')), findsNothing);
+    });
+
+    testWidgets('the last day itself is not past the end', (tester) async {
+      await pumpBoard(tester, kanban: board(endDate: day(0), daysRemaining: 0));
+      expect(find.byKey(const Key('sprint-past-end')), findsNothing);
+    });
+
+    test('a completed sprint is never past its end', () {
+      final s = ApiSprint.fromJson({
+        'id': 1,
+        'name': 'S',
+        'status': 'completed',
+        'end_date': '2026-01-01',
+      });
+      expect(s.isPastEnd(DateTime(2026, 11, 19)), isFalse);
+      final open = ApiSprint.fromJson({
+        'id': 1,
+        'name': 'S',
+        'status': 'active',
+        'end_date': '2026-11-15',
+      });
+      expect(open.isPastEnd(DateTime(2026, 11, 19, 1)), isTrue);
+      expect(open.isPastEnd(DateTime(2026, 11, 15, 23, 59)), isFalse);
+    });
   });
 
   testWidgets('moving a card posts the new status and reloads', (tester) async {
