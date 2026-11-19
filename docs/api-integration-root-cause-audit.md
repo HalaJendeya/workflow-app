@@ -288,3 +288,18 @@ Bearer token, and documented paths, exactly as the app sends them.
 
 Not changed: Client and Employee permissions, RTL and localization (new
 strings are in both ARB files), and anything that would mask S1 or S2.
+
+## Validation (2026-11-19)
+
+| Step | Result |
+|---|---|
+| `dart format --set-exit-if-changed lib test` | clean |
+| `flutter analyze` | no issues |
+| Targeted tests (dashboard, timesheets, sprint board, join request, M07, session scope, layouts) | 97 passed |
+| Full suite (emulator stopped) | **1047 passed, 8 skipped** (live smoke, `WF_LIVE_TOKEN`), **0 failed** |
+| `flutter build web --no-web-resources-cdn --dart-define=APP_MODE=mock` | built |
+| `flutter build apk --debug` (API mode) | built |
+| Android emulator | **Not verified.** The APK installed and launched, but the host fell to 0.3 GB free RAM (Android Studio open) and the emulator stopped rendering. It was shut down to protect the machine. The four fixes are covered by widget tests built from the live response shapes; their live conditions (one to-do task, one pending monthly timesheet, sprints past their end date, a pending join request) were observed with the read-only GETs above. |
+
+Raw live responses were kept only in a local scratch folder and deleted
+after the audit.
