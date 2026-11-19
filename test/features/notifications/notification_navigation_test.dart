@@ -235,6 +235,130 @@ void main() {
     expect(find.byKey(const Key('task-details')), findsNothing);
   });
 
+  testWidgets('a deleted task (404) shows a friendly error; Back goes home', (
+    tester,
+  ) async {
+    await pump(tester, [
+      _n(
+        'n6',
+        'Task assigned',
+        subject: {'type': 'task', 'id': 99},
+        read: true,
+      ),
+    ]);
+    await tapHome(tester, 'n6');
+    expect(sent(), contains('GET /api/v1/employee/tasks/99'));
+    expect(find.byKey(const Key('task-by-id')), findsOneWidget);
+    expect(
+      find.text('This item may no longer be available. Refresh and try again.'),
+      findsOneWidget,
+    );
+    // A read item is never written again.
+    expect(sent().where((s) => s.startsWith('POST')), isEmpty);
+    await tester.tap(find.byKey(const Key('task-details-back')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('home-notification-n6')), findsOneWidget);
+  });
+
+  testWidgets('a meeting I may not open (403) says so; Back goes home', (
+    tester,
+  ) async {
+    await pump(tester, [
+      _n('n7', 'Invited', subject: {'type': 'meeting', 'id': 77}, read: true),
+    ]);
+    http.routes['GET /api/v1/employee/meetings/77'] = (
+      403,
+      {
+        'success': false,
+        'message': 'You are not authorized to access this resource',
+        'errors': <Object>[],
+      },
+    );
+    await tapHome(tester, 'n7');
+    expect(find.byType(ApiMeetingDetailsScreen), findsOneWidget);
+    expect(
+      find.text("You don't have permission to perform this action."),
+      findsOneWidget,
+    );
+    // The server's raw message is never shown.
+    expect(find.textContaining('not authorized'), findsNothing);
+    await tester.tap(find.byKey(const Key('masthead-back')).last);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('home-notification-n7')), findsOneWidget);
+  });
+
+  testWidgets(
+    'a conversation I left (404) says so; the notification is not rewritten',
+    (tester) async {
+      await pump(tester, [
+        _n(
+          'n11',
+          'New message',
+          subject: {'type': 'conversation', 'id': 404},
+          read: true,
+        ),
+      ]);
+      await tapHome(tester, 'n11');
+      expect(find.byType(ChatScreen), findsOneWidget);
+      expect(sent(), contains('GET /api/v1/employee/conversations/404'));
+      expect(
+        find.text(
+          'This item may no longer be available. Refresh and try again.',
+        ),
+        findsWidgets,
+      );
+      // The notification (already read) is not written again. Opening a chat
+      // still asks to clear its badge (the chat screen's existing behaviour,
+      // unchanged here); the server refuses that for a conversation the user
+      // cannot open.
+      expect(
+        sent().where(
+          (s) => s.contains('/notifications/') && s.startsWith('POST'),
+        ),
+        isEmpty,
+      );
+    },
+  );
+
+  testWidgets('a failed mark-read is reported and the item still opens', (
+    tester,
+  ) async {
+    await pump(tester, [
+      _n('n8', 'Task assigned', subject: {'type': 'task', 'id': 13}),
+    ]);
+    http.handlers['POST /api/v1/employee/notifications/n8/read'] = (_) => (
+      500,
+      {'success': false, 'message': 'Server Error', 'errors': <Object>[]},
+    );
+    await tapHome(tester, 'n8');
+    expect(find.byKey(const Key('task-details')), findsOneWidget);
+    expect(
+      find.text('Something went wrong. Please try again later.'),
+      findsOneWidget,
+    );
+    expect(
+      sent().where((s) => s == 'POST /api/v1/employee/notifications/n8/read'),
+      hasLength(1),
+    );
+  });
+
+  testWidgets('unsupported subjects never crash and write only once', (
+    tester,
+  ) async {
+    await pump(tester, [
+      _n('n9', 'Odd', subject: {'type': 'task', 'id': 'abc'}),
+      _n('n10', 'Read odd', subject: {'kind': 'x'}, read: true),
+    ]);
+    expect(find.byKey(const Key('notification-opens')), findsNothing);
+    await tapHome(tester, 'n9');
+    await tapHome(tester, 'n10');
+    expect(tester.takeException(), isNull);
+    expect(sent().where((s) => s.startsWith('POST')), [
+      'POST /api/v1/employee/notifications/n9/read',
+    ]);
+    expect(sent().where((s) => s.contains('/tasks/')), isEmpty);
+  });
+
   testWidgets('a client never opens a task (no client task route)', (
     tester,
   ) async {
