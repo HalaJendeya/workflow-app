@@ -2542,4 +2542,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get joinRequestNoLongerWaiting => 'No longer waiting';
+
+  @override
+  String get meetingDecisions => 'Decisions';
+
+  @override
+  String get meetingActionItems => 'Action items';
+
+  @override
+  String get meetingRecords => 'Meeting records';
+
+  @override
+  String get meetingRecordsBody =>
+      'Chat, polls, notes, decisions and action items from this meeting.';
+
+  @override
+  String get meetingToolsParticipantsOnly =>
+      'Only participants of this meeting can see this. Join the meeting to view it.';
+
+  @override
+  String get meetingToolsReadOnly =>
+      'View only: sending, voting and editing aren\'t available here.';
+
+  @override
+  String get noMeetingMessages => 'No messages in this meeting yet.';
+
+  @override
+  String get noMeetingPolls => 'No polls in this meeting.';
+
+  @override
+  String get noMeetingNotes => 'No notes shared yet.';
+
+  @override
+  String get noMeetingDecisions => 'No decisions yet.';
+
+  @override
+  String get noMeetingActionItems => 'No action items yet.';
+
+  @override
+  String get pollOptionsTitle => 'Options';
+
+  @override
+  String get pollResultsNotShown =>
+      'Vote counts aren\'t available in the app yet.';
+
+  @override
+  String pollUntitled(int number) {
+    return 'Poll $number';
+  }
+
+  @override
+  String attachmentDownloadFailed(String reason) {
+    return 'Couldn\'t download the file: $reason';
+  }
 }

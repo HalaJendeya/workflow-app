@@ -2537,4 +2537,56 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get joinRequestNoLongerWaiting => 'لم يعد قيد الانتظار';
+
+  @override
+  String get meetingDecisions => 'القرارات';
+
+  @override
+  String get meetingActionItems => 'بنود العمل';
+
+  @override
+  String get meetingRecords => 'سجلات الاجتماع';
+
+  @override
+  String get meetingRecordsBody =>
+      'المحادثة والاستطلاعات والملاحظات والقرارات وبنود العمل في هذا الاجتماع.';
+
+  @override
+  String get meetingToolsParticipantsOnly =>
+      'هذا متاح لمشاركي الاجتماع فقط. انضم إلى الاجتماع لعرضه.';
+
+  @override
+  String get meetingToolsReadOnly =>
+      'للعرض فقط: الإرسال والتصويت والتعديل غير متاحة هنا.';
+
+  @override
+  String get noMeetingMessages => 'لا توجد رسائل في هذا الاجتماع بعد.';
+
+  @override
+  String get noMeetingPolls => 'لا توجد استطلاعات في هذا الاجتماع.';
+
+  @override
+  String get noMeetingNotes => 'لا توجد ملاحظات مشتركة بعد.';
+
+  @override
+  String get noMeetingDecisions => 'لا توجد قرارات بعد.';
+
+  @override
+  String get noMeetingActionItems => 'لا توجد بنود عمل بعد.';
+
+  @override
+  String get pollOptionsTitle => 'الخيارات';
+
+  @override
+  String get pollResultsNotShown => 'عدد الأصوات غير متاح في التطبيق بعد.';
+
+  @override
+  String pollUntitled(int number) {
+    return 'استطلاع $number';
+  }
+
+  @override
+  String attachmentDownloadFailed(String reason) {
+    return 'تعذّر تنزيل الملف: $reason';
+  }
 }

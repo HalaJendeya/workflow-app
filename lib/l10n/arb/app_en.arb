@@ -1318,5 +1318,22 @@
   "sprintPastEnd": "Past end date",
   "@sprintPastEnd": {"description": "Badge on an active sprint whose end date has passed (the server still reports it active until a lead completes it)."},
   "joinRequestNoLongerWaiting": "No longer waiting",
-  "@joinRequestNoLongerWaiting": {"description": "Own meeting join request whose status is not pending (the collection documents only pending)."}
+  "@joinRequestNoLongerWaiting": {"description": "Own meeting join request whose status is not pending (the collection documents only pending)."},
+  "meetingDecisions": "Decisions",
+  "meetingActionItems": "Action items",
+  "meetingRecords": "Meeting records",
+  "meetingRecordsBody": "Chat, polls, notes, decisions and action items from this meeting.",
+  "meetingToolsParticipantsOnly": "Only participants of this meeting can see this. Join the meeting to view it.",
+  "meetingToolsReadOnly": "View only: sending, voting and editing aren't available here.",
+  "noMeetingMessages": "No messages in this meeting yet.",
+  "noMeetingPolls": "No polls in this meeting.",
+  "noMeetingNotes": "No notes shared yet.",
+  "noMeetingDecisions": "No decisions yet.",
+  "noMeetingActionItems": "No action items yet.",
+  "pollOptionsTitle": "Options",
+  "pollResultsNotShown": "Vote counts aren't available in the app yet.",
+  "pollUntitled": "Poll {number}",
+  "@pollUntitled": {"description":"A meeting poll whose question the server did not send.","placeholders":{"number":{"type":"int"}}},
+  "attachmentDownloadFailed": "Couldn't download the file: {reason}",
+  "@attachmentDownloadFailed": {"placeholders":{"reason":{"type":"String"}}}
 }

@@ -16,6 +16,7 @@ import 'package:workflow_app/features/meetings/domain/meeting.dart';
 import 'package:workflow_app/features/meetings/presentation/api_meeting_room_screen.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_details_screen.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_forms.dart';
+import 'package:workflow_app/features/meetings/presentation/meeting_tools.dart';
 import 'package:workflow_app/features/meetings/presentation/meetings_screen.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -714,6 +715,13 @@ class ApiMeetingDetailsScreen extends ConsumerWidget {
                 m.status == ApiMeetingStatus.live)
           _JoinCard(meetingId: id, title: m.title),
         if (isEmployee && meeting.hasValue) _MyJoinRequestCard(meetingId: id),
+        if (!isEmployee)
+          if (meeting.value case final m?)
+            _MeetingRecordsCard(
+              meetingId: id,
+              title: m.title,
+              allowChat: m.allowChat,
+            ),
         _ParticipantsCard(meetingId: id),
         if (isEmployee) _InvitationsCard(meetingId: id),
       ],
@@ -949,6 +957,70 @@ class _MyJoinRequestCardState extends ConsumerState<_MyJoinRequestCard> {
               ],
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Client: the meeting's chat, polls, notes, decisions and action items,
+/// read-only, also after the meeting has ended. Each opens the meeting
+/// tools on that tab; Back returns here.
+class _MeetingRecordsCard extends StatelessWidget {
+  const new({
+    required this.meetingId,
+    required this.title,
+    required this.allowChat,
+  });
+
+  final int meetingId;
+  final String title;
+  final bool allowChat;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final tools = meetingToolsFor(allowChat: allowChat);
+    return ModuleCard(
+      key: const Key('meeting-records'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.meetingRecords,
+            style: AppTextStyles.mobileLgSemiBold.copyWith(
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.meetingRecordsBody,
+            style: AppTextStyles.mobileXsRegular.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final t in tools)
+                FilterChipBox(
+                  key: Key('meeting-records-${t.name}'),
+                  label: meetingToolLabel(l10n, t),
+                  onTap: () => Navigator.of(context, rootNavigator: true).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ApiMeetingToolsScreen(
+                        meetingId: meetingId,
+                        title: title,
+                        tools: tools,
+                        initial: t,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );

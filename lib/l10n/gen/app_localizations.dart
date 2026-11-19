@@ -4633,6 +4633,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No longer waiting'**
   String get joinRequestNoLongerWaiting;
+
+  /// No description provided for @meetingDecisions.
+  ///
+  /// In en, this message translates to:
+  /// **'Decisions'**
+  String get meetingDecisions;
+
+  /// No description provided for @meetingActionItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Action items'**
+  String get meetingActionItems;
+
+  /// No description provided for @meetingRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting records'**
+  String get meetingRecords;
+
+  /// No description provided for @meetingRecordsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat, polls, notes, decisions and action items from this meeting.'**
+  String get meetingRecordsBody;
+
+  /// No description provided for @meetingToolsParticipantsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only participants of this meeting can see this. Join the meeting to view it.'**
+  String get meetingToolsParticipantsOnly;
+
+  /// No description provided for @meetingToolsReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'View only: sending, voting and editing aren\'t available here.'**
+  String get meetingToolsReadOnly;
+
+  /// No description provided for @noMeetingMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages in this meeting yet.'**
+  String get noMeetingMessages;
+
+  /// No description provided for @noMeetingPolls.
+  ///
+  /// In en, this message translates to:
+  /// **'No polls in this meeting.'**
+  String get noMeetingPolls;
+
+  /// No description provided for @noMeetingNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes shared yet.'**
+  String get noMeetingNotes;
+
+  /// No description provided for @noMeetingDecisions.
+  ///
+  /// In en, this message translates to:
+  /// **'No decisions yet.'**
+  String get noMeetingDecisions;
+
+  /// No description provided for @noMeetingActionItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No action items yet.'**
+  String get noMeetingActionItems;
+
+  /// No description provided for @pollOptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Options'**
+  String get pollOptionsTitle;
+
+  /// No description provided for @pollResultsNotShown.
+  ///
+  /// In en, this message translates to:
+  /// **'Vote counts aren\'t available in the app yet.'**
+  String get pollResultsNotShown;
+
+  /// A meeting poll whose question the server did not send.
+  ///
+  /// In en, this message translates to:
+  /// **'Poll {number}'**
+  String pollUntitled(int number);
+
+  /// No description provided for @attachmentDownloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t download the file: {reason}'**
+  String attachmentDownloadFailed(String reason);
 }
 
 class _AppLocalizationsDelegate

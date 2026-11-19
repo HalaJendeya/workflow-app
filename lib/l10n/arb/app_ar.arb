@@ -755,5 +755,20 @@
   "payType": "نوع الأجر",
   "myTasksMetric": "مهامي",
   "sprintPastEnd": "تجاوز تاريخ الانتهاء",
-  "joinRequestNoLongerWaiting": "لم يعد قيد الانتظار"
+  "joinRequestNoLongerWaiting": "لم يعد قيد الانتظار",
+  "meetingDecisions": "القرارات",
+  "meetingActionItems": "بنود العمل",
+  "meetingRecords": "سجلات الاجتماع",
+  "meetingRecordsBody": "المحادثة والاستطلاعات والملاحظات والقرارات وبنود العمل في هذا الاجتماع.",
+  "meetingToolsParticipantsOnly": "هذا متاح لمشاركي الاجتماع فقط. انضم إلى الاجتماع لعرضه.",
+  "meetingToolsReadOnly": "للعرض فقط: الإرسال والتصويت والتعديل غير متاحة هنا.",
+  "noMeetingMessages": "لا توجد رسائل في هذا الاجتماع بعد.",
+  "noMeetingPolls": "لا توجد استطلاعات في هذا الاجتماع.",
+  "noMeetingNotes": "لا توجد ملاحظات مشتركة بعد.",
+  "noMeetingDecisions": "لا توجد قرارات بعد.",
+  "noMeetingActionItems": "لا توجد بنود عمل بعد.",
+  "pollOptionsTitle": "الخيارات",
+  "pollResultsNotShown": "عدد الأصوات غير متاح في التطبيق بعد.",
+  "pollUntitled": "استطلاع {number}",
+  "attachmentDownloadFailed": "تعذّر تنزيل الملف: {reason}"
 }

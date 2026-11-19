@@ -5,9 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
+import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/meetings/application/meeting_media_controller.dart';
+import 'package:workflow_app/features/meetings/data/meetings_repository.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_room_screen.dart'
     show RoomColors;
+import 'package:workflow_app/features/meetings/presentation/meeting_tools.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 /// The live meeting room (API mode): the dark in-call layout of the meeting
@@ -31,6 +34,10 @@ class ApiMeetingRoomScreen extends ConsumerStatefulWidget {
 class _ApiMeetingRoomScreenState extends ConsumerState<ApiMeetingRoomScreen> {
   MeetingMediaController get _media =>
       ref.read(meetingMediaProvider(widget.meetingId).notifier);
+
+  /// The tool shown instead of the stage (client only); `null` is the
+  /// stage. Tapping the selected tab again returns to the stage.
+  MeetingTool? _tool;
 
   @override
   void initState() {
@@ -57,6 +64,18 @@ class _ApiMeetingRoomScreenState extends ConsumerState<ApiMeetingRoomScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final s = ref.watch(meetingMediaProvider(widget.meetingId));
+    final isClient =
+        ref.watch(meetingsRepositoryProvider).portal == Portal.client;
+    final tools = isClient
+        ? meetingToolsFor(
+            allowChat:
+                ref
+                    .watch(apiMeetingProvider(widget.meetingId))
+                    .value
+                    ?.allowChat ??
+                false,
+          )
+        : const <MeetingTool>[];
     final status = switch (s.phase) {
       MediaPhase.connected => (l10n.meetingLive.toUpperCase(), RoomColors.live),
       MediaPhase.reconnecting => (l10n.meetingReconnecting, RoomColors.host),
@@ -126,7 +145,27 @@ class _ApiMeetingRoomScreenState extends ConsumerState<ApiMeetingRoomScreen> {
                   style: _t(12, RoomColors.text),
                 ),
               ),
-            Expanded(child: s.inRoom ? _stage(l10n, s) : _notInRoom(l10n, s)),
+            // Client: the room frames' tool tabs (chat, polls, notes, plus
+            // decisions and action items), read-only. A participant may
+            // read them (live: non-participants get 403).
+            if (s.inRoom && tools.isNotEmpty)
+              MeetingToolTabs(
+                tools: tools,
+                selected: _tool,
+                allowNone: true,
+                onSelect: (t) => setState(() => _tool = t),
+              ),
+            Expanded(
+              child: !s.inRoom
+                  ? _notInRoom(l10n, s)
+                  : switch (_tool) {
+                      final t? when tools.contains(t) => MeetingToolPanel(
+                        meetingId: widget.meetingId,
+                        tool: t,
+                      ),
+                      _ => _stage(l10n, s),
+                    },
+            ),
             if (s.inRoom || s.phase == MediaPhase.leaving) _controls(l10n, s),
           ],
         ),
