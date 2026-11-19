@@ -187,3 +187,5 @@ exact read-only requests and report the status codes.
 The new assignee picker reads `tasks/project-employees/{project}` only for
 projects the signed-in user leads. That limits what the app asks for; it
 does not fix S2 on the server.
+
+**Re-verified 2026-11-19** (read-only, correct `X-Company`, Bearer and paths, both accounts): S1 and S2 are still present. Evidence and the minimal reproduction are in `docs/api-integration-root-cause-audit.md` §I and `docs/backend-action-items.md`.

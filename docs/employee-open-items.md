@@ -37,6 +37,8 @@ same label. The definitions are undocumented. Needed: the meaning of each from
 the backend, then rename one label (copy change in both ARB files). **Open —
 contract/product.**
 
+**2026-11-19 (root-cause audit A):** confirmed live under identical conditions; the server is consistent and the shared label was the bug. The Dashboard now shows "MY TASKS" (`a5c844f`). Exact definitions remain a documentation question (`docs/backend-action-items.md`).
+
 ## O4 — Documented Employee features (updated 2026-11-18)
 
 Built on 2026-11-18 (local commits, mock-tested; not yet on a device in
