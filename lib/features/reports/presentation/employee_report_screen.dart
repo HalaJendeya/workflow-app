@@ -83,39 +83,36 @@ class _EmployeeReportScreenState extends ConsumerState<EmployeeReportScreen> {
     );
   });
 
-  String _periodLabel(BuildContext context) {
+  /// The period as shown ("Nov 2026", as the report's timesheet rows) and
+  /// as read aloud ("November 2026").
+  (String shown, String spoken) _periodLabel(BuildContext context) {
     final locale = Localizations.localeOf(context).toString();
-    return _query.span == ReportSpan.year
-        ? DateFormat.y(locale).format(_query.anchor)
-        : DateFormat.yMMMM(locale).format(_query.anchor);
+    if (_query.span == ReportSpan.year) {
+      final y = DateFormat.y(locale).format(_query.anchor);
+      return (y, y);
+    }
+    return (
+      DateFormat.yMMM(locale).format(_query.anchor),
+      DateFormat.yMMMM(locale).format(_query.anchor),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final value = ref.watch(employeeReportProvider(_query));
+    final period = _periodLabel(context);
     return ModulePage(
       key: const Key('employee-report'),
       title: l10n.myReport,
       description: l10n.myReportBody,
       children: [
-        ChipRow(
-          children: [
-            for (final (span, label) in [
-              (ReportSpan.month, l10n.periodMonth),
-              (ReportSpan.year, l10n.periodYear),
-            ])
-              FilterChipBox(
-                key: Key('report-span-${span.name}'),
-                label: label,
-                selected: _query.span == span,
-                onTap: () => setState(
-                  () => _query = _query.copyWith(span: span, page: 1),
-                ),
-              ),
-          ],
-        ),
+        // One card for the whole period choice: previous and next at the
+        // edges, the period and the Month/Year chips between them on one
+        // line when they fit, wrapped onto two (never clipped) on a narrow
+        // phone or with large text.
         ModuleCard(
+          key: const Key('report-period-controls'),
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
             children: [
@@ -126,12 +123,46 @@ class _EmployeeReportScreenState extends ConsumerState<EmployeeReportScreen> {
                 icon: const Icon(Icons.chevron_left),
               ),
               Expanded(
-                child: Text(
-                  _periodLabel(context),
-                  key: const Key('report-period'),
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.mobileBaseSemiBold.copyWith(
-                    color: AppColors.textPrimary,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: AppSpacing.sm,
+                    runSpacing: 6,
+                    children: [
+                      Semantics(
+                        label: period.$2,
+                        excludeSemantics: true,
+                        child: Text(
+                          period.$1,
+                          key: const Key('report-period'),
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.mobileBaseSemiBold.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      ChipRow(
+                        children: [
+                          for (final (span, label) in [
+                            (ReportSpan.month, l10n.periodMonth),
+                            (ReportSpan.year, l10n.periodYear),
+                          ])
+                            FilterChipBox(
+                              key: Key('report-span-${span.name}'),
+                              label: label,
+                              selected: _query.span == span,
+                              onTap: () => setState(
+                                () => _query = _query.copyWith(
+                                  span: span,
+                                  page: 1,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
