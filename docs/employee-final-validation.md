@@ -100,7 +100,7 @@ Decisions for the owner (current behaviour first):
 
 | # | Topic | Today | Option |
 |---|---|---|---|
-| R1 | Space above the figures | The Month/Year chips and the period stepper take two rows. At 320 dp the first figure starts about halfway down the screen. | Put Month/Year as a segmented control inside the stepper card (one row, about 70 dp saved). |
+| R1 | Space above the figures | The Month/Year chips and the period stepper take two rows. At 320 dp the first figure starts about halfway down the screen. | **Done 2026-11-19 (`4b6825b`)**, see §9 |
 | R2 | Money in the summary | Six metrics, including "Earnings" and "Approved" | Rename "Approved" to "Approved pay", or move both into the Timesheets section |
 | R3 | Tasks by status | A 2×3 grid; zeros take as much room as real counts | One compact row of status chips with counts, or hide zero statuses |
 | R4 | Rows that open something | Task and meeting rows open details but show no chevron. Timesheet and project rows open nothing. | Add a chevron to openable rows. Let timesheet rows open Timesheet details. |
@@ -126,7 +126,7 @@ opens a join form. Options:
 (b) keep the + menu only for leads, so regular employees join from Meetings
 and More has no + for them;
 (c) for a regular employee, make + open Join by Code directly.
-Recommendation: **(b)**. It is less misleading and keeps More uncluttered,
+Recommendation: **(b)**. **Owner chose (b) on 2026-11-19 (`e4cb495`)**, see §9. It is less misleading and keeps More uncluttered,
 and the Meetings chip remains the discoverable entry.
 
 ## 6. Notification routing
@@ -162,7 +162,7 @@ refused `POST …/read`. The server refuses it, so nothing changes.
 | `flutter build apk --debug` (API mode, `api.workflownets.com`) | Built at `317036e`; rebuilt at `HEAD` for the device check |
 | Android 16 emulator (Medium Phone API 36.1), live, read-only | §3–§6 above. No Flutter errors in logcat. Language, theme, density and airplane mode were restored afterwards. |
 
-## 8. Still open (unchanged by this pass)
+## 8. Still open
 
 | # | Item | Owner |
 |---|---|---|
@@ -175,3 +175,28 @@ refused `POST …/read`. The server refuses it, so nothing changes.
 
 No backend authorization rule is worked around in Flutter; hiding
 controls in the client is not a fix for S1 or S2.
+
+## 9. Owner decisions applied (2026-11-19)
+
+| Decision | Change | Verified |
+|---|---|---|
+| N1 (b): the + holds creation actions only | `e4cb495`. In API mode a regular employee has **no +** on More; a project lead keeps **Add Task**. Join by Code stays on the Meetings screen. Demo mode and client actions are unchanged. | Widget tests: no + for a non-lead, Add Task alone for a lead, the Meetings chip still offered. Emulator (live regular employee, read-only): no + on More; Meetings shows "join by code". |
+| R1: compact period controls | `4b6825b`. Previous, the period ("Nov 2026"; the full month for screen readers), Month/Year and next share one card. They sit on one line when they fit and wrap inside the card otherwise. The report's data and API calls are unchanged. | `employee_report_layout_test` (411/360/320 dp, 100 and 130 % text, English and Arabic). Height above the first figure: 129 → **76 dp** at 411 and 360 dp, 129 → **95 dp** at 320 dp, 134 → **105 dp** at 320 dp with 130 % text. Emulator: one line at 411 dp (the first figure is about 53 dp higher); at 320 dp with system font 1.3 it wraps with nothing clipped and no overflow; Year, Previous, Month and Back work. |
+
+Final gate: format clean, `flutter analyze` clean, targeted tests 66/66,
+**full suite 1041 passed, 8 skipped (live smoke, `WF_LIVE_TOKEN`), 0 failed**.
+Web and API-mode APK builds pass. No live data was changed.
+
+## 10. QA status
+
+**Employee E2E is not complete.** These remain open:
+
+- **S1** and **S2**: backend security release blockers.
+- Cross-account live mutation tests (`docs/employee-mutation-plan.md`); none has been run.
+- Physical Redmi 8 verification of this round.
+- Live Client acceptance.
+- **Q1**: status permissions for an assignee.
+- The WhatsApp settings route (O2), not deployed.
+- Contract gaps **E22–E26**.
+
+M08 is not started.
