@@ -315,6 +315,7 @@ class _ApiSprintViewState extends ConsumerState<ApiSprintView>
         else
           _Backlog(
             projectId: selected,
+            search: _query,
             matches: matches,
             pending: _pending,
             onTapTask: _chooseMove,
@@ -591,12 +592,16 @@ class _Board extends StatelessWidget {
 class _Backlog extends ConsumerWidget {
   const new({
     required this.projectId,
+    required this.search,
     required this.matches,
     required this.pending,
     required this.onTapTask,
   });
 
   final int? projectId;
+
+  /// The search box's text, sent with the export so the file matches it.
+  final String search;
   final bool Function(ApiTask) matches;
   final Map<int, ApiTaskStatus> pending;
   final ValueChanged<ApiTask> onTapTask;
@@ -700,14 +705,15 @@ class _Backlog extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 20),
-            // The whole backlog as CSV: the list here is its first page.
+            // The whole backlog as CSV (every page, not only this first
+            // one), narrowed by the same search as the list.
             if (total > 0) ...[
               Align(
                 alignment: AlignmentDirectional.centerStart,
                 child: ExportCsvChip(
                   download: () => ref
                       .read(employeeExportsProvider)
-                      .backlog(projectId: p.selectedProjectId),
+                      .backlog(projectId: p.selectedProjectId, search: search),
                 ),
               ),
               const SizedBox(height: 12),

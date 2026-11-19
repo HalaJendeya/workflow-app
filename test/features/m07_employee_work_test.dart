@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:workflow_app/app/app.dart';
 import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/core/config/app_config.dart';
+import 'package:workflow_app/core/files/csv_export.dart';
 import 'package:workflow_app/core/network/api_client.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/preferences/app_preferences.dart';
@@ -120,6 +121,9 @@ class _Server implements HttpClientAdapter {
     _task(5, canUpdate: false),
     _task(6, project: 5),
   ];
+
+  /// Backlog rows of `GET /sprints` (none unless a test adds some).
+  final List<Map<String, dynamic>> backlog = [];
 
   _Reply? createReply;
   _Reply? updateReply;
@@ -256,13 +260,13 @@ class _Server implements HttpClientAdapter {
               {'id': 4, 'name': 'Sprint 4', 'status': 'active'},
             ],
             'backlog': {
-              'data': <Object>[],
+              'data': backlog,
               'current_page': 1,
               'last_page': 1,
               'per_page': 5,
-              'total': 0,
+              'total': backlog.length,
             },
-            'backlog_stats': {'count': 0, 'points': 0},
+            'backlog_stats': {'count': backlog.length, 'points': 0},
           }),
         );
     }
@@ -301,6 +305,18 @@ class _Server implements HttpClientAdapter {
   ) async {
     requests.add(options);
     await requestStream?.drain<void>();
+    // CSV exports: the documented file reply (BOM, attachment).
+    if (options.method == 'GET' && options.uri.path.endsWith('/export')) {
+      final name = options.uri.pathSegments.reversed.skip(1).first;
+      return ResponseBody.fromBytes(
+        [0xEF, 0xBB, 0xBF, ...utf8.encode('Title\r\n"A, ""b"""\r\n')],
+        200,
+        headers: {
+          Headers.contentTypeHeader: ['text/csv; charset=UTF-8'],
+          'content-disposition': ['attachment; filename="$name.csv"'],
+        },
+      );
+    }
     final (status, body) = _route(options);
     return ResponseBody.fromString(
       jsonEncode(body),
@@ -342,6 +358,8 @@ Future<_Server> _pump(
   Size size = const Size(390, 1400),
   double scale = 1,
   AppPreferences? prefs,
+  CsvSaver? saver,
+  void Function(_Server)? prepare,
 }) async {
   useViewport(tester, size);
   tester.platformDispatcher.textScaleFactorTestValue = scale;
@@ -359,6 +377,7 @@ Future<_Server> _pump(
   );
   final server = _Server();
   if (!lead) server.led['3'] = [];
+  prepare?.call(server);
   await tester.pumpWidget(
     ProviderScope(
       retry: (_, _) => null,
@@ -369,6 +388,7 @@ Future<_Server> _pump(
         sessionStorageProvider.overrideWithValue(storage),
         authRepositoryProvider.overrideWithValue(_Auth()),
         if (prefs != null) initialPreferencesProvider.overrideWithValue(prefs),
+        if (saver != null) csvSaverProvider.overrideWithValue(saver),
         apiClientProvider.overrideWith(
           (ref) => ApiClient(
             baseUrl: 'https://api.test',
@@ -967,6 +987,102 @@ void main() {
       expect(r.headers['Authorization'], 'Bearer tkn-b');
       expect(r.headers['X-Company'], '4');
     }
+  });
+
+  group('CSV export: exactly what the list shows', () {
+    Map<String, String> withoutPaging(RequestOptions r) => {
+      for (final e in r.uri.queryParameters.entries)
+        if (e.key != 'page' && e.key != 'per_page') e.key: e.value,
+    };
+
+    Future<void> search(WidgetTester tester, String text) async {
+      await tester.enterText(find.byType(TextField).first, text);
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('tasks: search, project and sort as the list', (tester) async {
+      final saved = <CsvFile>[];
+      final server = await _pump(
+        tester,
+        saver: (f) async {
+          saved.add(f);
+          return true;
+        },
+      );
+      await _openTasks(tester);
+      await search(tester, ' Task ');
+      await _tap(tester, find.byKey(const Key('task-filters')));
+      await _tap(tester, find.byKey(const Key('filter-project-2')));
+      await _tap(tester, find.byKey(const Key('filter-sort-plannedDate')));
+      await _tap(tester, find.byKey(const Key('task-filters-apply')));
+      final list = server
+          .where('GET', '/api/v1/employee/tasks')
+          .where((r) => r.uri.queryParameters['per_page'] != '1')
+          .last;
+      await _tap(tester, find.byKey(const Key('export-csv')));
+      final export = server.where('GET', '/api/v1/employee/tasks/export');
+      expect(export, hasLength(1));
+      expect(withoutPaging(export.single), withoutPaging(list));
+      expect(export.single.uri.queryParameters, {
+        'month': 'all',
+        // My tasks (the default scope), as the list.
+        'assigned_to': '10',
+        'search': 'Task',
+        'project_id': '2',
+        'sort': '-task_date',
+      });
+      expect(saved.single.fileName, 'tasks.csv');
+      expect(
+        utf8.decode(saved.single.bytes.sublist(3)),
+        'Title\r\n"A, ""b"""\r\n',
+      );
+      expect(find.text('Saved tasks.csv.'), findsOneWidget);
+      // Exporting never changes the list.
+      expect(server.requests.where((r) => r.method != 'GET'), isEmpty);
+    });
+
+    testWidgets('projects: search and status as the list', (tester) async {
+      final server = await _pump(tester, saver: (_) async => true);
+      await tester.tap(find.text('Projects').last);
+      await tester.pumpAndSettle();
+      await search(tester, 'Portal');
+      await _tap(tester, find.text('All Status ⌄'));
+      await _tap(tester, find.text('Completed').last);
+      final list = server.where('GET', '/api/v1/employee/projects').last;
+      await _tap(tester, find.byKey(const Key('export-csv')));
+      final export = server
+          .where('GET', '/api/v1/employee/projects/export')
+          .single;
+      expect(withoutPaging(export), withoutPaging(list));
+      expect(export.uri.queryParameters, {
+        'search': 'Portal',
+        'status': 'completed',
+      });
+    });
+
+    testWidgets('backlog: the project and the search box', (tester) async {
+      final server = await _pump(
+        tester,
+        saver: (_) async => true,
+        prepare: (s) => s.backlog.addAll([_task(8), _task(9)]),
+      );
+      await tester.tap(find.text('Sprints').last);
+      await tester.pumpAndSettle();
+      await _tap(tester, find.text('Backlog'));
+      await search(tester, ' Task 8 ');
+      expect(find.text('Task 8'), findsOneWidget);
+      expect(find.text('Task 9'), findsNothing);
+      await _tap(tester, find.byKey(const Key('export-csv')));
+      final export = server
+          .where('GET', '/api/v1/employee/sprints/backlog/export')
+          .single;
+      expect(export.uri.queryParameters, {
+        'project_id': '2',
+        'search': 'Task 8',
+      });
+      expect(find.text('Saved backlog.csv.'), findsOneWidget);
+    });
   });
 
   group('layouts: RTL, dark, small phone with large text', () {

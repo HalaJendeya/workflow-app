@@ -58,12 +58,16 @@ class EmployeeExportsRepository {
       );
 
   /// `GET /employee/sprints/backlog/export` for [projectId] (the server
-  /// picks the first plannable project without one).
-  Future<CsvFile> backlog({int? projectId}) => downloadCsv(
+  /// picks the first plannable project without one), narrowed by the
+  /// backlog's [search] (documented `search`, partial text match).
+  Future<CsvFile> backlog({int? projectId, String search = ''}) => downloadCsv(
     _client,
     '$_base/sprints/backlog/export',
     fallbackName: 'backlog.csv',
-    query: {'project_id': ?projectId},
+    query: {
+      'project_id': ?projectId,
+      if (search.trim().isNotEmpty) 'search': search.trim(),
+    },
   );
 }
 
