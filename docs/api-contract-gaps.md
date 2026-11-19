@@ -170,6 +170,30 @@ were not substituted). Route registration only, unauthenticated GET:
 | C14 | Client home (Figma 534:30390) | Handled | The frame shows a Tasks card, but the client role has no task route. In API mode a client's home is the masthead plus notifications; the employee home and demo mode keep the card. | — |
 | C15 | Client live smoke | **Blocked (credentials)** | `test/live/client_live_smoke_test.dart` (tag `live`, `WF_LIVE_CLIENT_TOKEN`): GETs only, including both exports and a payment-details key probe; prints counts, flags and key names only. Skipped: no client token. | The owner runs the login helper for the client QA account. |
 
+## Client C3 — meeting collaboration, read-only (2026-11-19)
+
+Collection re-read: still **updatedAt 2026-11-14T11:14:33Z**. Every
+collaboration route is `permission: meetings.view` and shares its controller
+across roles. **Live access rule** (read-only GETs, employee QA lead token,
+company 1, the 6 meetings it can list, 2026-11-19): `messages`, `polls`,
+`notes`, `decisions` and `action-items` all answer **403** "You must be a
+participant of this meeting to use its …" — the lead is invited/visible but
+has not joined. No row could be observed, and joining is a mutation that
+was not sent. This is shape/authorization evidence about the shared
+controllers only; **no client request with a token was made**. All C3
+behaviour is verified with mocked responses.
+
+| # | Item | Status | Evidence / app behaviour | Needed to close |
+|---|---|---|---|---|
+| C16 | Meeting chat history | Handled (mocked) — **row partly undocumented** | `GET …/meetings/{id}/messages` (`per_page`, `after_id`, `before_id`): paginator `data.data[]`. Documented: `id` (test), `message` (`StoreMeetingMessageRequest`), `attachments[].id` (send test). **No sender, time, reply or read field is documented**, so messages show text and files only, ordered by id; nothing is guessed. Older pages via `before_id` (paginator `last_page` > `current_page`); refresh via `after_id`. No send box (C4 needs approval). | Documented message row (`user {id, name}`, `created_at`, `type`, attachment `file_name`/`mime_type`/`size`); a QA meeting the client has joined. |
+| C17 | Meeting attachments | Handled (mocked) | `GET …/meeting-attachments/{id}/download` streams the file; id from a chat message. Name from `Content-Disposition`; images/text previewed from memory; every file can be saved through the system dialog (same path as conversation attachments). Only `id` is documented. | Documented attachment object; a QA attachment. |
+| C18 | Meeting polls | Handled (mocked) — **results blocked** | `GET …/meetings/{id}/polls` (`data` list, `id`), `GET …/meeting-polls/{id}` (requires `id`, `options`; option `{id, title}`). Question from `StoreMeetingPollRequest.question`. **Per-option counts, the caller's own vote, `show_results`/`anonymous` on read and poll `status` values are not documented**, so no result is shown and the panel says so. Voting (`POST …/vote`, MUTATING) is not offered. | Documented poll read model (option `votes_count`/percent, `my_vote`, `status` values, `show_results`); approval for C4 voting. |
+| C19 | Meeting notes | Handled (mocked) | `GET …/meetings/{id}/notes` (`data` list). Fields from `StoreMeetingNoteRequest`: `title` (nullable), `content` (required — missing is an invalid response), `status` (`draft`/`published`; draft shows a badge), `is_shared`. Which notes a client receives (shared only? drafts?) is the server's rule; the app shows what it gets. | Documented note read model and visibility rule for clients. |
+| C20 | Meeting decisions | Handled (mocked) | `GET …/meetings/{id}/decisions` with the documented `status` filter (`pending`/`approved`/`rejected`, else 422). Fields from `StoreMeetingDecisionRequest`: `title` (required), `description`; `assigned_to` is an id only and is **not shown** (no name documented). Unknown status values get no badge. No approve/reject (403 for clients). | Documented decision read model (assignee name, `status`, timestamps). |
+| C21 | Meeting action items | Handled (mocked) | `GET …/meetings/{id}/action-items` with `status` (`pending`/`in_progress`/`completed`/`cancelled`). Fields from `StoreMeetingActionItemRequest`: `title`, `description`, `priority` (`low`/`medium`/`high`/`urgent`), `due_date`; `assigned_to` id not shown. `assigned_to` filter not used (no people list for clients). | Documented action-item read model (assignee name). |
+| C22 | Whiteboard | Not built | `GET/PUT …/whiteboard`, elements, undo/redo: element schema undocumented and the frame (672:5264) is a drawing surface — out of the read-only scope. | Element schema; a decision on read-only whiteboard. |
+| C23 | Decisions / action items design | Open (design) | Figma has room frames for chat (670:2505), polls (671:3024), notes (672:5044) only. Decisions and action items reuse the notes panel layout and the documented status vocabulary. | A frame or design sign-off. |
+
 ## Design / API clarifications
 
 | # | Item | Decision |

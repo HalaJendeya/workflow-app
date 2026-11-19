@@ -22,6 +22,7 @@ import 'package:workflow_app/features/companies/data/client_companies_repository
 import 'package:workflow_app/features/conversations/data/conversations_repository.dart';
 import 'package:workflow_app/features/dashboard/data/client_dashboard_repository.dart';
 import 'package:workflow_app/features/finance/data/client_finance_repository.dart';
+import 'package:workflow_app/features/meetings/data/meeting_collaboration_repository.dart';
 import 'package:workflow_app/features/meetings/data/meetings_repository.dart';
 import 'package:workflow_app/features/notifications/data/notifications_repository.dart';
 import 'package:workflow_app/features/profile/data/profile_repository.dart';
@@ -171,6 +172,60 @@ void main() {
     }
     final inv = await r.myInvitations();
     log('meetings=${page.items.length} my invitations=${inv.items.length}');
+  }, skip: skip);
+
+  test('meeting collaboration (C3): read-only, participants only', () async {
+    // Live rule (employee role, 2026-11-19): a meeting the caller has not
+    // joined answers 403 "must be a participant". Counts and key names
+    // only; no message, poll, note or file content is printed.
+    final meetings = await MeetingsRepository(
+      client,
+      Portal.client,
+    ).list((search: '', status: null, page: 1));
+    final c = MeetingCollaborationRepository(client, Portal.client);
+    var forbidden = 0;
+    for (final m in meetings.items) {
+      final reads = <String, Future<Object?> Function()>{
+        'messages': () => c.messages(m.id),
+        'polls': () => c.polls(m.id),
+        'notes': () => c.notes(m.id),
+        'decisions': () => c.decisions(m.id),
+        'action-items': () => c.actionItems(m.id),
+      };
+      for (final MapEntry(:key, :value) in reads.entries) {
+        try {
+          final r = await value();
+          final n = switch (r) {
+            final List<Object?> l => l.length,
+            final MeetingMessagePage p => p.items.length,
+            _ => 0,
+          };
+          log('meeting $key rows=$n');
+          if (key == 'messages' && n > 0) {
+            final raw = await client.get(
+              '/api/v1/client/meetings/${m.id}/messages',
+              query: {'per_page': 1},
+            );
+            final body = raw.data;
+            final rows = body is Map && body['data'] is Map
+                ? (body['data'] as Map)['data']
+                : null;
+            if (rows is List && rows.isNotEmpty && rows.first is Map) {
+              final keys = (rows.first as Map).keys.map((k) => '$k').toList()
+                ..sort();
+              log('message row keys=${keys.join(',')}');
+            }
+          }
+        } on ApiException catch (e) {
+          if (e.statusCode != 403) rethrow;
+          forbidden++;
+        }
+      }
+    }
+    log(
+      'collaboration: meetings=${meetings.items.length} '
+      'not-a-participant (403)=$forbidden',
+    );
   }, skip: skip);
 
   test('conversations, messages, available users', () async {
