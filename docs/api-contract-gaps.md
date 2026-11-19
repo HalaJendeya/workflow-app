@@ -154,6 +154,22 @@ Both QA employee tokens valid. Read-only GETs only. Full report:
 | E26 | Employee report screen design | Open (design) | No Figma frame; built from existing components (masthead, chips, metric group, cards). | A Figma frame or design sign-off. |
 | E21 | WhatsApp settings route | **Open (backend)** | Now answers 404 "The route api/v1/employee/account/whatsapp-notifications could not be found" — not deployed, not an employee-row problem. | Deploy the route. |
 
+## Client C1 + C2 — home, CSV exports, payment details (2026-11-19)
+
+Collection re-read: still **updatedAt 2026-11-14T11:14:33Z**. No live client
+request was made with a token (no client QA token is stored; employee tokens
+were not substituted). Route registration only, unauthenticated GET:
+`client/invoices/export`, `client/payments/export`, `client/payments/{id}` →
+401 (registered). Everything below is verified with mocked responses only.
+
+| # | Item | Status | Evidence / app behaviour | Needed to close |
+|---|---|---|---|---|
+| C11 | Client invoice CSV export | Handled (mocked) | `GET /client/invoices/export` with the list's `status`, `sort`, `search`, `from`, `to`, `project_id` and no `page`/`per_page` (one builder for list and export). `text/csv` + BOM saved byte for byte through the system save dialog; a non-CSV 200 is never saved; 422 (> 10 000 rows) says to narrow the filters; a cancelled save shows no message. `ids[]` and `client_id` are not sent (no row selection; the client is the caller). "↓ Export Report" placed as in Figma 643:36002. | Live export with QA invoices (C10). |
+| C12 | Client payment CSV export | Handled (mocked) | `GET /client/payments/export` with the list's `status`, `search`, `from`, no paging; same file and error rules as C11. The list sends no `to`, `type`, `payment_method`, `wallet_id` or `invoice_id`, so the export does not either. Placed as in Figma 643:35269. | Live export with QA payments (C10). |
+| C13 | Client payment details | **Blocked (contract)** | `GET /client/payments/{id}` (`Admin\PaymentController@show`) documents only `data.id`; there is no example in any role (super admin, company admin, client). The company-admin *list* example has `id, invoice_id, wallet_id, amount, payment_method, payment_date` (plus `direction` from the description), but `show` may add or rename fields (relations, status, currency). The QA client has no payment, so no live id exists to read. Details stay the list row; no field is guessed. The live client smoke prints the `show` key names once a QA payment exists. | A documented `show` response (fields, types, `status` values, currency, related invoice/wallet), or a QA payment (C10) to read once. |
+| C14 | Client home (Figma 534:30390) | Handled | The frame shows a Tasks card, but the client role has no task route. In API mode a client's home is the masthead plus notifications; the employee home and demo mode keep the card. | — |
+| C15 | Client live smoke | **Blocked (credentials)** | `test/live/client_live_smoke_test.dart` (tag `live`, `WF_LIVE_CLIENT_TOKEN`): GETs only, including both exports and a payment-details key probe; prints counts, flags and key names only. Skipped: no client token. | The owner runs the login helper for the client QA account. |
+
 ## Design / API clarifications
 
 | # | Item | Decision |
