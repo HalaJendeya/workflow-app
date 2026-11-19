@@ -447,6 +447,9 @@ void main() {
       expect(find.text('Alpha Portal'), findsOneWidget);
       expect(find.text('Alpha login screen'), findsOneWidget);
       expect(find.byKey(const Key('timesheet-out-of-sync')), findsOneWidget);
+      // The pay type is labelled as such (36b44d8), not as a rate.
+      expect(find.text('Pay type'), findsOneWidget);
+      expect(find.text('Hourly'), findsOneWidget);
       expect(paths(a), contains('GET /api/v1/employee/timesheets/42/details'));
     });
 

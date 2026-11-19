@@ -271,6 +271,24 @@ void main() {
       expect(find.textContaining('Leader'), findsOneWidget);
       expect(find.byKey(const Key('report-timesheet-1')), findsOneWidget);
       expect(find.byKey(const Key('report-meeting-41')), findsOneWidget);
+      // Sentence-case labels and plain section names (36b44d8 and the
+      // 2026-11-19 emulator review): no upper-case metric label, no
+      // module page title as a section heading.
+      expect(find.text('Logged time'), findsOneWidget);
+      expect(find.text('LOGGED HOURS'), findsNothing);
+      for (final (key, title) in [
+        ('report-tasks', 'Tasks'),
+        ('report-projects', 'Projects'),
+        ('report-timesheets', 'Timesheets'),
+        ('report-meetings', 'Meetings'),
+      ]) {
+        expect(
+          find.descendant(of: find.byKey(Key(key)), matching: find.text(title)),
+          findsOneWidget,
+          reason: key,
+        );
+      }
+      expect(find.text('Meetings Management'), findsNothing);
       // The current month: nothing later to step to.
       final next = tester.widget<IconButton>(
         find.byKey(const Key('report-next')),

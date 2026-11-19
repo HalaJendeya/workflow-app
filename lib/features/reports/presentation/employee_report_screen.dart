@@ -318,7 +318,8 @@ class _ReportBody extends StatelessWidget {
             ),
         ]),
         const SizedBox(height: AppSpacing.lg),
-        section('meetings', l10n.meetingsTitle, [
+        // A plain section name like the others, not the module's page title.
+        section('meetings', l10n.catMeetings, [
           if (r.meetings.isEmpty) Text(l10n.reportNoMeetings, style: secondary),
           for (final m in r.meetings)
             row(
