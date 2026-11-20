@@ -6,6 +6,7 @@ import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/network/api_response.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/auth/application/session_scope.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 
 /// `status` of a meeting: `waiting | live | ended | cancelled` (the list
@@ -479,19 +480,24 @@ class MeetingJoin extends Notifier<MeetingJoinState> {
   /// role has no route to read its join request, so asking again is the
   /// only way to learn the host admitted it (200) or refused it (an error
   /// with the server's reason).
+  ///
+  /// A join answered after a sign-out or company switch is not applied:
+  /// it happened in the company it was sent with, and the new scope starts
+  /// from its own state (no participant id, no pending request).
   Future<void> join() async {
     if (state.busy || state.outcome is Joined) return;
+    final scope = ref.captureScope();
     final before = state;
     state = MeetingJoinState(outcome: before.outcome, busy: true);
     try {
       final outcome = await ref
           .read(meetingsRepositoryProvider)
           .join(meetingId);
-      if (!ref.mounted) return;
+      if (!ref.inScope(scope)) return;
       state = MeetingJoinState(outcome: outcome);
       ref.invalidate(apiParticipantsProvider(meetingId));
     } on ApiException catch (e) {
-      if (!ref.mounted) return;
+      if (!ref.inScope(scope)) return;
       state = MeetingJoinState(
         outcome: before.outcome,
         left: before.left,
@@ -505,14 +511,15 @@ class MeetingJoin extends Notifier<MeetingJoinState> {
   Future<void> leave() async {
     final joined = state.outcome;
     if (state.busy || joined is! Joined) return;
+    final scope = ref.captureScope();
     state = MeetingJoinState(outcome: joined, busy: true);
     try {
       await ref.read(meetingsRepositoryProvider).leave(joined.participantId);
-      if (!ref.mounted) return;
+      if (!ref.inScope(scope)) return;
       state = const MeetingJoinState(left: true);
       ref.invalidate(apiParticipantsProvider(meetingId));
     } on ApiException catch (e) {
-      if (!ref.mounted) return;
+      if (!ref.inScope(scope)) return;
       state = MeetingJoinState(outcome: joined, error: e);
     }
   }

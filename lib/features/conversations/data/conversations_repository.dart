@@ -9,6 +9,7 @@ import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/network/api_response.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/auth/application/session_scope.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/conversations/data/chat_attachments.dart';
 
@@ -423,16 +424,21 @@ class ConversationThread extends AsyncNotifier<MessageThread> {
   Future<void> loadEarlier() {
     final current = state.value;
     if (current == null || !current.hasEarlier) return Future.value();
-    return _earlier ??= _loadEarlier(current)
-        .whenComplete(() => _earlier = null);
+    Future<void>? mine;
+    return _earlier ??= mine = _loadEarlier(current).whenComplete(() {
+      // A newer scope may already hold its own page request.
+      if (identical(_earlier, mine)) _earlier = null;
+    });
   }
 
   Future<void> _loadEarlier(MessageThread current) async {
+    final scope = ref.captureScope();
     final page = await _repo.messages(
       conversationId,
       beforeId: current.oldestId,
     );
-    if (!ref.mounted) return;
+    // Another account or company since: the page is not applied.
+    if (!ref.inScope(scope)) return;
     final now = state.value;
     if (now == null) return;
     state = AsyncData(now.merge(page.messages, hasEarlier: page.hasMore));
@@ -446,6 +452,7 @@ class ConversationThread extends AsyncNotifier<MessageThread> {
   /// [fresh] waits for it and then asks again, for a caller that needs a
   /// state newer than its own action (a send).
   Future<int> poll({bool fresh = false}) async {
+    final scope = ref.captureScope();
     final running = _poll;
     if (running != null) {
       if (!fresh) return await running;
@@ -454,7 +461,8 @@ class ConversationThread extends AsyncNotifier<MessageThread> {
       } on Object {
         // The earlier poll's failure is its caller's; ask again.
       }
-      if (!ref.mounted) return 0;
+      // No follow-up request once the account or company has changed.
+      if (!ref.inScope(scope)) return 0;
       final again = _poll;
       if (again != null) return await again;
     }
@@ -468,7 +476,8 @@ class ConversationThread extends AsyncNotifier<MessageThread> {
   }
 
   Future<int> _pollOnce() async {
-    final me = ref.read(sessionControllerProvider).value?.userId;
+    final scope = ref.captureScope();
+    final me = scope.userId;
     var others = 0;
     for (var i = 0; i < maxPollPages; i++) {
       final current = state.value;
@@ -477,8 +486,10 @@ class ConversationThread extends AsyncNotifier<MessageThread> {
         conversationId,
         afterId: current.cursor,
       );
-      // The chat may have closed while the page was on its way.
-      if (!ref.mounted) return others;
+      // The chat may have closed, or the account or company changed,
+      // while the page was on its way: it is dropped and no further page
+      // is asked for.
+      if (!ref.inScope(scope)) return others;
       final now = state.value;
       if (now == null) return others;
       final known = {for (final m in now.messages) m.id};
@@ -501,9 +512,10 @@ class ConversationThread extends AsyncNotifier<MessageThread> {
     return others;
   }
 
-  /// A message the server confirmed in a send response.
-  void addSent(ApiMessage message) {
-    if (!ref.mounted) return;
+  /// A message the server confirmed in a send response, sent while [scope]
+  /// was current; dropped when the account or company has changed since.
+  void addSent(ApiMessage message, {required SessionScope scope}) {
+    if (!ref.inScope(scope)) return;
     final now = state.value;
     if (now == null) return;
     state = AsyncData(now.merge([message]));

@@ -13,6 +13,7 @@ import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/auth/application/session_scope.dart';
 import 'package:workflow_app/features/conversations/data/conversations_repository.dart';
 import 'package:workflow_app/features/conversations/presentation/api_conversation_actions.dart';
 import 'package:workflow_app/features/conversations/presentation/api_new_conversation_screen.dart';
@@ -459,9 +460,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   bool _sending = false;
   bool _disposed = false;
 
+  /// The account and company this chat was opened in. The conversation
+  /// belongs to them: after a sign-out or company switch the chat stops
+  /// polling and sending, and drops any answer still on its way.
+  late final SessionScope _scope;
+
   @override
   void initState() {
     super.initState();
+    // Captured now, not on first use: a later switch must not become the
+    // chat's own scope.
+    _scope = ref.read(sessionScopeProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (!ref.read(demoModeProvider)) {
@@ -492,7 +501,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     if (state == AppLifecycleState.resumed) unawaited(_poll());
   }
 
-  bool get _alive => mounted && !_disposed;
+  bool get _alive =>
+      mounted &&
+      !_disposed &&
+      identical(ref.read(sessionScopeProvider), _scope);
 
   /// The timer polls only while this chat is what the person sees: not in
   /// the background, not under another page or sheet.
@@ -568,13 +580,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               },
       );
       if (!_alive) return false;
-      if (sent != null) thread.addSent(sent);
+      if (sent != null) thread.addSent(sent, scope: _scope);
       setState(() => _outgoing.remove(o));
       if (sent == null) await _poll(fresh: true);
       if (_alive) ref.invalidate(apiConversationsProvider);
       return true;
     } on ApiException catch (e) {
-      if (!mounted || _disposed) return false;
+      if (!mounted || !_alive) return false;
       setState(() {
         o
           ..failed = true
@@ -646,7 +658,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           );
       // The chip is ready again before the preview opens.
       _opening.remove(attachmentId);
-      if (!mounted || _disposed) return;
+      if (!mounted || !_alive) return;
       setState(() {});
       await showAttachmentPreview(
         context,
@@ -655,7 +667,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       );
     } on ApiException catch (e) {
       _opening.remove(attachmentId);
-      if (!mounted || _disposed) return;
+      if (!mounted || !_alive) return;
       setState(() {});
       showSnack(context, localizedError(l10n, e));
     }
@@ -665,7 +677,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     try {
       await ref.read(conversationThreadProvider(_apiId).notifier).loadEarlier();
     } on ApiException catch (e) {
-      if (mounted && !_disposed) {
+      if (mounted && _alive) {
         showSnack(context, localizedError(AppLocalizations.of(context), e));
       }
     } finally {

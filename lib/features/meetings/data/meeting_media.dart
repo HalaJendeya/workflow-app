@@ -104,11 +104,15 @@ class MeetingMediaApi {
   }
 
   /// `POST …/media/leave` `{device_id}`: closes this device's session only.
-  Future<void> leave(int meetingId, String deviceId) async {
+  /// [companyId] is the company the session was joined in: sent as its
+  /// `X-Company`, so a leave after a company switch still reaches the
+  /// meeting's own company.
+  Future<void> leave(int meetingId, String deviceId, {int? companyId}) async {
     ApiEnvelope.unwrapObject(
       await _client.post(
         '$_base/meetings/$meetingId/media/leave',
         body: {'device_id': deviceId},
+        headers: {'X-Company': ?companyId?.toString()},
       ),
     );
   }

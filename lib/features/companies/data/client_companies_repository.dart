@@ -5,6 +5,7 @@ import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/network/api_response.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/auth/application/session_scope.dart';
 
 /// A company of `GET /api/v1/client/companies` ("List My Companies").
 ///
@@ -108,10 +109,13 @@ class CompanySwitch extends Notifier<int?> {
     if (state != null) return false;
     final session = ref.read(sessionControllerProvider).value;
     if (session == null || session.companyId == companyId) return false;
+    final scope = ref.captureScope();
     state = companyId;
     try {
       await ref.read(clientCompaniesRepositoryProvider).checkAccess(companyId);
-      if (!ref.mounted) return false;
+      // Signed out or switched another way while the check ran: this
+      // answer no longer decides anything.
+      if (!ref.inScope(scope)) return false;
       await ref
           .read(sessionControllerProvider.notifier)
           .switchCompany(companyId);

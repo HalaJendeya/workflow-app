@@ -742,5 +742,5 @@ class _MediaApi implements MeetingMediaApi {
   Future<void> state(int meetingId, {bool? microphone, bool? camera}) async {}
 
   @override
-  Future<void> leave(int meetingId, String deviceId) async {}
+  Future<void> leave(int meetingId, String deviceId, {int? companyId}) async {}
 }

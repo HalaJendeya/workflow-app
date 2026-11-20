@@ -494,6 +494,38 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    testWidgets('C5: an open chat stops polling and marking read after a '
+        'company switch', (tester) async {
+      await pump(tester);
+      await openChat(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byKey(const Key('chat-input'))),
+      );
+      final before = http.requests.length;
+      await container.read(sessionControllerProvider.notifier).switchCompany(7);
+      // Two poll ticks: the chat belongs to company 3 and asks nothing
+      // more for it, under 7 or at all.
+      newer = [_msg(12, 'From company 3')];
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpAndSettle();
+      final after = http.requests.skip(before);
+      expect(
+        after.where(
+          (r) =>
+              r.uri.path == '/api/v1/client/conversations/1/messages' &&
+              r.queryParameters.containsKey('after_id'),
+        ),
+        isEmpty,
+        reason: 'no poll after the switch',
+      );
+      expect(
+        after.where((r) => r.uri.path.endsWith('/conversations/1/read')),
+        isEmpty,
+      );
+      expect(find.text('From company 3'), findsNothing);
+    });
+
     testWidgets('chat: latest page, load earlier, polling, no reload', (
       tester,
     ) async {

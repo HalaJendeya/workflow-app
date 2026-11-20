@@ -7,6 +7,7 @@ import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
+import 'package:workflow_app/features/auth/application/session_scope.dart';
 import 'package:workflow_app/features/conversations/data/chat_attachments.dart';
 import 'package:workflow_app/features/conversations/data/file_picker_attachments.dart';
 import 'package:workflow_app/features/conversations/presentation/chat_attachment_widgets.dart';
@@ -544,12 +545,14 @@ class _ChatPanelState extends ConsumerState<_ChatPanel> {
   Future<void> _open(int attachmentId) async {
     if (_opening.contains(attachmentId)) return;
     final l10n = AppLocalizations.of(context);
+    final scope = ref.captureScope();
     setState(() => _opening.add(attachmentId));
     try {
       final file = await ref
           .read(meetingCollaborationRepositoryProvider)
           .downloadAttachment(attachmentId);
-      if (!mounted) return;
+      // Another account or company since: the file is not shown.
+      if (!mounted || !ref.inScope(scope)) return;
       // Downloaded: the chip is no longer busy while the preview is open.
       setState(() => _opening.remove(attachmentId));
       await showAttachmentPreview(
@@ -558,7 +561,7 @@ class _ChatPanelState extends ConsumerState<_ChatPanel> {
         save: ref.read(attachmentSaverProvider),
       );
     } on Object catch (e) {
-      if (mounted) {
+      if (mounted && ref.inScope(scope)) {
         _say(l10n.attachmentDownloadFailed(localizedError(l10n, e)));
       }
     } finally {

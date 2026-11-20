@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/auth/application/session_scope.dart';
 import 'package:workflow_app/features/notifications/data/mock_notifications_repository.dart';
 import 'package:workflow_app/features/notifications/data/notifications_repository.dart';
 import 'package:workflow_app/features/notifications/domain/app_notification.dart';
@@ -94,15 +95,21 @@ class NotificationsController extends AsyncNotifier<NotificationInbox> {
     if (current == null || !current.hasMore || state.isLoading) {
       return Future.value();
     }
-    return _loadingMore ??= _loadMore(current)
-        .whenComplete(() => _loadingMore = null);
+    Future<void>? mine;
+    return _loadingMore ??= mine = _loadMore(current).whenComplete(() {
+      // A newer account or company may already have its own request.
+      if (identical(_loadingMore, mine)) _loadingMore = null;
+    });
   }
 
+  /// Answers obtained after a sign-out or company switch are dropped: the
+  /// inbox belongs to the account and company it was asked for.
   Future<void> _loadMore(NotificationInbox current) async {
+    final scope = ref.captureScope();
     final next = await ref
         .read(notificationsRepositoryProvider)
         .list(page: current.currentPage + 1, filter: filter);
-    if (!ref.mounted) return;
+    if (!ref.inScope(scope)) return;
     // A notification that arrived meanwhile shifts the pages: an item can
     // come back on the next page. Keep one copy.
     final seen = {for (final n in current.items) n.id};
@@ -117,18 +124,24 @@ class NotificationsController extends AsyncNotifier<NotificationInbox> {
     );
   }
 
-  Future<void> markRead(String id) =>
-      _marking[id] ??= _markRead(id).whenComplete(() {
-        // A block that discards the result: `remove` returns this very
-        // future, which `whenComplete` would otherwise wait for — forever.
-        unawaited(_marking.remove(id));
-      });
+  Future<void> markRead(String id) {
+    Future<void>? mine;
+    return _marking[id] ??= mine = _markRead(id).whenComplete(() {
+      // Only this request's own entry: a newer scope may hold another.
+      // A block that discards the result: `remove` returns this very
+      // future, which `whenComplete` would otherwise wait for — forever.
+      if (identical(_marking[id], mine)) unawaited(_marking.remove(id));
+    });
+  }
 
   Future<void> _markRead(String id) async {
+    final scope = ref.captureScope();
     final updated = await ref
         .read(notificationsRepositoryProvider)
         .markRead(id);
-    if (!ref.mounted) return;
+    // Marked on the server for the account it was sent for; another
+    // account's or company's inbox is not touched or reloaded.
+    if (!ref.inScope(scope)) return;
     final current = state.value;
     if (current == null) return;
     final wasUnread = current.items.any((n) => n.id == id && !n.isRead);
@@ -181,14 +194,19 @@ class NotificationsController extends AsyncNotifier<NotificationInbox> {
     }
   }
 
-  Future<void> markAllRead() =>
-      _markingAll ??= _markAllRead().whenComplete(() => _markingAll = null);
+  Future<void> markAllRead() {
+    Future<void>? mine;
+    return _markingAll ??= mine = _markAllRead().whenComplete(() {
+      if (identical(_markingAll, mine)) _markingAll = null;
+    });
+  }
 
   Future<void> _markAllRead() async {
+    final scope = ref.captureScope();
     final unread = await ref
         .read(notificationsRepositoryProvider)
         .markAllRead();
-    if (!ref.mounted) return;
+    if (!ref.inScope(scope)) return;
     final current = state.value;
     if (current == null) return;
     _settle(

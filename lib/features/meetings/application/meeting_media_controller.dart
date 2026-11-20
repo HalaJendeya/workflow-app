@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:workflow_app/app/providers.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/auth/application/session_scope.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/meetings/data/livekit_media_engine.dart';
 import 'package:workflow_app/features/meetings/data/meeting_media.dart';
@@ -205,6 +206,10 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
   StreamSubscription<MediaRoomEvent>? _events;
   String? _deviceId;
 
+  /// The company the session was joined in: its `media/leave` goes there,
+  /// also when the release follows a company switch.
+  int? _joinedCompany;
+
   @override
   MediaSessionState build() {
     ref
@@ -230,7 +235,11 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
     if (device != null) {
       // Captured before disposal: `ref` is not usable from here on.
       final api = _api;
-      unawaited(api?.leave(meetingId, device).catchError((Object _) {}));
+      unawaited(
+        api
+            ?.leave(meetingId, device, companyId: _joinedCompany)
+            .catchError((Object _) {}),
+      );
     }
   }
 
@@ -238,16 +247,21 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
 
   /// Permission, then `media/join`, then the LiveKit room. Ignored while a
   /// join is under way or the person is already inside.
+  ///
+  /// Each step continues only while the account and company it started in
+  /// are current: after a sign-out or company switch no further request is
+  /// made for this meeting and no room is opened.
   Future<void> join({bool camera = false}) async {
     if (!state.canJoin) return;
     final engine = ref.read(mediaEngineProvider);
     if (engine == null) return;
+    final scope = ref.captureScope();
     state = state.copy(
       phase: MediaPhase.requestingPermission,
       clearError: true,
     );
     final granted = await engine.requestPermissions(camera: camera);
-    if (!ref.mounted) return;
+    if (!ref.inScope(scope)) return;
     if (granted.microphone != MediaPermission.granted) {
       state = MediaSessionState(
         phase: MediaPhase.permissionDenied,
@@ -261,23 +275,38 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
 
     state = state.copy(phase: MediaPhase.joining);
     final MediaJoinOutcome outcome;
+    final api = ref.read(meetingMediaApiProvider);
+    final String device;
     try {
-      _api = ref.read(meetingMediaApiProvider);
-      _deviceId = await ref.read(mediaDeviceIdProvider.future);
-      if (!ref.mounted) return;
-      outcome = await _api!.join(meetingId, _deviceId!);
+      device = await ref.read(mediaDeviceIdProvider.future);
+      if (!ref.inScope(scope)) return;
+      _api = api;
+      _deviceId = device;
+      _joinedCompany = scope.companyId;
+      outcome = await api.join(meetingId, device);
     } on ApiException catch (e) {
-      if (ref.mounted) {
+      if (ref.inScope(scope)) {
         state = MediaSessionState(phase: MediaPhase.failed, error: e);
       }
       return;
     }
-    if (!ref.mounted) return;
+    if (!ref.inScope(scope)) {
+      // Joined in the company it was sent with, after the person left it:
+      // close that session there instead of opening a room.
+      if (outcome is MediaGranted) {
+        unawaited(
+          api
+              .leave(meetingId, device, companyId: scope.companyId)
+              .catchError((Object _) {}),
+        );
+      }
+      return;
+    }
     switch (outcome) {
       case MediaJoinRequested():
         state = const MediaSessionState(phase: MediaPhase.waitingForHost);
       case MediaGranted(:final credentials):
-        await _connect(engine, credentials, withCamera);
+        await _connect(engine, credentials, withCamera, scope);
     }
   }
 
@@ -285,6 +314,7 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
     MediaEngine engine,
     MediaCredentials credentials,
     bool camera,
+    SessionScope scope,
   ) async {
     state = state.copy(phase: MediaPhase.connecting);
     final room = engine.createRoom();
@@ -301,12 +331,18 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
     } on Object catch (e) {
       // The server already counts this device in: close it there too.
       _release();
-      if (ref.mounted) {
+      if (ref.inScope(scope)) {
         state = MediaSessionState(phase: MediaPhase.failed, error: e);
       }
       return;
     }
-    if (!ref.mounted) return;
+    if (!ref.inScope(scope)) {
+      // The switch already released this room (and told its company); a
+      // connection that finished afterwards is closed on the device.
+      if (identical(_room, room)) _release();
+      unawaited(room.disconnect().catchError((Object _) {}));
+      return;
+    }
     state = MediaSessionState(
       phase: MediaPhase.connected,
       microphone: true,
@@ -358,11 +394,15 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
       return;
     }
     _toggling = true;
+    final scope = ref.captureScope();
     if (camera ?? false) {
       // Joined audio-only after a refusal: ask again before the camera.
       final engine = ref.read(mediaEngineProvider);
       final asked = await engine?.requestPermissions(camera: true);
-      if (!ref.mounted) return;
+      if (!ref.inScope(scope)) {
+        _toggling = false;
+        return;
+      }
       if (asked?.camera != MediaPermission.granted) {
         _toggling = false;
         state = state.copy(
@@ -377,10 +417,14 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
       if (camera != null) await room.setCamera(enabled: camera);
     } on Object catch (e) {
       _toggling = false;
-      if (ref.mounted) state = state.copy(error: e);
+      if (ref.inScope(scope)) state = state.copy(error: e);
       return;
     }
-    if (!ref.mounted) return;
+    // Released by a switch meanwhile: no record under another company.
+    if (!ref.inScope(scope)) {
+      _toggling = false;
+      return;
+    }
     state = state.copy(
       microphone: microphone,
       camera: camera,
@@ -390,7 +434,7 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
     try {
       await _api?.state(meetingId, microphone: microphone, camera: camera);
     } on ApiException catch (e) {
-      if (ref.mounted) state = state.copy(error: e);
+      if (ref.inScope(scope)) state = state.copy(error: e);
     } finally {
       _toggling = false;
     }
@@ -401,6 +445,7 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
   Future<void> leave() async {
     if (_room == null && !state.inRoom) return;
     if (state.phase == MediaPhase.leaving) return;
+    final scope = ref.captureScope();
     state = state.copy(phase: MediaPhase.leaving);
     final room = _room;
     final device = _deviceId;
@@ -416,12 +461,12 @@ class MeetingMediaController extends Notifier<MediaSessionState> {
     Object? error;
     if (device != null) {
       try {
-        await _api?.leave(meetingId, device);
+        await _api?.leave(meetingId, device, companyId: _joinedCompany);
       } on ApiException catch (e) {
         error = e;
       }
     }
-    if (ref.mounted) {
+    if (ref.inScope(scope)) {
       state = MediaSessionState(phase: MediaPhase.ended, error: error);
     }
   }

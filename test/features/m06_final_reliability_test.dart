@@ -7,6 +7,7 @@ import 'package:workflow_app/core/config/app_config.dart';
 import 'package:workflow_app/core/network/api_client.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/auth/application/session_scope.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/conversations/data/conversations_repository.dart';
 import 'package:workflow_app/features/meetings/data/meetings_repository.dart';
@@ -166,7 +167,7 @@ void main() {
       final poll = thread.poll();
       await pumpEventQueue();
       // The send answers first with the message row…
-      thread.addSent(_m(13, sender: _me));
+      thread.addSent(_m(13, sender: _me), scope: c.read(sessionScopeProvider));
       expect(ids(), [10, 11, 13]);
       // …then the poll that was already running returns it too, with the
       // message that arrived between.
@@ -177,7 +178,7 @@ void main() {
 
     test('a sent message does not move the poll cursor (no gap)', () async {
       await open();
-      thread.addSent(_m(13, sender: _me));
+      thread.addSent(_m(13, sender: _me), scope: c.read(sessionScopeProvider));
       final poll = thread.poll();
       await pumpEventQueue();
       expect(repo.calls[1].afterId, 11, reason: 'not 13: 12 may exist');

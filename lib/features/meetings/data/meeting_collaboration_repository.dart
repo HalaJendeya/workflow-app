@@ -9,6 +9,7 @@ import 'package:workflow_app/core/network/api_client.dart';
 import 'package:workflow_app/core/network/api_page.dart';
 import 'package:workflow_app/core/network/api_response.dart';
 import 'package:workflow_app/features/auth/application/session_controller.dart';
+import 'package:workflow_app/features/auth/application/session_scope.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/conversations/data/chat_attachments.dart';
 import 'package:workflow_app/features/meetings/data/meetings_repository.dart';
@@ -551,8 +552,11 @@ class MeetingChat extends AsyncNotifier<MeetingMessagePage> {
   Future<void> loadEarlier() async {
     final now = state.value;
     if (now == null || !now.hasOlder || now.items.isEmpty) return;
+    final scope = ref.captureScope();
     final page = await _repo.messages(meetingId, beforeId: now.items.first.id);
-    if (!ref.mounted) return;
+    // Another account or company since: neither the page nor the
+    // messages read before it belong on today's screen.
+    if (!ref.inScope(scope)) return;
     state = AsyncData((
       items: _merge(now.items, page.items),
       hasOlder: page.hasOlder,
@@ -568,8 +572,9 @@ class MeetingChat extends AsyncNotifier<MeetingMessagePage> {
       await future;
       return;
     }
+    final scope = ref.captureScope();
     final page = await _repo.messages(meetingId, afterId: now.items.last.id);
-    if (!ref.mounted) return;
+    if (!ref.inScope(scope)) return;
     state = AsyncData((
       items: _merge(now.items, page.items),
       hasOlder: now.hasOlder,
@@ -597,14 +602,17 @@ class MeetingMessageSender extends AsyncNotifier<int?> {
     return null;
   }
 
-  /// `true` when the message was sent; `false` when it failed or another
-  /// send was already on the way.
+  /// `true` when the message was sent; `false` when it failed, another
+  /// send was already on the way, or the account or company changed while
+  /// it was on its way (it was sent with the company it started in; its
+  /// outcome is not shown and nothing is re-read or re-sent).
   Future<bool> send({
     String text = '',
     OutgoingFile? file,
     void Function(double progress)? onProgress,
   }) async {
     if (state.isLoading) return false;
+    final scope = ref.captureScope();
     state = const AsyncLoading<int?>();
     final result = await AsyncValue.guard(
       () => ref
@@ -616,7 +624,7 @@ class MeetingMessageSender extends AsyncNotifier<int?> {
             onProgress: onProgress,
           ),
     );
-    if (!ref.mounted) return result.hasValue;
+    if (!ref.inScope(scope)) return false;
     state = result;
     if (!result.hasValue) return false;
     try {
@@ -647,18 +655,22 @@ class PollVoter extends AsyncNotifier<PollVoteResult?> {
     return null;
   }
 
+  /// `false` also when the account or company changed while the vote was
+  /// on its way: it counted for the company it was sent with, but its
+  /// result is not shown and nothing is re-read.
   Future<bool> vote({
     required int meetingId,
     required List<int> optionIds,
   }) async {
     if (state.isLoading) return false;
+    final scope = ref.captureScope();
     state = const AsyncLoading<PollVoteResult?>();
     final result = await AsyncValue.guard(
       () => ref
           .read(meetingCollaborationRepositoryProvider)
           .vote(pollId, optionIds),
     );
-    if (!ref.mounted) return result.hasValue;
+    if (!ref.inScope(scope)) return false;
     state = result;
     if (!result.hasValue) return false;
     ref

@@ -414,7 +414,7 @@ class _Api implements MeetingMediaApi {
   }
 
   @override
-  Future<void> leave(int meetingId, String deviceId) async {
+  Future<void> leave(int meetingId, String deviceId, {int? companyId}) async {
     calls.add('leave');
     if (leaveError case final e?) throw e;
   }

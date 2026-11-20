@@ -8,6 +8,7 @@ import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
+import 'package:workflow_app/features/auth/application/session_scope.dart';
 import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/meetings/application/meeting_media_controller.dart';
@@ -505,12 +506,15 @@ class _InvitationTileState extends ConsumerState<_InvitationTile> {
 
   Future<void> _respond({required bool accept}) async {
     final l10n = AppLocalizations.of(context);
+    final scope = ref.captureScope();
     setState(() => _busy = true);
     try {
       await ref
           .read(meetingsRepositoryProvider)
           .respond(widget.invitationId, accept: accept);
-      if (!mounted) return;
+      // Answered for the account and company it was sent in; after a
+      // switch nothing is shown or reloaded for the new one.
+      if (!mounted || !ref.inScope(scope)) return;
       showSnack(
         context,
         accept ? l10n.invitationAccepted : l10n.invitationDeclined,
@@ -520,7 +524,9 @@ class _InvitationTileState extends ConsumerState<_InvitationTile> {
         ref.invalidate(apiMeetingProvider(id));
       }
     } on Object catch (e) {
-      if (mounted) showSnack(context, localizedError(l10n, e));
+      if (mounted && ref.inScope(scope)) {
+        showSnack(context, localizedError(l10n, e));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -871,19 +877,22 @@ class _MyJoinRequestCardState extends ConsumerState<_MyJoinRequestCard> {
       ),
     );
     if (ok != true || !mounted) return;
+    final scope = ref.captureScope();
     setState(() => _busy = true);
     try {
       await ref
           .read(meetingsRepositoryProvider)
           .withdrawJoinRequest(widget.meetingId);
-      if (!mounted) return;
+      if (!mounted || !ref.inScope(scope)) return;
       // A fresh Join is offered again.
       ref
         ..invalidate(meetingJoinProvider(widget.meetingId))
         ..invalidate(myJoinRequestProvider(widget.meetingId));
       showSnack(context, l10n.joinRequestWithdrawn);
     } on Object catch (e) {
-      if (mounted) showSnack(context, localizedError(l10n, e));
+      if (mounted && ref.inScope(scope)) {
+        showSnack(context, localizedError(l10n, e));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
