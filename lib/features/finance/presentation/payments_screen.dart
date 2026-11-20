@@ -10,6 +10,7 @@ import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/data/client_finance_repository.dart';
 import 'package:workflow_app/features/finance/domain/finance_models.dart';
+import 'package:workflow_app/features/finance/presentation/api_invoices_view.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/features/work/presentation/work_widgets.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -558,7 +559,24 @@ class _ApiPaymentCard extends StatelessWidget {
           fields: [DetailField(l10n.fieldAmount, amount), ...fields],
           footer: Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: InfoNotice(text: l10n.paymentSummaryNote),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                InfoNotice(text: l10n.paymentSummaryNote),
+                // The row's `invoice_id` opens that invoice from
+                // `GET /client/invoices/{id}` (403/404 shown with Retry).
+                if (p.invoiceId case final invoiceId?)
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: TextButton(
+                      key: const Key('payment-view-invoice'),
+                      onPressed: () =>
+                          showApiInvoiceDetailsById(context, invoiceId),
+                      child: Text(l10n.viewInvoice),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

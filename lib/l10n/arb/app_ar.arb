@@ -791,5 +791,8 @@
   "companySwitchConfirm": "تبديل",
   "companySwitched": "تعمل الآن في {name}.",
   "companySwitchRefused": "لا يمكن لحسابك العمل في {name} بعد.",
-  "companySwitchFailed": "تعذّر تبديل الشركة. {reason}"
+  "companySwitchFailed": "تعذّر تبديل الشركة. {reason}",
+  "invoicePaymentsTitle": "الدفعات على هذه الفاتورة",
+  "invoicePaymentsEmpty": "لا توجد دفعات مسجلة لهذه الفاتورة بعد.",
+  "viewInvoice": "عرض الفاتورة"
 }

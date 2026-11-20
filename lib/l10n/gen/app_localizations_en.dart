@@ -2681,4 +2681,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String companySwitchFailed(String reason) {
     return 'Couldn\'t switch company. $reason';
   }
+
+  @override
+  String get invoicePaymentsTitle => 'Payments for this invoice';
+
+  @override
+  String get invoicePaymentsEmpty =>
+      'No payments recorded for this invoice yet.';
+
+  @override
+  String get viewInvoice => 'View invoice';
 }

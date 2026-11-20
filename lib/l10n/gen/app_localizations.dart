@@ -4849,6 +4849,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t switch company. {reason}'**
   String companySwitchFailed(String reason);
+
+  /// No description provided for @invoicePaymentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments for this invoice'**
+  String get invoicePaymentsTitle;
+
+  /// No description provided for @invoicePaymentsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No payments recorded for this invoice yet.'**
+  String get invoicePaymentsEmpty;
+
+  /// No description provided for @viewInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'View invoice'**
+  String get viewInvoice;
 }
 
 class _AppLocalizationsDelegate

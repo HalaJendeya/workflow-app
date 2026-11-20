@@ -2679,4 +2679,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String companySwitchFailed(String reason) {
     return 'تعذّر تبديل الشركة. $reason';
   }
+
+  @override
+  String get invoicePaymentsTitle => 'الدفعات على هذه الفاتورة';
+
+  @override
+  String get invoicePaymentsEmpty => 'لا توجد دفعات مسجلة لهذه الفاتورة بعد.';
+
+  @override
+  String get viewInvoice => 'عرض الفاتورة';
 }

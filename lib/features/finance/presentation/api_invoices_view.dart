@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/export_csv_chip.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
@@ -326,7 +327,8 @@ List<({DetailField field, bool summary})> invoiceFields(
 
 /// Invoice details from `GET /client/invoices/{id}`: the row at once with a
 /// loading bar, then the server's record; 403/404 or a network failure
-/// shows the error with Retry and no stale amounts.
+/// shows the error with Retry and no stale amounts. Under the details: the
+/// payments recorded against the invoice.
 Future<void> showApiInvoiceDetails(
   BuildContext context, {
   required InvoiceRecord row,
@@ -337,56 +339,211 @@ Future<void> showApiInvoiceDetails(
   useRootNavigator: true,
   isScrollControlled: true,
   builder: (_) => _InvoiceDetailsSheet(
+    invoiceId: row.id,
     row: row,
     currency: currency,
     projectTitle: projectTitle,
   ),
 );
 
+/// Invoice details opened from somewhere that knows only the id (a payment
+/// row's `invoice_id`): a loading bar until `GET /client/invoices/{id}`
+/// answers. The invoice carries only a `currency_id` and no list `totals`
+/// name it here, so amounts show without a currency rather than a guessed
+/// one; the project title is looked up as on the cards.
+Future<void> showApiInvoiceDetailsById(BuildContext context, int invoiceId) =>
+    showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      builder: (_) => _InvoiceDetailsSheet(invoiceId: invoiceId),
+    );
+
 class _InvoiceDetailsSheet extends ConsumerWidget {
   const new({
-    required this.row,
-    required this.currency,
-    required this.projectTitle,
+    required this.invoiceId,
+    this.row,
+    this.currency,
+    this.projectTitle,
   });
 
-  final InvoiceRecord row;
+  final int invoiceId;
+  final InvoiceRecord? row;
   final CurrencyRef? currency;
   final String? projectTitle;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final value = ref.watch(clientInvoiceProvider(row.id));
+    final value = ref.watch(clientInvoiceProvider(invoiceId));
     final shown = value.value ?? row;
-    final (label, tone) = _status(l10n, shown);
+    final (label, tone) = shown == null
+        ? ('', BadgeTone.neutral)
+        : _status(l10n, shown);
+    final title =
+        projectTitle ??
+        switch (shown?.projectId) {
+          final id? => ref.watch(apiProjectProvider(id)).value?.title,
+          null => null,
+        };
     return RecordDetailsBody(
       key: const Key('invoice-details'),
-      title: '#${shown.id}',
+      title: '#$invoiceId',
       status: label,
       tone: tone,
-      fields: value.hasError
+      fields: value.hasError || shown == null
           ? const []
           : [
-              for (final f in invoiceFields(
-                l10n,
-                shown,
-                currency,
-                projectTitle,
-              ))
+              for (final f in invoiceFields(l10n, shown, currency, title))
                 f.field,
             ],
-      footer: switch (value) {
-        AsyncError(:final error) => ApiErrorCard(
-          error: error,
-          onRetry: () => ref.invalidate(clientInvoiceProvider(row.id)),
+      footer: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          switch (value) {
+            AsyncError(:final error) => ApiErrorCard(
+              error: error,
+              onRetry: () => ref.invalidate(clientInvoiceProvider(invoiceId)),
+            ),
+            AsyncData() => const SizedBox.shrink(),
+            _ => const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: LinearProgressIndicator(
+                key: Key('invoice-details-loading'),
+              ),
+            ),
+          },
+          // An invoice the client may not read has no payments to show.
+          if (!value.hasError) InvoicePaymentsSection(invoiceId: invoiceId),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Payments for this invoice": `GET /client/payments?invoice_id=` one page
+/// at a time with "Load more". Rows show only documented list fields
+/// (amount, date, method); the amount carries a currency only when the
+/// answer's `totals` name exactly one, as on the payments list.
+class InvoicePaymentsSection extends ConsumerStatefulWidget {
+  const new({required this.invoiceId, super.key});
+
+  final int invoiceId;
+
+  @override
+  ConsumerState<InvoicePaymentsSection> createState() =>
+      _InvoicePaymentsSectionState();
+}
+
+class _InvoicePaymentsSectionState
+    extends ConsumerState<InvoicePaymentsSection> {
+  int _pages = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final rows = <Widget>[];
+    var more = false;
+    for (var page = 1; page <= _pages; page++) {
+      final q = (invoiceId: widget.invoiceId, page: page);
+      switch (ref.watch(clientInvoicePaymentsProvider(q))) {
+        case AsyncData(:final value):
+          for (final p in value.page.items) {
+            rows.add(
+              _InvoicePaymentRow(payment: p, currency: value.onlyCurrency),
+            );
+          }
+          if (page == 1 && value.page.items.isEmpty) {
+            rows.add(
+              EmptyNotice(
+                key: const Key('invoice-payments-empty'),
+                text: l10n.invoicePaymentsEmpty,
+              ),
+            );
+          }
+          more = page == _pages && value.page.hasMore;
+        case AsyncError(:final error):
+          rows.add(
+            ApiErrorCard(
+              error: error,
+              onRetry: () => ref.invalidate(clientInvoicePaymentsProvider(q)),
+            ),
+          );
+        default:
+          rows.add(
+            const Padding(
+              key: Key('invoice-payments-loading'),
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          );
+      }
+    }
+    return Column(
+      key: const Key('invoice-payments'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          l10n.invoicePaymentsTitle,
+          style: AppTextStyles.mobileLgSemiBold.copyWith(
+            color: AppColors.textPrimary,
+          ),
         ),
-        AsyncData() => null,
-        _ => const Padding(
-          padding: EdgeInsets.only(top: 8),
-          child: LinearProgressIndicator(key: Key('invoice-details-loading')),
-        ),
-      },
+        const SizedBox(height: 8),
+        ...rows,
+        if (more)
+          TextButton(
+            key: const Key('invoice-payments-more'),
+            onPressed: () => setState(() => _pages++),
+            child: Text(l10n.loadMore),
+          ),
+      ],
+    );
+  }
+}
+
+class _InvoicePaymentRow extends StatelessWidget {
+  const new({required this.payment, required this.currency});
+
+  final PaymentRecord payment;
+  final PaymentTotal? currency;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = payment;
+    final when = DateFormat('yyyy-MM-dd', 'en').format(p.date);
+    final secondary = AppTextStyles.mobileBaseRegular.copyWith(
+      color: AppColors.textSecondary,
+    );
+    return Padding(
+      key: Key('invoice-payment-${p.id}'),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('#${p.id} · $when', style: secondary),
+                if (p.method != null) Text(p.method!, style: secondary),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            money(
+              p.amount,
+              currency: currency?.code ?? '',
+              symbol: currency?.symbol ?? '',
+            ),
+            style: AppTextStyles.mobileBaseSemiBold.copyWith(
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -279,6 +279,9 @@ const PaymentQuery defaultPaymentQuery = (
   page: 1,
 );
 
+/// One page of the payments recorded against an invoice.
+typedef InvoicePaymentsQuery = ({int invoiceId, int page});
+
 /// A project the invoice filter can offer: `id` and `title` of
 /// `GET /client/projects`.
 typedef ProjectOption = ({int id, String title});
@@ -324,12 +327,18 @@ class ClientFinanceRepository {
     ApiEnvelope.unwrapObject(await _client.get('/api/v1/client/invoices/$id')),
   );
 
-  Future<PaymentList> payments(PaymentQuery q) async {
+  Future<PaymentList> payments(PaymentQuery q) =>
+      _payments({'page': q.page, ..._paymentFilters(q)});
+
+  /// The payments recorded against one invoice: `GET /client/payments`
+  /// with its documented `invoice_id` filter ("only this invoice"). Rows,
+  /// `stats` and `totals` are those of the list; read-only.
+  Future<PaymentList> invoicePayments(InvoicePaymentsQuery q) =>
+      _payments({'page': q.page, 'invoice_id': q.invoiceId});
+
+  Future<PaymentList> _payments(Json query) async {
     final body = ApiEnvelope.unwrapBody(
-      await _client.get(
-        '/api/v1/client/payments',
-        query: {'page': q.page, ..._paymentFilters(q)},
-      ),
+      await _client.get('/api/v1/client/payments', query: query),
     );
     final data = body['data'];
     if (data is! Json) missingField('data');
@@ -441,6 +450,13 @@ final FutureProviderFamily<PaymentList, PaymentQuery> clientPaymentsProvider =
     FutureProvider.autoDispose.family<PaymentList, PaymentQuery>((ref, q) {
       _scope(ref);
       return ref.watch(clientFinanceRepositoryProvider).payments(q);
+    });
+
+final FutureProviderFamily<PaymentList, InvoicePaymentsQuery>
+clientInvoicePaymentsProvider = FutureProvider.autoDispose
+    .family<PaymentList, InvoicePaymentsQuery>((ref, q) {
+      _scope(ref);
+      return ref.watch(clientFinanceRepositoryProvider).invoicePayments(q);
     });
 
 final FutureProviderFamily<ApiPage<ProjectOption>, ProjectSearch>

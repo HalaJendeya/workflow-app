@@ -121,14 +121,16 @@ Map<String, dynamic> _paymentList(
   List<Object> rows, {
   List<Object>? totals,
   Map<String, dynamic>? stats,
+  int page = 1,
+  int last = 1,
 }) => {
   'success': true,
   'message': 'Payments list',
   'data': {
-    'current_page': 1,
+    'current_page': page,
     'per_page': 15,
-    'total': rows.length,
-    'last_page': 1,
+    'total': last == 1 ? rows.length : 15 * (last - 1) + rows.length,
+    'last_page': last,
     'data': rows,
   },
   'stats':
@@ -197,6 +199,9 @@ class _Server implements HttpClientAdapter {
 
   /// Replaces the normal answer for a path.
   final Map<String, Object> overrides = {};
+
+  /// Status for `GET /client/payments?invoice_id=` (null = answer).
+  int? failInvoicePayments;
 
   /// Holds the invoice list for one `project_id` open.
   final Map<int, Completer<void>> projectGates = {};
@@ -284,6 +289,25 @@ class _Server implements HttpClientAdapter {
           200,
           ok({..._invoice(12, status: 'paid'), 'amount': '1000.00'}),
         );
+      case '/api/v1/client/payments'
+          when o.queryParameters.containsKey('invoice_id'):
+        // Documented `invoice_id` filter: invoice 12 has two pages of
+        // payments in company 3; every other invoice has none.
+        if (failInvoicePayments case final status?) {
+          return (status, failure('Error'));
+        }
+        if (company != '3' || asInt(o.queryParameters['invoice_id']) != 12) {
+          return (200, _paymentList(const []));
+        }
+        final page = int.tryParse('${o.queryParameters['page']}') ?? 1;
+        return (
+          200,
+          _paymentList(
+            page == 1 ? [_payment(31)] : [_payment(35)..['amount'] = '250.00'],
+            page: page,
+            last: 2,
+          ),
+        );
       case '/api/v1/client/payments':
         if (company == '4') return (200, _paymentList([_payment(91)]));
         if (company != '3') return (200, _paymentList(const [], totals: []));
@@ -350,6 +374,7 @@ class _Auth implements AuthRepository {
 Future<(_Server, _Auth)> _pump(
   WidgetTester tester, {
   Size size = const Size(390, 844),
+  Locale locale = const Locale('en'),
 }) async {
   useViewport(tester, size);
   await loadAppFonts();
@@ -382,7 +407,7 @@ Future<(_Server, _Auth)> _pump(
           ),
         ),
       ],
-      child: const WorkFlowApp(locale: Locale('en')),
+      child: WorkFlowApp(locale: locale),
     ),
   );
   await tester.pumpAndSettle();
@@ -905,6 +930,192 @@ void main() {
       await _tap(tester, find.byKey(const Key('api-retry')));
       await _reveal(tester, find.byKey(const Key('api-invoice-12')));
       expect(find.byKey(const Key('api-error')), findsNothing);
+    });
+  });
+
+  group('payments of one invoice (invoice_id)', () {
+    late FakeHttpAdapter http;
+    late ClientFinanceRepository repo;
+
+    setUp(() {
+      http = FakeHttpAdapter();
+      repo = ClientFinanceRepository(
+        ApiClient(
+          baseUrl: 'https://api.test',
+          credentials: _Creds(),
+          adapter: http,
+        ),
+      );
+    });
+
+    test('sends only page and the documented invoice_id filter', () async {
+      http.reply(200, _paymentList([_payment(31)]));
+      final list = await repo.invoicePayments((invoiceId: 12, page: 2));
+      final r = http.last;
+      expect(r.method, 'GET');
+      expect(r.uri.path, '/api/v1/client/payments');
+      expect(r.queryParameters, {'page': 2, 'invoice_id': 12});
+      expect(r.headers['X-Company'], '25');
+      expect(list.page.items.single.id, 31);
+      expect(list.onlyCurrency?.code, 'USD');
+    });
+
+    test('incomplete answers are invalid, not empty', () async {
+      http.reply(200, _paymentList([_payment(31)])..remove('stats'));
+      await expectLater(
+        repo.invoicePayments((invoiceId: 12, page: 1)),
+        _kind(ApiFailureKind.invalidResponse),
+      );
+      http.reply(200, _paymentList([_payment(31)..remove('payment_date')]));
+      await expectLater(
+        repo.invoicePayments((invoiceId: 12, page: 1)),
+        _kind(ApiFailureKind.invalidResponse),
+      );
+    });
+
+    testWidgets('invoice details list its payments page by page', (
+      tester,
+    ) async {
+      final (server, _) = await _pump(tester);
+      await _invoicesTab(tester);
+      await _tap(tester, _view('api-invoice-12'));
+      final section = find.byKey(const Key('invoice-payments'));
+      expect(
+        find.descendant(
+          of: section,
+          matching: find.text('Payments for this invoice'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('invoice-payment-31')), findsOneWidget);
+      expect(
+        find.descendant(of: section, matching: find.text(r'$300')),
+        findsOneWidget,
+      );
+      final first = server.last('/api/v1/client/payments');
+      expect(first.queryParameters, {'page': 1, 'invoice_id': 12});
+      expect(first.headers['X-Company'], '3');
+
+      final more = find.byKey(const Key('invoice-payments-more'));
+      await tester.ensureVisible(more);
+      await tester.pumpAndSettle();
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      expect(server.last('/api/v1/client/payments').queryParameters, {
+        'page': 2,
+        'invoice_id': 12,
+      });
+      // Both pages stay; the last page offers no more.
+      expect(find.byKey(const Key('invoice-payment-31')), findsOneWidget);
+      expect(find.byKey(const Key('invoice-payment-35')), findsOneWidget);
+      expect(more, findsNothing);
+    });
+
+    testWidgets('an invoice without payments says so', (tester) async {
+      final (server, _) = await _pump(tester);
+      server.overrides['/api/v1/client/invoices/13'] = ok(
+        _invoice(13, project: 8),
+      );
+      await _invoicesTab(tester);
+      await _tap(tester, _view('api-invoice-13'));
+      expect(find.byKey(const Key('invoice-payments-empty')), findsOneWidget);
+      expect(
+        find.text('No payments recorded for this invoice yet.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a failed payments read shows Retry, which recovers', (
+      tester,
+    ) async {
+      final (server, _) = await _pump(tester, size: const Size(320, 640));
+      server.failInvoicePayments = 500;
+      await _invoicesTab(tester);
+      await _tap(tester, _view('api-invoice-12'));
+      final sheet = find.byKey(const Key('invoice-details'));
+      // The invoice itself still shows; only the payments section failed.
+      expect(
+        find.descendant(of: sheet, matching: find.text('Remaining')),
+        findsOneWidget,
+      );
+      final retry = find.descendant(
+        of: find.byKey(const Key('invoice-payments')),
+        matching: find.byKey(const Key('api-retry')),
+      );
+      server.failInvoicePayments = null;
+      await tester.ensureVisible(retry);
+      await tester.pumpAndSettle();
+      await tester.tap(retry);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('invoice-payment-31')), findsOneWidget);
+    });
+
+    testWidgets('an unreadable invoice asks for no payments', (tester) async {
+      final (server, _) = await _pump(tester);
+      server.fail['/api/v1/client/invoices/12'] = 403;
+      await _invoicesTab(tester);
+      await _tap(tester, _view('api-invoice-12'));
+      expect(find.byKey(const Key('api-error')), findsOneWidget);
+      expect(find.byKey(const Key('invoice-payments')), findsNothing);
+    });
+
+    testWidgets('a payment opens the invoice it was recorded against', (
+      tester,
+    ) async {
+      final (server, _) = await _pump(tester);
+      await _payments(tester);
+      await _tap(tester, _view('api-payment-31'));
+      await tester.tap(find.byKey(const Key('payment-view-invoice')));
+      await tester.pumpAndSettle();
+      final sheet = find.byKey(const Key('invoice-details'));
+      expect(find.descendant(of: sheet, matching: find.text('#12')), findsOne);
+      expect(
+        server.last('/api/v1/client/invoices/12').headers['X-Company'],
+        '3',
+      );
+      // The server's record: paid in full, project name looked up.
+      expect(
+        find.descendant(of: sheet, matching: find.text('Paid')),
+        findsWidgets,
+      );
+      expect(
+        find.descendant(
+          of: sheet,
+          matching: find.text('Customer Portal Revamp'),
+        ),
+        findsOneWidget,
+      );
+      // Still no undocumented payment-details request.
+      expect(
+        server.requests.where(
+          (r) => r.uri.path.startsWith('/api/v1/client/payments/'),
+        ),
+        isEmpty,
+      );
+    });
+
+    testWidgets('Arabic, RTL and large text: no overflow', (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await _pump(
+        tester,
+        size: const Size(320, 640),
+        locale: const Locale('ar'),
+      );
+      await tester.tap(find.text('الفواتير').last);
+      await tester.pumpAndSettle();
+      await _tap(
+        tester,
+        find.descendant(
+          of: find.byKey(const Key('api-invoice-12')),
+          matching: find.text('عرض التفاصيل'),
+        ),
+      );
+      final section = find.byKey(const Key('invoice-payments'));
+      expect(section, findsOneWidget);
+      expect(Directionality.of(tester.element(section)), TextDirection.rtl);
+      expect(find.text('الدفعات على هذه الفاتورة'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
   });
 

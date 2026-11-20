@@ -1363,5 +1363,8 @@
   "companySwitchRefused": "Your account can't work in {name} yet.",
   "@companySwitchRefused": {"placeholders":{"name":{"type":"String"}}},
   "companySwitchFailed": "Couldn't switch company. {reason}",
-  "@companySwitchFailed": {"placeholders":{"reason":{"type":"String"}}}
+  "@companySwitchFailed": {"placeholders":{"reason":{"type":"String"}}},
+  "invoicePaymentsTitle": "Payments for this invoice",
+  "invoicePaymentsEmpty": "No payments recorded for this invoice yet.",
+  "viewInvoice": "View invoice"
 }
