@@ -151,9 +151,17 @@ void main() {
     expect(find.textContaining(':00 AM'), findsNothing);
     // The description stays whole and full width.
     expect(find.textContaining('split the stories'), findsOneWidget);
-    // Enabled features only, as badges; nothing that looks tappable.
-    expect(find.text('Chat'), findsOneWidget);
-    expect(find.text('File sharing'), findsNothing);
+    // Enabled features only, as badges; nothing that looks tappable. (The
+    // Meeting records card below has its own "Chat" chip since F03.)
+    final facts = find.byKey(const Key('meeting-facts'));
+    expect(
+      find.descendant(of: facts, matching: find.text('Chat')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: facts, matching: find.text('File sharing')),
+      findsNothing,
+    );
     await _scrollThrough(tester);
   });
 

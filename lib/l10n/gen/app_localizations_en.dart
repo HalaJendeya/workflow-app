@@ -2702,4 +2702,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String reportRangeTooLong(int days) {
     return 'Choose a range of up to $days days.';
   }
+
+  @override
+  String get meetingToolsReadOnlyApp => 'View only in the app.';
 }

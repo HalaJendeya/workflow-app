@@ -797,5 +797,6 @@
   "viewInvoice": "عرض الفاتورة",
   "reportChooseDates": "اختر التواريخ",
   "reportRangeHelp": "فترة التقرير",
-  "reportRangeTooLong": "اختر فترة لا تزيد عن {days} يومًا."
+  "reportRangeTooLong": "اختر فترة لا تزيد عن {days} يومًا.",
+  "meetingToolsReadOnlyApp": "للعرض فقط في التطبيق."
 }

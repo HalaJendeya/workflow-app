@@ -359,7 +359,7 @@ void main() {
     });
   });
 
-  group('meeting details entry (client only)', () {
+  group('meeting details entry (client; employee: F03 test)', () {
     testWidgets('client: Meeting records lists every tool', (tester) async {
       await pump(tester, const ApiMeetingDetailsScreen(id: 41));
       expect(find.byKey(const Key('meeting-records')), findsOneWidget);
@@ -379,21 +379,6 @@ void main() {
       );
       expect(find.byKey(const Key('meeting-records-chat')), findsNothing);
       expect(find.byKey(const Key('meeting-records-notes')), findsOneWidget);
-    });
-
-    testWidgets('employee details are unchanged (no records card)', (
-      tester,
-    ) async {
-      await pump(
-        tester,
-        const ApiMeetingDetailsScreen(id: 41),
-        portal: Portal.employee,
-      );
-      expect(find.byKey(const Key('meeting-records')), findsNothing);
-      expect(
-        http.requests.where((r) => r.uri.path.contains('/notes')),
-        isEmpty,
-      );
     });
   });
 
@@ -671,7 +656,7 @@ void main() {
     });
   });
 
-  group('live room (client tabs)', () {
+  group('live room (client tabs; employee: F03 test)', () {
     List<Override> room(FakeMediaEngine engine) => [
       mediaEngineProvider.overrideWithValue(engine),
       meetingMediaApiProvider.overrideWithValue(_MediaApi()),
@@ -701,17 +686,6 @@ void main() {
         ),
         isEmpty,
       );
-    });
-
-    testWidgets('employee room is unchanged (no tool tabs)', (tester) async {
-      await pump(
-        tester,
-        const ApiMeetingRoomScreen(meetingId: 41, title: 'Sprint Planning'),
-        portal: Portal.employee,
-        extra: room(FakeMediaEngine()),
-        fakeEngine: true,
-      );
-      expect(find.byKey(const Key('meeting-tool-tabs')), findsNothing);
     });
   });
 }

@@ -1370,5 +1370,6 @@
   "reportChooseDates": "Choose dates",
   "reportRangeHelp": "Report period",
   "reportRangeTooLong": "Choose a range of up to {days} days.",
-  "@reportRangeTooLong": {"placeholders":{"days":{"type":"int"}}}
+  "@reportRangeTooLong": {"placeholders":{"days":{"type":"int"}}},
+  "meetingToolsReadOnlyApp": "View only in the app."
 }

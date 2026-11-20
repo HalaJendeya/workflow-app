@@ -8,22 +8,27 @@ import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/auth/application/session_scope.dart';
+import 'package:workflow_app/features/auth/domain/session.dart' show Portal;
 import 'package:workflow_app/features/conversations/data/chat_attachments.dart';
 import 'package:workflow_app/features/conversations/data/file_picker_attachments.dart';
 import 'package:workflow_app/features/conversations/presentation/chat_attachment_widgets.dart';
 import 'package:workflow_app/features/meetings/data/meeting_collaboration_repository.dart';
 import 'package:workflow_app/features/meetings/data/meetings_repository.dart'
-    show apiMeetingProvider;
+    show apiMeetingProvider, meetingsRepositoryProvider;
 import 'package:workflow_app/features/meetings/presentation/meeting_room_screen.dart'
     show RoomColors;
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 /// The meeting tools of the in-call frames (chat 670:2505, polls 671:3024,
-/// notes 672:5044 — "Meeting Tool Navigation Tabs"). A client sends chat
-/// messages (with one file when the meeting allows file sharing) and votes
-/// in polls; notes, decisions and action items are view only (their writes
-/// need `meetings.update`, which clients lack). Decisions and action items
-/// have no frame; they reuse the notes panel's layout.
+/// notes 672:5044 — "Meeting Tool Navigation Tabs"; the employee copies
+/// are 729:22436 and 729:22662). A participant — client or employee — sends
+/// chat messages (with one file when the meeting allows file sharing) and
+/// votes in polls (`meetings.view` for both roles). Notes, decisions and
+/// action items are view only: their writes need `meetings.update`, which
+/// clients lack, and for employees they are the host's tools (the polls
+/// frame's "Create a poll" is the host view), which the app does not offer.
+/// Decisions and action items have no frame; they reuse the notes panel's
+/// layout.
 enum MeetingTool { chat, polls, notes, decisions, actionItems }
 
 String meetingToolLabel(AppLocalizations l10n, MeetingTool t) => switch (t) {
@@ -353,20 +358,27 @@ class _PanelCard extends StatelessWidget {
   }
 }
 
-/// "View only" line under the panels a client cannot change (notes,
-/// decisions, action items: their writes answer 403 for clients).
-class _ReadOnlyFooter extends StatelessWidget {
+/// "View only" line under the panels the app does not change (notes,
+/// decisions, action items). A client's writes answer 403, so it is told the
+/// meeting's team manages them; an employee is on that team, so it is only
+/// told the app shows them read-only.
+class _ReadOnlyFooter extends ConsumerWidget {
   const new();
 
   @override
-  Widget build(BuildContext context) => Padding(
-    key: const Key('meeting-tool-read-only'),
-    padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-    child: Text(
-      AppLocalizations.of(context).meetingToolsReadOnly,
-      style: _t(11, RoomColors.sub),
-    ),
-  );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final employee =
+        ref.watch(meetingsRepositoryProvider).portal == Portal.employee;
+    return Padding(
+      key: const Key('meeting-tool-read-only'),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      child: Text(
+        employee ? l10n.meetingToolsReadOnlyApp : l10n.meetingToolsReadOnly,
+        style: _t(11, RoomColors.sub),
+      ),
+    );
+  }
 }
 
 /// One record on a panel: title, optional body and badges.

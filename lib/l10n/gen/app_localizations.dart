@@ -4885,6 +4885,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose a range of up to {days} days.'**
   String reportRangeTooLong(int days);
+
+  /// No description provided for @meetingToolsReadOnlyApp.
+  ///
+  /// In en, this message translates to:
+  /// **'View only in the app.'**
+  String get meetingToolsReadOnlyApp;
 }
 
 class _AppLocalizationsDelegate

@@ -721,13 +721,14 @@ class ApiMeetingDetailsScreen extends ConsumerWidget {
                 m.status == ApiMeetingStatus.live)
           _JoinCard(meetingId: id, title: m.title),
         if (isEmployee && meeting.hasValue) _MyJoinRequestCard(meetingId: id),
-        if (!isEmployee)
-          if (meeting.value case final m?)
-            _MeetingRecordsCard(
-              meetingId: id,
-              title: m.title,
-              allowChat: m.allowChat,
-            ),
+        // F03: clients and employees read the same records through their
+        // own role prefix (`meetings.view` for both).
+        if (meeting.value case final m?)
+          _MeetingRecordsCard(
+            meetingId: id,
+            title: m.title,
+            allowChat: m.allowChat,
+          ),
         _ParticipantsCard(meetingId: id),
         if (isEmployee) _InvitationsCard(meetingId: id),
       ],
@@ -972,9 +973,9 @@ class _MyJoinRequestCardState extends ConsumerState<_MyJoinRequestCard> {
   }
 }
 
-/// Client: the meeting's chat, polls, notes, decisions and action items,
-/// read-only, also after the meeting has ended. Each opens the meeting
-/// tools on that tab; Back returns here.
+/// The meeting's chat, polls, notes, decisions and action items for a
+/// client or an employee, also after the meeting has ended. Each opens the
+/// meeting tools on that tab; Back returns here.
 class _MeetingRecordsCard extends StatelessWidget {
   const new({
     required this.meetingId,

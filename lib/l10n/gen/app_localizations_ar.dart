@@ -2699,4 +2699,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String reportRangeTooLong(int days) {
     return 'اختر فترة لا تزيد عن $days يومًا.';
   }
+
+  @override
+  String get meetingToolsReadOnlyApp => 'للعرض فقط في التطبيق.';
 }

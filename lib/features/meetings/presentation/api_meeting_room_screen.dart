@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
-import 'package:workflow_app/features/auth/domain/session.dart';
 import 'package:workflow_app/features/meetings/application/meeting_media_controller.dart';
 import 'package:workflow_app/features/meetings/data/meetings_repository.dart';
 import 'package:workflow_app/features/meetings/presentation/meeting_room_screen.dart'
@@ -64,18 +63,13 @@ class _ApiMeetingRoomScreenState extends ConsumerState<ApiMeetingRoomScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final s = ref.watch(meetingMediaProvider(widget.meetingId));
-    final isClient =
-        ref.watch(meetingsRepositoryProvider).portal == Portal.client;
-    final tools = isClient
-        ? meetingToolsFor(
-            allowChat:
-                ref
-                    .watch(apiMeetingProvider(widget.meetingId))
-                    .value
-                    ?.allowChat ??
-                false,
-          )
-        : const <MeetingTool>[];
+    // F03: the same tools for clients and employees; each reaches them
+    // through its own role prefix.
+    final tools = meetingToolsFor(
+      allowChat:
+          ref.watch(apiMeetingProvider(widget.meetingId)).value?.allowChat ??
+          false,
+    );
     final status = switch (s.phase) {
       MediaPhase.connected => (l10n.meetingLive.toUpperCase(), RoomColors.live),
       MediaPhase.reconnecting => (l10n.meetingReconnecting, RoomColors.host),
