@@ -1886,7 +1886,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'This account isn\'t an employee account. Go back and choose Client.';
 
   @override
-  String get myCompaniesNote => 'Companies linked to your account.';
+  String get myCompaniesNote =>
+      'Companies linked to your account. Choose the one you work in.';
 
   @override
   String get noCompaniesYet => 'Your account isn\'t linked to any company yet.';
@@ -2647,5 +2648,37 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String pollVoteFailed(String reason) {
     return 'Vote not recorded. $reason';
+  }
+
+  @override
+  String get companyActive => 'Active';
+
+  @override
+  String get companyUse => 'Use this company';
+
+  @override
+  String get companySwitchTitle => 'Switch company?';
+
+  @override
+  String companySwitchBody(String name) {
+    return 'Projects, meetings, chats and invoices will show $name\'s data.';
+  }
+
+  @override
+  String get companySwitchConfirm => 'Switch';
+
+  @override
+  String companySwitched(String name) {
+    return 'Now working in $name.';
+  }
+
+  @override
+  String companySwitchRefused(String name) {
+    return 'Your account can\'t work in $name yet.';
+  }
+
+  @override
+  String companySwitchFailed(String reason) {
+    return 'Couldn\'t switch company. $reason';
   }
 }

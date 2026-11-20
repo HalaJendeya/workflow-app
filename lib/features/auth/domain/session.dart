@@ -51,6 +51,16 @@ class Session {
   final int? companyId;
   final Portal portal;
 
+  /// The same sign-in working in [company]: the `X-Company` the app sends
+  /// from now on (collection §4: a company the account may use).
+  Session withCompany(int company) => Session(
+    token: token,
+    tokenType: tokenType,
+    userId: userId,
+    portal: portal,
+    companyId: company,
+  );
+
   Map<String, String> toStorage() => {
     'token': token,
     'token_type': tokenType,

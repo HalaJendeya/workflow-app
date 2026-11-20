@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/network/api_exception.dart';
+import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
+import 'package:workflow_app/features/auth/application/session_controller.dart';
 import 'package:workflow_app/features/companies/data/client_companies_repository.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
@@ -129,25 +132,29 @@ class _CompaniesScreenState extends ConsumerState<CompaniesScreen> {
               AsyncSection(
                 value: ref.watch(clientCompaniesProvider),
                 onRetry: () => ref.invalidate(clientCompaniesProvider),
-                builder: (companies) => companies.isEmpty
-                    ? EmptyNotice(
-                        key: const Key('no-companies'),
-                        text: l10n.noCompaniesYet,
-                      )
-                    : _grid(
-                        l10n,
-                        [
-                          for (final c in companies)
-                            CompanyCardData(
-                              id: 'api-${c.id}',
-                              name: c.name,
-                              domain: c.subtitle ?? '',
-                              icon: 'company_building',
-                              tint: _info50,
-                            ),
-                        ].where(matches).toList(),
-                        actions: false,
-                      ),
+                builder: (companies) {
+                  if (companies.isEmpty) {
+                    return EmptyNotice(
+                      key: const Key('no-companies'),
+                      text: l10n.noCompaniesYet,
+                    );
+                  }
+                  final byCard = {for (final c in companies) 'api-${c.id}': c};
+                  return _grid(
+                    l10n,
+                    [
+                      for (final c in companies)
+                        CompanyCardData(
+                          id: 'api-${c.id}',
+                          name: c.name,
+                          domain: c.subtitle ?? '',
+                          icon: 'company_building',
+                          tint: _info50,
+                        ),
+                    ].where(matches).toList(),
+                    footer: (card) => _SwitchAction(company: byCard[card.id]!),
+                  );
+                },
               ),
             ],
     );
@@ -156,7 +163,7 @@ class _CompaniesScreenState extends ConsumerState<CompaniesScreen> {
   Widget _grid(
     AppLocalizations l10n,
     List<CompanyCardData> items, {
-    bool actions = true,
+    Widget Function(CompanyCardData)? footer,
   }) {
     if (items.isEmpty) return EmptyNotice(text: l10n.noRecords);
     return LayoutBuilder(
@@ -169,7 +176,7 @@ class _CompaniesScreenState extends ConsumerState<CompaniesScreen> {
             for (final company in items)
               SizedBox(
                 width: w,
-                child: _CompanyCard(company, actions: actions),
+                child: _CompanyCard(company, footer: footer?.call(company)),
               ),
           ],
         );
@@ -179,13 +186,14 @@ class _CompaniesScreenState extends ConsumerState<CompaniesScreen> {
 }
 
 class _CompanyCard extends ConsumerWidget {
-  const new(this.company, {this.actions = true});
+  const new(this.company, {this.footer});
 
   final CompanyCardData company;
 
-  /// Join / pending area. Off for API rows: the route offers no status
-  /// and there is nothing they could join.
-  final bool actions;
+  /// The action area of an API row (the company switch). Without it the
+  /// card shows the demo Join / pending area: API rows have no join
+  /// status and nothing they could join.
+  final Widget? footer;
 
   static const _jakarta = 'PlusJakartaSans';
 
@@ -254,9 +262,9 @@ class _CompanyCard extends ConsumerWidget {
               color: ModuleColors.muted,
             ),
           ),
-          if (actions) const SizedBox(height: 16),
-          if (!actions)
-            const SizedBox.shrink()
+          const SizedBox(height: 16),
+          if (footer case final f?)
+            f
           else if (pending)
             Container(
               width: double.infinity,
@@ -347,6 +355,189 @@ class _CompanyCard extends ConsumerWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// The pill of the card's action area (Figma: "pandding").
+class _CardPill extends StatelessWidget {
+  const new({
+    required this.label,
+    required this.background,
+    required this.foreground,
+    super.key,
+  });
+
+  final String label;
+  final Color background;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+    decoration: BoxDecoration(
+      color: background,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(color: foreground, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Flexible(
+          child: FitText(
+            label,
+            minScale: 0.6,
+            style: TextStyle(
+              fontFamily: _CompanyCard._jakarta,
+              fontSize: 12,
+              height: 16 / 12,
+              fontWeight: FontWeight.w600,
+              color: foreground,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// The card's filled button (Figma: "Join Request"); a spinner while
+/// [busy], off when [onTap] is null.
+class _CardButton extends StatelessWidget {
+  const new({
+    required this.label,
+    required this.onTap,
+    required this.buttonKey,
+    this.busy = false,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final Key buttonKey;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: double.infinity,
+    child: Material(
+      color: onTap == null && !busy
+          ? AppColors.primaryStrong.withValues(alpha: 0.5)
+          : AppColors.primaryStrong,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        key: buttonKey,
+        borderRadius: BorderRadius.circular(12),
+        onTap: busy ? null : onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: busy
+              ? const Center(
+                  child: SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.white,
+                    ),
+                  ),
+                )
+              // Wraps rather than cuts the label on narrow cards.
+              : Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: _CompanyCard._jakarta,
+                    fontSize: 12,
+                    height: 16 / 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.white,
+                  ),
+                ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// The company the client works in (`X-Company`, collection §4): "Active"
+/// on that card, "Use this company" on the others. Switching asks first,
+/// then checks the company with the server; a refusal changes nothing.
+/// One switch at a time.
+class _SwitchAction extends ConsumerWidget {
+  const new({required this.company});
+
+  final ClientCompany company;
+
+  Future<void> _switch(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.companySwitchTitle),
+        content: Text(l10n.companySwitchBody(company.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            key: const Key('company-switch-confirm'),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.companySwitchConfirm),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      final switched = await ref
+          .read(companySwitchProvider.notifier)
+          .switchTo(company.id);
+      if (switched && context.mounted) {
+        showSnack(context, l10n.companySwitched(company.name));
+      }
+    } on ApiException catch (e) {
+      if (!context.mounted) return;
+      showSnack(
+        context,
+        e.kind == ApiFailureKind.forbidden
+            ? l10n.companySwitchRefused(company.name)
+            : l10n.companySwitchFailed(localizedError(l10n, e)),
+      );
+    } on Object catch (e) {
+      if (context.mounted) {
+        showSnack(context, l10n.companySwitchFailed(localizedError(l10n, e)));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final active = ref.watch(
+      sessionControllerProvider.select((s) => s.value?.companyId),
+    );
+    final switching = ref.watch(companySwitchProvider);
+    if (active == company.id) {
+      return _CardPill(
+        key: Key('company-active-${company.id}'),
+        label: l10n.companyActive,
+        background: _success50,
+        foreground: ModuleColors.successFg,
+      );
+    }
+    return _CardButton(
+      buttonKey: Key('company-use-${company.id}'),
+      label: l10n.companyUse,
+      busy: switching == company.id,
+      onTap: switching == null ? () => _switch(context, ref) : null,
     );
   }
 }

@@ -1880,7 +1880,8 @@ class AppLocalizationsAr extends AppLocalizations {
       'هذا الحساب ليس حساب موظف. ارجع واختر عميل.';
 
   @override
-  String get myCompaniesNote => 'الشركات المرتبطة بحسابك.';
+  String get myCompaniesNote =>
+      'الشركات المرتبطة بحسابك. اختر الشركة التي تعمل فيها.';
 
   @override
   String get noCompaniesYet => 'حسابك غير مرتبط بأي شركة بعد.';
@@ -2645,5 +2646,37 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String pollVoteFailed(String reason) {
     return 'لم يُسجَّل صوتك. $reason';
+  }
+
+  @override
+  String get companyActive => 'نشطة';
+
+  @override
+  String get companyUse => 'استخدام هذه الشركة';
+
+  @override
+  String get companySwitchTitle => 'تبديل الشركة؟';
+
+  @override
+  String companySwitchBody(String name) {
+    return 'ستعرض المشاريع والاجتماعات والمحادثات والفواتير بيانات $name.';
+  }
+
+  @override
+  String get companySwitchConfirm => 'تبديل';
+
+  @override
+  String companySwitched(String name) {
+    return 'تعمل الآن في $name.';
+  }
+
+  @override
+  String companySwitchRefused(String name) {
+    return 'لا يمكن لحسابك العمل في $name بعد.';
+  }
+
+  @override
+  String companySwitchFailed(String reason) {
+    return 'تعذّر تبديل الشركة. $reason';
   }
 }

@@ -46,7 +46,12 @@ final clientDashboardRepositoryProvider = Provider<ClientDashboardRepository>(
 
 final FutureProvider<ClientDashboardSummary> clientDashboardSummaryProvider =
     FutureProvider.autoDispose((ref) {
-      // Keyed to the signed-in user: another account never sees these.
-      ref.watch(sessionControllerProvider.select((s) => s.value?.userId));
+      // Keyed to the account and its company: another account or company
+      // never sees these.
+      ref.watch(
+        sessionControllerProvider.select(
+          (s) => (s.value?.userId, s.value?.companyId),
+        ),
+      );
       return ref.watch(clientDashboardRepositoryProvider).summary();
     });

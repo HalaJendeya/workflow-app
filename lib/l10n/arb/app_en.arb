@@ -1012,7 +1012,7 @@
   "fieldRate": "Rate",
   "wrongPortalClient": "This account isn't a client account. Go back and choose Employee.",
   "wrongPortalEmployee": "This account isn't an employee account. Go back and choose Client.",
-  "myCompaniesNote": "Companies linked to your account.",
+  "myCompaniesNote": "Companies linked to your account. Choose the one you work in.",
   "noCompaniesYet": "Your account isn't linked to any company yet.",
   "runningLabel": "Running",
   "viewAllLabel": "View All",
@@ -1351,5 +1351,17 @@
   "pollVoteRecorded": "{count, plural, =1{Vote recorded · 1 vote in total} other{Vote recorded · {count} votes in total}}",
   "@pollVoteRecorded": {"placeholders":{"count":{"type":"int"}}},
   "pollVoteFailed": "Vote not recorded. {reason}",
-  "@pollVoteFailed": {"placeholders":{"reason":{"type":"String"}}}
+  "@pollVoteFailed": {"placeholders":{"reason":{"type":"String"}}},
+  "companyActive": "Active",
+  "companyUse": "Use this company",
+  "companySwitchTitle": "Switch company?",
+  "companySwitchBody": "Projects, meetings, chats and invoices will show {name}'s data.",
+  "@companySwitchBody": {"placeholders":{"name":{"type":"String"}}},
+  "companySwitchConfirm": "Switch",
+  "companySwitched": "Now working in {name}.",
+  "@companySwitched": {"placeholders":{"name":{"type":"String"}}},
+  "companySwitchRefused": "Your account can't work in {name} yet.",
+  "@companySwitchRefused": {"placeholders":{"name":{"type":"String"}}},
+  "companySwitchFailed": "Couldn't switch company. {reason}",
+  "@companySwitchFailed": {"placeholders":{"reason":{"type":"String"}}}
 }

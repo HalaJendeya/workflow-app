@@ -47,7 +47,8 @@ class _Session extends SessionController {
     portal: Portal.client,
   );
 
-  void switchCompany(int id) => state = AsyncData(
+  @override
+  Future<void> switchCompany(int id) async => state = AsyncData(
     Session(
       token: 't',
       tokenType: 'Bearer',
@@ -334,9 +335,8 @@ void main() {
         expect(c.read(meetingJoinProvider(41)).outcome, isA<JoinRequested>());
         again.close();
         // …but another company is another context.
-        (c.read(sessionControllerProvider.notifier) as _Session).switchCompany(
-          4,
-        );
+        await (c.read(sessionControllerProvider.notifier) as _Session)
+            .switchCompany(4);
         await pumpEventQueue();
         expect(c.read(meetingJoinProvider(41)).outcome, isNull);
       },

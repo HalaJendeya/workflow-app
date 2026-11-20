@@ -42,6 +42,26 @@ class SessionController extends AsyncNotifier<Session?> {
     state = AsyncData(session);
   }
 
+  /// Works in [companyId] from now on (`X-Company`, collection §4). The
+  /// caller checks first that the server accepts the company. Every data
+  /// provider is keyed to (account, company), so all of it reloads and
+  /// nothing from the previous company is shown. Kept on the device only
+  /// when the session is ("Remember me").
+  Future<void> switchCompany(int companyId) async {
+    final current = state.value;
+    if (current == null || current.companyId == companyId) return;
+    final next = current.withCompany(companyId);
+    final credentials = ref.read(sessionCredentialsProvider)..session = next;
+    state = AsyncData(next);
+    final storage = ref.read(sessionStorageProvider);
+    final remembered = (await storage.readAll()).isNotEmpty;
+    // Only while this is still the session: a sign-out in between clears
+    // the credentials first and must not be undone by this write.
+    if (remembered && identical(credentials.session, next)) {
+      await storage.writeAll(next.toStorage());
+    }
+  }
+
   Future<void> logout() async {
     try {
       await ref.read(authRepositoryProvider).logout();

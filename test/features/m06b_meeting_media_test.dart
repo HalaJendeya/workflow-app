@@ -350,7 +350,8 @@ void main() {
       open();
       await media().join();
       final second = engine.rooms.last;
-      (c.read(sessionControllerProvider.notifier) as _Session).switchCompany(4);
+      await (c.read(sessionControllerProvider.notifier) as _Session)
+          .switchCompany(4);
       await pumpEventQueue();
       expect(second.disconnected, isTrue);
       expect(state().phase, MediaPhase.idle);
@@ -368,7 +369,8 @@ class _Session extends SessionController {
     portal: Portal.client,
   );
 
-  void switchCompany(int id) => state = AsyncData(
+  @override
+  Future<void> switchCompany(int id) async => state = AsyncData(
     Session(
       token: 't',
       tokenType: 'Bearer',

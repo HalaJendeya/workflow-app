@@ -3491,7 +3491,7 @@ abstract class AppLocalizations {
   /// No description provided for @myCompaniesNote.
   ///
   /// In en, this message translates to:
-  /// **'Companies linked to your account.'**
+  /// **'Companies linked to your account. Choose the one you work in.'**
   String get myCompaniesNote;
 
   /// No description provided for @noCompaniesYet.
@@ -4801,6 +4801,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Vote not recorded. {reason}'**
   String pollVoteFailed(String reason);
+
+  /// No description provided for @companyActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get companyActive;
+
+  /// No description provided for @companyUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this company'**
+  String get companyUse;
+
+  /// No description provided for @companySwitchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch company?'**
+  String get companySwitchTitle;
+
+  /// No description provided for @companySwitchBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects, meetings, chats and invoices will show {name}\'s data.'**
+  String companySwitchBody(String name);
+
+  /// No description provided for @companySwitchConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch'**
+  String get companySwitchConfirm;
+
+  /// No description provided for @companySwitched.
+  ///
+  /// In en, this message translates to:
+  /// **'Now working in {name}.'**
+  String companySwitched(String name);
+
+  /// No description provided for @companySwitchRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account can\'t work in {name} yet.'**
+  String companySwitchRefused(String name);
+
+  /// No description provided for @companySwitchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t switch company. {reason}'**
+  String companySwitchFailed(String reason);
 }
 
 class _AppLocalizationsDelegate

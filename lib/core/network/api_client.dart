@@ -158,8 +158,13 @@ class _AuthInterceptor extends Interceptor {
       if (token != null && !options.headers.containsKey('Authorization')) {
         options.headers['Authorization'] = 'Bearer $token';
       }
+      // A request that names its own company keeps it (as with
+      // Authorization above): the company switch checks a company before
+      // the session moves to it.
       final companyId = _credentials.companyId;
-      if (companyId != null && _tenantPrefixes.any(path.startsWith)) {
+      if (companyId != null &&
+          !options.headers.containsKey('X-Company') &&
+          _tenantPrefixes.any(path.startsWith)) {
         options.headers['X-Company'] = companyId.toString();
       }
     }
