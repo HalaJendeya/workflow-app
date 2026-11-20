@@ -263,6 +263,42 @@ Connector frame**. No live request of any kind was sent.
 Employee: the report's documented custom range is now built (E27 in
 `docs/employee-remaining-features.md`).
 
+## F03 — Employee meeting collaboration (2026-11-20)
+
+Contract: Postman `WorkFlow`, updatedAt 2026-11-14 (unchanged). Employee
+folder `08 Meetings`: chat (`GET`/`POST …/meetings/{id}/messages`), polls
+(`GET …/polls`, `GET meeting-polls/{id}`, `POST …/vote`), notes, decisions,
+action items (lists and single reads) and `GET meeting-attachments/{id}/download`
+all need **`meetings.view`** — the same participant routes and rules as the
+client's (403 "must be a participant" for a meeting the caller has not
+joined). Figma: the employee room copies 729:22436 (polls) and 729:22662 show
+the same Chat / Polls / Notes / Participants tabs as the client frames.
+**No meeting permission or route distinguishes a project lead from a regular
+employee**; meeting roles (creator, host, co-host) decide host actions.
+Nothing was sent to a live server.
+
+| # | Item | Status | Evidence / app behaviour | Needed to close |
+|---|---|---|---|---|
+| F03-1 | Employee chat history, attachments, polls, notes, decisions, action items | Handled (mocked) | The client C3 screens now serve employees too: meeting details → **Meeting records** (both roles) and the live room's tool tabs. The shared repository already builds `/api/v1/{portal}` paths; no repository or provider was duplicated. Panels read "View only in the app." for employees (the client wording says the meeting's team manages them). | A QA meeting the employee has joined (live read). |
+| F03-2 | Employee send (text or one `file`) and poll vote | Handled (mocked) | Same C4 send bar and vote flow and rules: one request at a time, file checked before upload, 422 field message with Retry, 403 "only participants", 401 ends the session, after-send `after_id` refresh, poll re-read after a vote. Stale answers after an account or company change are dropped (shared C5 scope guard; tested for employees). | Owner-approved live send and vote (C30 applies to both roles). |
+| F03-3 | Create / update / close polls; create / update / delete ⚠️ notes, decisions, action items; approve decision; complete action item; convert to task | **Not offered (host/product)** | Employee routes exist with `meetings.update`; the polls frame's "Create a poll" is the **host** view, and decisions/action items have no write frame (C23). The server's host check for these writes is not documented. | A product decision on which employees (host/co-host) may manage records in the app, and frames for the forms. |
+| F03-4 | Host controls: start, end, cancel ⚠️, admission mode, invitations send/cancel ⚠️, mute/unmute (all), participant role, guests admit/reject/revoke, join requests admit/reject/admit-all, whiteboard edit | **Not offered (host/product)** | `meetings.manage_status` / `meetings.update` plus `canManageMeeting()` (creator, host, co-host — 403 otherwise). Employees cannot create meetings (Permission Boundary), so they are hosts only when an admin makes them one. | Product decision (O4: host-side tools) and a QA meeting with an employee host. |
+
+**Emulator (2026-11-20, Medium_Phone_API_36.1, Android 16, debug API build
+against a local mock server on 127.0.0.1 — not the backend):** employee
+More → Meetings → meeting details show **Meeting records** (Chat, Polls,
+Notes, Decisions, Action items) beside Participants and Invitations; chat
+history, older-page link and `agenda.txt` preview with Save; a double tap
+on Send made **one** `POST …/employee/meetings/41/messages` (201) followed by
+an `after_id` refresh; a double tap on Vote made **one** `POST
+…/employee/meeting-polls/5/vote` and the poll was re-read ("Vote recorded ·
+9 votes in total"); notes read "View only in the app."; Android Back returned
+to the details; a meeting with chat off offers no Chat chip; a meeting the
+employee has not joined shows the participants-only notice after one
+request; Arabic (per-app locale) right-to-left tabs and send bar above the
+docked keyboard. The mock logged exactly those two writes. Not covered: the
+LiveKit room's tool tabs on a device (no media server; widget-tested).
+
 ## Design / API clarifications
 
 | # | Item | Decision |
