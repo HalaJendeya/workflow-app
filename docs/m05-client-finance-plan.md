@@ -157,3 +157,17 @@ Still limited by the API (not invented):
   `GET /client/payments/{id}`; the view is labelled "Payment summary" and
   shows only verified list fields. No details request is made.
 
+## 8. Finance completion pass (2026-11-20)
+
+Contract unchanged (updatedAt 2026-11-14); no Figma frame for invoice
+details, Pay or checkout. No live request was sent.
+
+- **Built — payments of an invoice** (`d79c242`): invoice details list the
+  payments recorded against the invoice (`GET /client/payments?invoice_id=`,
+  documented filter, Load more, empty and Retry states); a payment summary
+  opens its invoice ("View invoice"). Mock-tested, including Arabic/RTL at
+  320 dp and 130 % text.
+- **Still blocked:** Pay (C38 — `url_launcher` approval, a Pay design and a
+  Stripe test-mode host), the success callback (C39 — undocumented return
+  URL), payment details (C13), `payment_method`/`type`/`wallet_id` filters
+  (C40). See `docs/api-contract-gaps.md`.

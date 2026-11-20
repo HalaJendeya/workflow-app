@@ -49,12 +49,12 @@ requested features every route is documented, usable by the employee role
 | 4 | Join by code; own join request | **Done** (mock-tested) | Meetings list chip → **Join by Code** → meeting details (removed from More → Create on 2026-11-19: the + holds creation actions only). Meeting details: **Your join request** (waiting for host, Check again, Withdraw after confirmation) | `f1bd301` |
 | 5 | CSV export | **Done** | One **Export CSV** chip beside the filters of Tasks, Projects, Timesheets and the Backlog; the list's current filters, every page; system save dialog | `1314dec` |
 | 6 | Project-member-only assignees | **Done** | Task form assignee list = the chosen project's members; cleared when the project changes; error + Retry if it fails | `ea93973` |
+| 7 | Report custom range (E27, 2026-11-20) | **Done** (mock-tested; no Figma frame) | My report → tap the period ("Choose dates") → date-range picker → `from`/`to` only (never with `year`/`month`); > 366 days refused before sending; previous/next off for a range. The label is the entry point because a third chip wraps the owner-reviewed controls card at 360 dp. | `f533faa` |
 
 Not built (documented but out of scope or not usable): host-side join
 request management (admit/reject/admit-all — employees cannot create
 meetings and are not hosts in practice), meeting guest/public routes,
-WhatsApp settings (O2), the custom `from`/`to` report range (month and
-year cover the screen; can be added), `GET /timesheets/{id}` (details
+WhatsApp settings (O2), `GET /timesheets/{id}` (details
 suffice; it returns the user record).
 
 ## 3. Navigation and UX (Phase 3)

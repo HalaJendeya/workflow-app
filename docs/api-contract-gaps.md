@@ -242,6 +242,27 @@ join with 200 participant / 202 `{join_request}`, leave (M5, M7).
 | C35 | Client Join by Code | **Blocked (no route)** | `GET /meetings/by-code/{code}` exists for super admin, company admin and employee only. The public `meeting-guest/preview` + `enter` routes are for guests without an account and are not used for a signed-in client. The client chip keeps explaining it is unavailable (M8). | A client by-code route. |
 | C36 | Client join-request status / withdraw | **Blocked (no route)** | `GET`/`DELETE /meetings/{id}/join-request` exist for super admin, company admin and employee only. A client's 202 join keeps the pending state per account and company; "Try joining again" is the only way to learn the outcome (M5). | Client routes to read and withdraw its own join request. |
 
+## Feature completion — Client Finance and remaining features (2026-11-20)
+
+Contract re-read: Postman `WorkFlow`, **updatedAt 2026-11-14T11:14:33Z**
+(unchanged since C1–C5). Figma page `534:30389` searched for invoice,
+payment, pay/checkout and Claude frames: only "Payment Records"
+(643:35269, 643:36002), "Add Payment" (643:35666) and "Create Invoice"
+(643:36437) exist — **no invoice-details, Pay, checkout or Claude
+Connector frame**. No live request of any kind was sent.
+
+| # | Item | Status | Evidence / app behaviour | Needed to close |
+|---|---|---|---|---|
+| C37 | Payments recorded against an invoice | Handled (mocked) | `GET /client/payments` documents `invoice_id` ("only this invoice"). Invoice details (`GET /client/invoices/{id}`) now end with **Payments for this invoice**: `?page=&invoice_id=` only, one page at a time with Load more, empty notice, error + Retry that leaves the invoice shown; not requested when the invoice itself is refused (403/404). Rows show only documented list fields (`id`, `payment_date`, `payment_method`, `amount`); the amount carries a currency only when that answer's `totals` names exactly one. A payment summary with an `invoice_id` offers **View invoice** (`GET /client/invoices/{id}`; amounts without a currency there, since no list `totals` names its `currency_id`). Still no `GET /client/payments/{id}` request (C13). Commit `d79c242`. | Live check with QA invoices and payments (C10). |
+| C38 | Pay an invoice (Stripe Checkout) | **Blocked (approval + design + backend)** | Contract is complete: `POST /client/invoices/{id}/pay {payment_gateway: "stripe"}` → `data {payment_url, session_id}`; ⚠️ creates a real Checkout Session. Not built: (1) no Figma Pay control or checkout/return frame; (2) opening `payment_url` needs `url_launcher` — a new dependency, not approved; (3) `api.workflownets.com` is treated as production and its Stripe mode is unconfirmed, so no test-mode host exists for the owner-approved single run. | Owner approval of `url_launcher`; a Pay design; a staging host with Stripe test keys. |
+| C39 | Confirm a Stripe payment (`GET …/{id}/success?session_id=`) | **Blocked (contract)** | Responses documented (200 `{invoice_id, status: paid\|unpaid}`, idempotent; 400/403/404/409/422). The `session_id` is the one "Stripe appends to the success URL", but the server-configured success URL — and whether it can return to the app (deep link) — is not documented. Without it the app could only re-read the invoice. | Documented success/cancel URLs and a return path to the app. |
+| C40 | Payment `payment_method`, `type`, `wallet_id` filters | **Blocked (contract)** | `payment_method` needs the values in `facets.methods`, whose element shape is undocumented (empty live). `type` is `invoice\|employee` (staff payouts, not a client concept); clients have no wallet route to choose a `wallet_id` from. The documented `to` bound is not needed: the date chips are open-ended (`from` only). | Documented `facets.methods[]` shape. |
+| C41 | Claude Connector (client and employee) | **Blocked (design + product)** | Documented: `GET …/claude/connections` (`connections[] {id, client_name, company {id, name}, created_at, last_used_at}`, `mcp_url`), `…/activity` (`data.items` + `meta`), `…/requests[/{id}]`, `approve` ⚠️ (**executes** the prepared action — may delete tasks/sprints/projects), `reject`, `DELETE …/connections/{id}` ⚠️, OAuth consent (website half of a browser flow). Routes exist only while `CLAUDE_CONNECTOR_ENABLED=true` (live: 401 without a token, so registered). No Figma frame; approvals are described as decided "on the website". Not built. | A product decision to offer it in the app, and a design. |
+| C42 | Realtime notifications | Not built (by choice) | `POST /broadcasting/auth` authorizes the user's private channel; using it needs a Pusher/WebSocket client dependency. Notifications keep polling, which works. | A decision to add a realtime dependency. |
+
+Employee: the report's documented custom range is now built (E27 in
+`docs/employee-remaining-features.md`).
+
 ## Design / API clarifications
 
 | # | Item | Decision |
