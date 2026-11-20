@@ -2557,7 +2557,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get meetingToolsReadOnly =>
-      'للعرض فقط: الإرسال والتصويت والتعديل غير متاحة هنا.';
+      'للعرض فقط: فريق الاجتماع هو من يضيفها ويعدّلها.';
 
   @override
   String get noMeetingMessages => 'لا توجد رسائل في هذا الاجتماع بعد.';
@@ -2578,7 +2578,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pollOptionsTitle => 'الخيارات';
 
   @override
-  String get pollResultsNotShown => 'عدد الأصوات غير متاح في التطبيق بعد.';
+  String get pollResultsNotShown => 'نتائج كل خيار غير متاحة في التطبيق بعد.';
 
   @override
   String pollUntitled(int number) {
@@ -2588,5 +2588,62 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String attachmentDownloadFailed(String reason) {
     return 'تعذّر تنزيل الملف: $reason';
+  }
+
+  @override
+  String get meetingChatHint => 'اكتب رسالة للمشاركين…';
+
+  @override
+  String get meetingChatSend => 'إرسال الرسالة';
+
+  @override
+  String get meetingChatAttach => 'إرفاق ملف';
+
+  @override
+  String get meetingChatRemoveFile => 'إزالة الملف';
+
+  @override
+  String get meetingChatSending => 'جارٍ الإرسال…';
+
+  @override
+  String meetingChatSendFailed(String reason) {
+    return 'لم تُرسل الرسالة. $reason';
+  }
+
+  @override
+  String get meetingSendParticipantsOnly =>
+      'يمكن لمشاركي هذا الاجتماع فقط إرسال الرسائل أو التصويت.';
+
+  @override
+  String get meetingFileTypeNotAllowed =>
+      'يمكن مشاركة الصور وملفات PDF والنصوص وMP4 وMP3 وZIP فقط في الاجتماع.';
+
+  @override
+  String get meetingFileTooLarge => 'يجب ألا يتجاوز حجم الملف 10 ميغابايت.';
+
+  @override
+  String get pollVote => 'تصويت';
+
+  @override
+  String get pollChooseOption => 'اختر خيارًا ثم صوّت.';
+
+  @override
+  String pollVoteRecorded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'تم تسجيل صوتك · $count صوت إجمالًا',
+      many: 'تم تسجيل صوتك · $count صوتًا إجمالًا',
+      few: 'تم تسجيل صوتك · $count أصوات إجمالًا',
+      two: 'تم تسجيل صوتك · صوتان إجمالًا',
+      one: 'تم تسجيل صوتك · صوت واحد إجمالًا',
+      zero: 'تم تسجيل صوتك',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pollVoteFailed(String reason) {
+    return 'لم يُسجَّل صوتك. $reason';
   }
 }

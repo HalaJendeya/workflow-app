@@ -67,3 +67,27 @@ Future<OutgoingFile?> pickProfileImage() async {
     if (!kIsWeb) await FilePicker.clearTemporaryFiles();
   }
 }
+
+/// One file of [extensions] through the platform picker. A file larger
+/// than [maxBytes] is refused before it is read ([AttachmentRejected] with
+/// `tooLarge`); the content is checked by the caller.
+Future<OutgoingFile?> pickOneFile({
+  required List<String> extensions,
+  required int maxBytes,
+}) async {
+  final picked = await FilePicker.pickFiles(
+    type: FileType.custom,
+    allowedExtensions: extensions,
+  );
+  if (picked.isEmpty) return null;
+  try {
+    final f = picked.first;
+    final size = await f.length();
+    if (size != null && size > maxBytes) {
+      throw const AttachmentRejected(AttachmentProblem.tooLarge);
+    }
+    return OutgoingFile(name: f.name, bytes: await f.readAsBytes());
+  } finally {
+    if (!kIsWeb) await FilePicker.clearTemporaryFiles();
+  }
+}

@@ -2562,7 +2562,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get meetingToolsReadOnly =>
-      'View only: sending, voting and editing aren\'t available here.';
+      'View only: the meeting\'s team adds and updates these.';
 
   @override
   String get noMeetingMessages => 'No messages in this meeting yet.';
@@ -2584,7 +2584,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pollResultsNotShown =>
-      'Vote counts aren\'t available in the app yet.';
+      'Per-option results aren\'t available in the app yet.';
 
   @override
   String pollUntitled(int number) {
@@ -2594,5 +2594,58 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String attachmentDownloadFailed(String reason) {
     return 'Couldn\'t download the file: $reason';
+  }
+
+  @override
+  String get meetingChatHint => 'Type a message to participants…';
+
+  @override
+  String get meetingChatSend => 'Send message';
+
+  @override
+  String get meetingChatAttach => 'Attach a file';
+
+  @override
+  String get meetingChatRemoveFile => 'Remove file';
+
+  @override
+  String get meetingChatSending => 'Sending…';
+
+  @override
+  String meetingChatSendFailed(String reason) {
+    return 'Message not sent. $reason';
+  }
+
+  @override
+  String get meetingSendParticipantsOnly =>
+      'Only participants of this meeting can send messages or vote.';
+
+  @override
+  String get meetingFileTypeNotAllowed =>
+      'Only images, PDF, text, MP4, MP3 and ZIP files can be shared in a meeting.';
+
+  @override
+  String get meetingFileTooLarge => 'The file must be 10 MB or smaller.';
+
+  @override
+  String get pollVote => 'Vote';
+
+  @override
+  String get pollChooseOption => 'Choose an option, then vote.';
+
+  @override
+  String pollVoteRecorded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Vote recorded · $count votes in total',
+      one: 'Vote recorded · 1 vote in total',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pollVoteFailed(String reason) {
+    return 'Vote not recorded. $reason';
   }
 }

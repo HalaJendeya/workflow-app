@@ -4667,7 +4667,7 @@ abstract class AppLocalizations {
   /// No description provided for @meetingToolsReadOnly.
   ///
   /// In en, this message translates to:
-  /// **'View only: sending, voting and editing aren\'t available here.'**
+  /// **'View only: the meeting\'s team adds and updates these.'**
   String get meetingToolsReadOnly;
 
   /// No description provided for @noMeetingMessages.
@@ -4709,7 +4709,7 @@ abstract class AppLocalizations {
   /// No description provided for @pollResultsNotShown.
   ///
   /// In en, this message translates to:
-  /// **'Vote counts aren\'t available in the app yet.'**
+  /// **'Per-option results aren\'t available in the app yet.'**
   String get pollResultsNotShown;
 
   /// A meeting poll whose question the server did not send.
@@ -4723,6 +4723,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t download the file: {reason}'**
   String attachmentDownloadFailed(String reason);
+
+  /// No description provided for @meetingChatHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a message to participants…'**
+  String get meetingChatHint;
+
+  /// No description provided for @meetingChatSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send message'**
+  String get meetingChatSend;
+
+  /// No description provided for @meetingChatAttach.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach a file'**
+  String get meetingChatAttach;
+
+  /// No description provided for @meetingChatRemoveFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove file'**
+  String get meetingChatRemoveFile;
+
+  /// No description provided for @meetingChatSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending…'**
+  String get meetingChatSending;
+
+  /// No description provided for @meetingChatSendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Message not sent. {reason}'**
+  String meetingChatSendFailed(String reason);
+
+  /// No description provided for @meetingSendParticipantsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only participants of this meeting can send messages or vote.'**
+  String get meetingSendParticipantsOnly;
+
+  /// No description provided for @meetingFileTypeNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Only images, PDF, text, MP4, MP3 and ZIP files can be shared in a meeting.'**
+  String get meetingFileTypeNotAllowed;
+
+  /// No description provided for @meetingFileTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'The file must be 10 MB or smaller.'**
+  String get meetingFileTooLarge;
+
+  /// No description provided for @pollVote.
+  ///
+  /// In en, this message translates to:
+  /// **'Vote'**
+  String get pollVote;
+
+  /// No description provided for @pollChooseOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an option, then vote.'**
+  String get pollChooseOption;
+
+  /// No description provided for @pollVoteRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Vote recorded · 1 vote in total} other{Vote recorded · {count} votes in total}}'**
+  String pollVoteRecorded(int count);
+
+  /// No description provided for @pollVoteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Vote not recorded. {reason}'**
+  String pollVoteFailed(String reason);
 }
 
 class _AppLocalizationsDelegate

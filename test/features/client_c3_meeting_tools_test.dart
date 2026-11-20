@@ -519,7 +519,7 @@ void main() {
       expectReadOnly();
     });
 
-    testWidgets('polls: question, options on demand, no results or vote', (
+    testWidgets('polls: question, options on demand, no results', (
       tester,
     ) async {
       await pump(tester, const ApiMeetingDetailsScreen(id: 41));
@@ -538,10 +538,12 @@ void main() {
       // Undocumented per-option counts are not shown.
       expect(find.textContaining('7'), findsNothing);
       expect(
-        find.text("Vote counts aren't available in the app yet."),
+        find.text("Per-option results aren't available in the app yet."),
         findsOneWidget,
       );
-      expect(find.byKey(const Key('meeting-tool-read-only')), findsOneWidget);
+      // C4: voting is offered (client_c4_meeting_interactions_test.dart);
+      // opening a poll alone sends nothing.
+      expect(find.byKey(const Key('meeting-tool-read-only')), findsNothing);
       expectReadOnly();
     });
 

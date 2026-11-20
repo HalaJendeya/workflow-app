@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show LengthLimitingTextInputFormatter;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/network/api_exception.dart';
 import 'package:workflow_app/core/widgets/api_error_text.dart';
 import 'package:workflow_app/core/widgets/content_text.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
+import 'package:workflow_app/features/conversations/data/chat_attachments.dart';
+import 'package:workflow_app/features/conversations/data/file_picker_attachments.dart';
 import 'package:workflow_app/features/conversations/presentation/chat_attachment_widgets.dart';
 import 'package:workflow_app/features/meetings/data/meeting_collaboration_repository.dart';
+import 'package:workflow_app/features/meetings/data/meetings_repository.dart'
+    show apiMeetingProvider;
 import 'package:workflow_app/features/meetings/presentation/meeting_room_screen.dart'
     show RoomColors;
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
 
 /// The meeting tools of the in-call frames (chat 670:2505, polls 671:3024,
-/// notes 672:5044 — "Meeting Tool Navigation Tabs"), read-only. Decisions
-/// and action items have no frame; they reuse the notes panel's layout.
+/// notes 672:5044 — "Meeting Tool Navigation Tabs"). A client sends chat
+/// messages (with one file when the meeting allows file sharing) and votes
+/// in polls; notes, decisions and action items are view only (their writes
+/// need `meetings.update`, which clients lack). Decisions and action items
+/// have no frame; they reuse the notes panel's layout.
 enum MeetingTool { chat, polls, notes, decisions, actionItems }
 
 String meetingToolLabel(AppLocalizations l10n, MeetingTool t) => switch (t) {
@@ -344,7 +352,8 @@ class _PanelCard extends StatelessWidget {
   }
 }
 
-/// "View only" line under panels whose frame shows sending or voting.
+/// "View only" line under the panels a client cannot change (notes,
+/// decisions, action items: their writes answer 403 for clients).
 class _ReadOnlyFooter extends StatelessWidget {
   const new();
 
@@ -490,6 +499,20 @@ class _ChatPanel extends ConsumerStatefulWidget {
 class _ChatPanelState extends ConsumerState<_ChatPanel> {
   bool _older = false;
   final _opening = <int>{};
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// After a send: the new message is the last one.
+  void _toEnd() => WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (_scroll.hasClients) {
+      _scroll.jumpTo(_scroll.position.maxScrollExtent);
+    }
+  });
 
   Future<void> _loadEarlier() async {
     setState(() => _older = true);
@@ -547,10 +570,21 @@ class _ChatPanelState extends ConsumerState<_ChatPanel> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final value = ref.watch(meetingChatProvider(widget.meetingId));
+    final allowFiles =
+        ref.watch(apiMeetingProvider(widget.meetingId)).value?.allowFileShare ??
+        false;
     return _PanelCard(
       title: l10n.featureChat,
       onRefresh: _refresh,
-      footer: const _ReadOnlyFooter(),
+      // Only once the chat could be read: a non-participant (403) gets
+      // the notice, not a send bar the server would refuse.
+      footer: value.hasValue
+          ? _ChatComposer(
+              meetingId: widget.meetingId,
+              allowFiles: allowFiles,
+              onSent: _toEnd,
+            )
+          : null,
       child: _RoomAsync<MeetingMessagePage>(
         value: value,
         onRetry: () => ref.invalidate(meetingChatProvider(widget.meetingId)),
@@ -558,6 +592,7 @@ class _ChatPanelState extends ConsumerState<_ChatPanel> {
         empty: l10n.noMeetingMessages,
         builder: (p) => ListView(
           key: const Key('meeting-chat-list'),
+          controller: _scroll,
           padding: const EdgeInsets.all(12),
           children: [
             if (p.hasOlder)
@@ -604,6 +639,292 @@ class _ChatPanelState extends ConsumerState<_ChatPanel> {
   }
 }
 
+/// Picks one file for a meeting message; `null` when the person cancels.
+typedef MeetingFilePicker = Future<OutgoingFile?> Function();
+
+/// The platform picker, limited to the route's file types. Tests replace
+/// it; `null` hides the attach button.
+final meetingFilePickerProvider = Provider<MeetingFilePicker?>(
+  (_) =>
+      () => pickOneFile(
+        extensions: MeetingFileRules.extensions,
+        maxBytes: MeetingFileRules.maxBytes,
+      ),
+);
+
+String _meetingFileProblem(AppLocalizations l10n, AttachmentProblem p) =>
+    switch (p) {
+      AttachmentProblem.tooLarge => l10n.meetingFileTooLarge,
+      AttachmentProblem.typeNotAllowed => l10n.meetingFileTypeNotAllowed,
+      _ => attachmentProblemText(l10n, p),
+    };
+
+/// A refused send or vote: 403 is the participants-only rule; anything
+/// else is the shared localized error (a 422 shows the server's field
+/// message when it is safe to show).
+String _writeError(AppLocalizations l10n, Object e) =>
+    e is ApiException && e.kind == ApiFailureKind.forbidden
+    ? l10n.meetingSendParticipantsOnly
+    : localizedError(l10n, e);
+
+/// The send bar of the chat frame (670:2505): attach, text, send. Text is
+/// at most 5000 characters; a file is checked before anything is uploaded.
+/// The bar is busy while a message is on the way, so it cannot be sent
+/// twice; text and file stay after a failure so Retry sends them again.
+class _ChatComposer extends ConsumerStatefulWidget {
+  const new({
+    required this.meetingId,
+    required this.allowFiles,
+    required this.onSent,
+  });
+
+  final int meetingId;
+  final bool allowFiles;
+  final VoidCallback onSent;
+
+  @override
+  ConsumerState<_ChatComposer> createState() => _ChatComposerState();
+}
+
+class _ChatComposerState extends ConsumerState<_ChatComposer> {
+  final _text = TextEditingController();
+  OutgoingFile? _file;
+  String? _fileError;
+  double? _progress;
+
+  @override
+  void initState() {
+    super.initState();
+    _text.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  bool get _canSend => _text.text.trim().isNotEmpty || _file != null;
+
+  Future<void> _attach() async {
+    final pick = ref.read(meetingFilePickerProvider);
+    if (pick == null) return;
+    final l10n = AppLocalizations.of(context);
+    try {
+      final f = await pick();
+      if (!mounted || f == null) return;
+      final problem = checkMeetingFile(f);
+      setState(() {
+        _file = problem == null ? f : _file;
+        _fileError = problem == null
+            ? null
+            : _meetingFileProblem(l10n, problem);
+      });
+    } on AttachmentRejected catch (e) {
+      if (mounted) {
+        setState(() => _fileError = _meetingFileProblem(l10n, e.problem));
+      }
+    } on Object {
+      if (mounted) setState(() => _fileError = l10n.attachmentsPending);
+    }
+  }
+
+  Future<void> _send() async {
+    if (!_canSend) return;
+    final file = _file;
+    setState(() => _progress = file == null ? null : 0);
+    final sent = await ref
+        .read(meetingMessageSenderProvider(widget.meetingId).notifier)
+        .send(
+          text: _text.text,
+          file: file,
+          onProgress: file == null
+              ? null
+              : (p) {
+                  if (mounted) setState(() => _progress = p);
+                },
+        );
+    if (!mounted) return;
+    setState(() {
+      _progress = null;
+      if (sent) {
+        _text.clear();
+        _file = null;
+        _fileError = null;
+      }
+    });
+    if (sent) widget.onSent();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final state = ref.watch(meetingMessageSenderProvider(widget.meetingId));
+    final busy = state.isLoading;
+    final error = state.hasError && !busy ? state.error : null;
+    final file = _file;
+    return Padding(
+      key: const Key('meeting-chat-composer'),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (file != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                key: const Key('meeting-chat-file'),
+                children: [
+                  const Icon(
+                    Icons.insert_drive_file_outlined,
+                    size: 18,
+                    color: RoomColors.sub,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: ContentText(
+                      file.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _t(12, RoomColors.text),
+                    ),
+                  ),
+                  IconButton(
+                    key: const Key('meeting-chat-file-remove'),
+                    visualDensity: VisualDensity.compact,
+                    tooltip: l10n.meetingChatRemoveFile,
+                    onPressed: busy ? null : () => setState(() => _file = null),
+                    icon: const Icon(
+                      Icons.close,
+                      size: 18,
+                      color: RoomColors.sub,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (busy && _progress != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: LinearProgressIndicator(
+                key: const Key('meeting-chat-progress'),
+                value: _progress,
+                color: RoomColors.blue,
+                backgroundColor: RoomColors.chip,
+              ),
+            ),
+          Container(
+            padding: const EdgeInsetsDirectional.fromSTEB(4, 2, 4, 2),
+            decoration: BoxDecoration(
+              color: RoomColors.input,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0x1AFFFFFF)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (widget.allowFiles &&
+                    ref.watch(meetingFilePickerProvider) != null)
+                  IconButton(
+                    key: const Key('meeting-chat-attach'),
+                    tooltip: l10n.meetingChatAttach,
+                    onPressed: busy ? null : _attach,
+                    icon: const Icon(Icons.attach_file, color: RoomColors.sub),
+                  )
+                else
+                  const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    key: const Key('meeting-chat-input'),
+                    controller: _text,
+                    enabled: !busy,
+                    minLines: 1,
+                    maxLines: 3,
+                    textInputAction: TextInputAction.newline,
+                    keyboardType: TextInputType.multiline,
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(meetingMessageMaxLength),
+                    ],
+                    style: _t(13, RoomColors.text, FontWeight.w400),
+                    cursorColor: RoomColors.blue,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      border: InputBorder.none,
+                      hintText: l10n.meetingChatHint,
+                      hintStyle: _t(13, RoomColors.sub, FontWeight.w400),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Material(
+                    color: _canSend && !busy
+                        ? RoomColors.blue
+                        : RoomColors.chip,
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      key: const Key('meeting-chat-send'),
+                      tooltip: busy
+                          ? l10n.meetingChatSending
+                          : l10n.meetingChatSend,
+                      onPressed: _canSend && !busy ? _send : null,
+                      icon: busy
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.white,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.send_rounded,
+                              color: AppColors.white,
+                              size: 20,
+                            ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_fileError case final e?)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                e,
+                key: const Key('meeting-chat-file-error'),
+                style: _t(12, RoomColors.mutedFg),
+              ),
+            ),
+          if (error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.meetingChatSendFailed(_writeError(l10n, error)),
+                      key: const Key('meeting-chat-send-error'),
+                      style: _t(12, RoomColors.mutedFg),
+                    ),
+                  ),
+                  if (_canSend)
+                    TextButton(
+                      key: const Key('meeting-chat-retry'),
+                      onPressed: _send,
+                      child: Text(l10n.retry),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Polls
 
@@ -619,7 +940,6 @@ class _PollsPanel extends ConsumerWidget {
     return _PanelCard(
       title: l10n.polls,
       onRefresh: () => ref.invalidate(meetingPollsProvider(meetingId)),
-      footer: const _ReadOnlyFooter(),
       child: _RoomAsync<List<MeetingPoll>>(
         value: value,
         onRetry: () => ref.invalidate(meetingPollsProvider(meetingId)),
@@ -628,7 +948,12 @@ class _PollsPanel extends ConsumerWidget {
         builder: (polls) => ListView(
           padding: const EdgeInsets.all(12),
           children: [
-            for (final p in polls) _PollTile(poll: p, key: Key('poll-${p.id}')),
+            for (final p in polls)
+              _PollTile(
+                meetingId: meetingId,
+                poll: p,
+                key: Key('poll-${p.id}'),
+              ),
           ],
         ),
       ),
@@ -637,10 +962,11 @@ class _PollsPanel extends ConsumerWidget {
 }
 
 /// A poll: its question; expanding reads `GET meeting-polls/{id}` for the
-/// options. No vote is sent and no result is shown (not documented).
+/// options and offers the vote. No result is shown (not documented).
 class _PollTile extends ConsumerStatefulWidget {
-  const new({required this.poll, super.key});
+  const new({required this.meetingId, required this.poll, super.key});
 
+  final int meetingId;
   final MeetingPoll poll;
 
   @override
@@ -688,7 +1014,10 @@ class _PollTileState extends ConsumerState<_PollTile> {
           if (_open)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: _PollOptions(pollId: widget.poll.id),
+              child: _PollOptions(
+                meetingId: widget.meetingId,
+                pollId: widget.poll.id,
+              ),
             ),
         ],
       ),
@@ -696,16 +1025,44 @@ class _PollTileState extends ConsumerState<_PollTile> {
   }
 }
 
-class _PollOptions extends ConsumerWidget {
-  const new({required this.pollId});
+/// The poll's options as choices, with Vote (`POST meeting-polls/{id}/vote`,
+/// one option id: whether a poll takes several is not on the read model).
+/// Vote is off until an option is chosen and while a vote is on the way;
+/// after a 200 it shows the documented `total_votes` and stays off until
+/// another option is chosen. Per-option results are not documented.
+class _PollOptions extends ConsumerStatefulWidget {
+  const new({required this.meetingId, required this.pollId});
 
+  final int meetingId;
   final int pollId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_PollOptions> createState() => _PollOptionsState();
+}
+
+class _PollOptionsState extends ConsumerState<_PollOptions> {
+  int? _choice;
+  int? _votedFor;
+
+  Future<void> _vote() async {
+    final choice = _choice;
+    if (choice == null) return;
+    final ok = await ref
+        .read(pollVoterProvider(widget.pollId).notifier)
+        .vote(meetingId: widget.meetingId, optionIds: [choice]);
+    if (ok && mounted) setState(() => _votedFor = choice);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final pollId = widget.pollId;
     final value = ref.watch(meetingPollProvider(pollId));
+    final voter = ref.watch(pollVoterProvider(pollId));
+    final busy = voter.isLoading;
     return value.when(
+      skipLoadingOnRefresh: true,
+      skipLoadingOnReload: true,
       loading: () => const Padding(
         padding: EdgeInsets.all(8),
         child: Center(child: CircularProgressIndicator(color: RoomColors.blue)),
@@ -726,25 +1083,115 @@ class _PollOptions extends ConsumerWidget {
           ),
         ],
       ),
-      data: (d) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(l10n.pollOptionsTitle, style: _t(11, RoomColors.sub)),
-          const SizedBox(height: 6),
-          for (final o in d.options)
-            Container(
-              key: Key('poll-option-${o.id}'),
-              margin: const EdgeInsets.only(bottom: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0x33FFFFFF)),
+      data: (d) {
+        final canVote = !busy && _choice != null && _choice != _votedFor;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.pollChooseOption, style: _t(11, RoomColors.sub)),
+            const SizedBox(height: 6),
+            for (final o in d.options)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Semantics(
+                  selected: _choice == o.id,
+                  inMutuallyExclusiveGroup: true,
+                  button: true,
+                  child: Material(
+                    color: _choice == o.id
+                        ? const Color(0x330066FF)
+                        : Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(
+                        color: _choice == o.id
+                            ? RoomColors.blue
+                            : const Color(0x33FFFFFF),
+                      ),
+                    ),
+                    child: InkWell(
+                      key: Key('poll-option-${o.id}'),
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: busy ? null : () => setState(() => _choice = o.id),
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.fromSTEB(
+                          10,
+                          8,
+                          12,
+                          8,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _choice == o.id
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_unchecked,
+                              size: 18,
+                              color: _choice == o.id
+                                  ? RoomColors.blue
+                                  : RoomColors.sub,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ContentText(
+                                o.title,
+                                style: _t(13, RoomColors.text),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
-              child: ContentText(o.title, style: _t(13, RoomColors.text)),
+            const SizedBox(height: 4),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: FilledButton.icon(
+                key: Key('poll-vote-$pollId'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: RoomColors.blue,
+                  disabledBackgroundColor: RoomColors.chip,
+                  foregroundColor: AppColors.white,
+                  disabledForegroundColor: RoomColors.sub,
+                ),
+                onPressed: canVote ? _vote : null,
+                icon: busy
+                    ? const SizedBox.square(
+                        dimension: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.white,
+                        ),
+                      )
+                    : const Icon(Icons.how_to_vote_outlined, size: 18),
+                label: Text(l10n.pollVote),
+              ),
             ),
-          Text(l10n.pollResultsNotShown, style: _t(11, RoomColors.sub)),
-        ],
-      ),
+            if (voter case AsyncData(value: final r?))
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  l10n.pollVoteRecorded(r.totalVotes),
+                  key: Key('poll-voted-$pollId'),
+                  style: _t(12, RoomColors.live),
+                ),
+              ),
+            if (voter.hasError && !busy)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  l10n.pollVoteFailed(_writeError(l10n, voter.error!)),
+                  key: Key('poll-vote-error-$pollId'),
+                  style: _t(12, RoomColors.mutedFg),
+                ),
+              ),
+            const SizedBox(height: 6),
+            Text(l10n.pollResultsNotShown, style: _t(11, RoomColors.sub)),
+          ],
+        );
+      },
     );
   }
 }
@@ -764,6 +1211,7 @@ class _NotesPanel extends ConsumerWidget {
     return _PanelCard(
       title: l10n.notes,
       onRefresh: () => ref.invalidate(meetingNotesProvider(meetingId)),
+      footer: const _ReadOnlyFooter(),
       child: _RoomAsync<List<MeetingNote>>(
         value: value,
         onRetry: () => ref.invalidate(meetingNotesProvider(meetingId)),
@@ -825,6 +1273,7 @@ class _DecisionsPanelState extends ConsumerState<_DecisionsPanel> {
     return _PanelCard(
       title: l10n.meetingDecisions,
       onRefresh: () => ref.invalidate(meetingDecisionsProvider(q)),
+      footer: const _ReadOnlyFooter(),
       filters: _FilterRow<DecisionStatus>(
         values: DecisionStatus.values,
         selected: _status,
@@ -902,6 +1351,7 @@ class _ActionItemsPanelState extends ConsumerState<_ActionItemsPanel> {
     return _PanelCard(
       title: l10n.meetingActionItems,
       onRefresh: () => ref.invalidate(meetingActionItemsProvider(q)),
+      footer: const _ReadOnlyFooter(),
       filters: _FilterRow<ActionItemStatus>(
         values: ActionItemStatus.values,
         selected: _status,
