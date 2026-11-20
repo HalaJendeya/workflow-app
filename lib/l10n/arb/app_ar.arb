@@ -794,5 +794,8 @@
   "companySwitchFailed": "تعذّر تبديل الشركة. {reason}",
   "invoicePaymentsTitle": "الدفعات على هذه الفاتورة",
   "invoicePaymentsEmpty": "لا توجد دفعات مسجلة لهذه الفاتورة بعد.",
-  "viewInvoice": "عرض الفاتورة"
+  "viewInvoice": "عرض الفاتورة",
+  "reportChooseDates": "اختر التواريخ",
+  "reportRangeHelp": "فترة التقرير",
+  "reportRangeTooLong": "اختر فترة لا تزيد عن {days} يومًا."
 }

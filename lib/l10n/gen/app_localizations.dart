@@ -4867,6 +4867,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View invoice'**
   String get viewInvoice;
+
+  /// No description provided for @reportChooseDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose dates'**
+  String get reportChooseDates;
+
+  /// No description provided for @reportRangeHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Report period'**
+  String get reportRangeHelp;
+
+  /// No description provided for @reportRangeTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a range of up to {days} days.'**
+  String reportRangeTooLong(int days);
 }
 
 class _AppLocalizationsDelegate

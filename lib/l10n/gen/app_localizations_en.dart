@@ -2691,4 +2691,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewInvoice => 'View invoice';
+
+  @override
+  String get reportChooseDates => 'Choose dates';
+
+  @override
+  String get reportRangeHelp => 'Report period';
+
+  @override
+  String reportRangeTooLong(int days) {
+    return 'Choose a range of up to $days days.';
+  }
 }

@@ -8,53 +8,92 @@ import 'package:workflow_app/core/network/api_response.dart';
 import 'package:workflow_app/features/work/data/board_repository.dart';
 
 /// Which period the report covers. The route takes `year` (+ `month`) or a
-/// `from`/`to` range; the app offers a calendar month and a whole year.
-enum ReportSpan { month, year }
+/// `from`/`to` range (collection, "Custom Range"): a calendar month, a whole
+/// year or a range of up to [ReportQuery.maxRangeDays] days.
+enum ReportSpan { month, year, range }
 
 /// One request of `GET /employee/report`: [span] of the month or year
-/// [anchor] falls in, and the page of the task list.
+/// [anchor] falls in, or the [from]–[to] range, and the page of the task
+/// list.
 @immutable
 class ReportQuery {
-  const new({required this.span, required this.anchor, this.page = 1});
+  const new({
+    required this.span,
+    required this.anchor,
+    this.from,
+    this.to,
+    this.page = 1,
+  }) : assert(
+         span != ReportSpan.range || (from != null && to != null),
+         'a range needs from and to',
+       );
 
   final ReportSpan span;
   final DateTime anchor;
+
+  /// First and last day of a [ReportSpan.range]; unused otherwise.
+  final DateTime? from;
+  final DateTime? to;
   final int page;
 
-  /// `year` and `month` (month only for a month), the task page and size.
-  /// No `employee_id`, `user_id` or `company_id`: the route refuses them
-  /// (422) and always reports the caller.
+  /// "range ≤ 366 days" (collection). Counted inclusively, so a range the
+  /// app sends is never longer than the server's limit.
+  static const maxRangeDays = 366;
+
+  /// Whether [from]–[to] (inclusive) is a range the route accepts:
+  /// `to` on or after `from`, and no longer than [maxRangeDays].
+  static bool validRange(DateTime from, DateTime to) {
+    final a = DateTime.utc(from.year, from.month, from.day);
+    final b = DateTime.utc(to.year, to.month, to.day);
+    return !b.isBefore(a) && b.difference(a).inDays + 1 <= maxRangeDays;
+  }
+
+  /// `year` and `month` (month only for a month), or `from` and `to`
+  /// (`Y-m-d`; they cannot be combined with `year`/`month` — 422), plus the
+  /// task page and size. No `employee_id`, `user_id` or `company_id`: the
+  /// route refuses them (422) and always reports the caller.
   Json get params => {
-    'year': anchor.year,
-    if (span == ReportSpan.month) 'month': anchor.month,
+    if (span == ReportSpan.range) ...{
+      'from': _ymd(from!),
+      'to': _ymd(to!),
+    } else ...{
+      'year': anchor.year,
+      if (span == ReportSpan.month) 'month': anchor.month,
+    },
     'page': page,
     'per_page': ReportQuery.perPage,
   };
 
+  static String _ymd(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-'
+      '${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
+
   static const perPage = 10;
 
-  ReportQuery copyWith({ReportSpan? span, DateTime? anchor, int? page}) =>
-      ReportQuery(
-        span: span ?? this.span,
-        anchor: anchor ?? this.anchor,
-        page: page ?? this.page,
-      );
+  ReportQuery copyWith({
+    ReportSpan? span,
+    DateTime? anchor,
+    DateTime? from,
+    DateTime? to,
+    int? page,
+  }) => ReportQuery(
+    span: span ?? this.span,
+    anchor: anchor ?? this.anchor,
+    from: from ?? this.from,
+    to: to ?? this.to,
+    page: page ?? this.page,
+  );
 
+  /// The fields that reach the server decide equality, so the same report
+  /// is not fetched twice.
   @override
   bool operator ==(Object other) =>
-      other is ReportQuery &&
-      other.span == span &&
-      other.anchor.year == anchor.year &&
-      (span == ReportSpan.year || other.anchor.month == anchor.month) &&
-      other.page == page;
+      other is ReportQuery && mapEquals(other.params, params);
 
   @override
-  int get hashCode => Object.hash(
-    span,
-    anchor.year,
-    span == ReportSpan.month ? anchor.month : 0,
-    page,
-  );
+  int get hashCode =>
+      Object.hashAll(params.entries.map((e) => Object.hash(e.key, e.value)));
 }
 
 /// The six task statuses the report counts (`tasks.by_status`).

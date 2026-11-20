@@ -1366,5 +1366,9 @@
   "@companySwitchFailed": {"placeholders":{"reason":{"type":"String"}}},
   "invoicePaymentsTitle": "Payments for this invoice",
   "invoicePaymentsEmpty": "No payments recorded for this invoice yet.",
-  "viewInvoice": "View invoice"
+  "viewInvoice": "View invoice",
+  "reportChooseDates": "Choose dates",
+  "reportRangeHelp": "Report period",
+  "reportRangeTooLong": "Choose a range of up to {days} days.",
+  "@reportRangeTooLong": {"placeholders":{"days":{"type":"int"}}}
 }

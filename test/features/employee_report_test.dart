@@ -210,6 +210,52 @@ void main() {
       });
     });
 
+    test(
+      'a custom range sends from and to only, never year or month',
+      () async {
+        http.reply(200, ok(reportJson()));
+        await repo().report(
+          ReportQuery(
+            span: ReportSpan.range,
+            anchor: DateTime(2026, 11),
+            from: DateTime(2026, 9, 15),
+            to: DateTime(2026, 10, 5),
+          ),
+        );
+        expect(http.last.queryParameters, {
+          'from': '2026-09-15',
+          'to': '2026-10-05',
+          'page': 1,
+          'per_page': 10,
+        });
+      },
+    );
+
+    test('a range is valid only forwards and up to 366 days', () {
+      final d = DateTime(2026);
+      expect(ReportQuery.validRange(d, d), isTrue);
+      expect(ReportQuery.validRange(d, DateTime(2026, 12, 31)), isTrue); // 365
+      expect(ReportQuery.validRange(d, DateTime(2027)), isTrue); // 366
+      expect(ReportQuery.validRange(d, DateTime(2027, 1, 2)), isFalse); // 367
+      expect(ReportQuery.validRange(d, DateTime(2025, 12, 31)), isFalse);
+    });
+
+    test('ranges are equal only when they send the same dates', () {
+      ReportQuery r(int day) => ReportQuery(
+        span: ReportSpan.range,
+        anchor: DateTime(2026, 11, day),
+        from: DateTime(2026, 9, day),
+        to: DateTime(2026, 10, 5),
+      );
+      expect(r(1), r(1));
+      expect(r(1).hashCode, r(1).hashCode);
+      expect(r(1), isNot(r(2)));
+      expect(
+        r(1),
+        isNot(ReportQuery(span: ReportSpan.month, anchor: DateTime(2026, 9))),
+      );
+    });
+
     test('a missing section is an invalid response, not an empty report', () {
       http.reply(200, ok(reportJson()..remove('timesheets')));
       expect(
@@ -319,6 +365,49 @@ void main() {
       q = a.requests.last.uri.queryParameters;
       expect(q.containsKey('month'), isFalse);
       expect(find.byKey(const Key('report-period')), findsOneWidget);
+    });
+
+    testWidgets('a custom range is chosen in the picker and sent', (
+      tester,
+    ) async {
+      final a = await pumpEmployeeScreen(
+        tester,
+        const EmployeeReportScreen(),
+        handlers: {'GET /api/v1/employee/report': answer},
+      );
+      final before = a.requests.length;
+      // Cancelled: nothing changes and nothing is sent.
+      await tester.tap(find.byKey(const Key('report-choose-dates')));
+      await tester.pumpAndSettle();
+      expect(find.byType(DateRangePickerDialog), findsOneWidget);
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+      expect(a.requests.length, before);
+
+      // Saved: the last 30 days, offered by default.
+      await tester.tap(find.byKey(const Key('report-choose-dates')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      String ymd(DateTime d) => d.toIso8601String().substring(0, 10);
+      final q = a.requests.last.uri.queryParameters;
+      expect(q['from'], ymd(today.subtract(const Duration(days: 29))));
+      expect(q['to'], ymd(today));
+      expect(q.containsKey('year'), isFalse);
+      expect(q.containsKey('month'), isFalse);
+      expect(find.textContaining(' – '), findsOneWidget);
+      // A range has no previous or next period.
+      for (final k in ['report-previous', 'report-next']) {
+        expect(tester.widget<IconButton>(find.byKey(Key(k))).onPressed, isNull);
+      }
+      // Back to months: year and month again.
+      await tester.tap(find.byKey(const Key('report-span-month')));
+      await tester.pumpAndSettle();
+      final m = a.requests.last.uri.queryParameters;
+      expect(m['month'], isNotNull);
+      expect(m.containsKey('from'), isFalse);
     });
 
     testWidgets('a failure is shown with Retry', (tester) async {

@@ -43,7 +43,8 @@ String _meetingStatusLabel(AppLocalizations l10n, String s) => switch (s) {
 };
 
 /// "My report" (`GET /employee/report`): the signed-in employee's own
-/// tasks, projects, time, timesheets and meetings for a month or a year.
+/// tasks, projects, time, timesheets and meetings for a month, a year or a
+/// chosen range of dates.
 /// The report is always the caller's: no person or company is chosen.
 ///
 /// No Figma frame exists for this screen; it is built only from the
@@ -65,12 +66,64 @@ class _EmployeeReportScreenState extends ConsumerState<EmployeeReportScreen> {
   );
 
   /// The period after the current one would be empty, so it is not offered.
+  /// A custom range has no previous or next: it is chosen again instead.
   bool get _atLatest {
+    if (_query.span == ReportSpan.range) return true;
     final now = DateTime.now();
     final a = _query.anchor;
     return _query.span == ReportSpan.year
         ? a.year >= now.year
         : (a.year > now.year || (a.year == now.year && a.month >= now.month));
+  }
+
+  /// Opens the date-range picker (today at the latest). A range longer than
+  /// [ReportQuery.maxRangeDays] is refused here, before any request, and the
+  /// report stays as it was; so does a cancelled picker.
+  Future<void> _pickRange() async {
+    final l10n = AppLocalizations.of(context);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final current = _query.span == ReportSpan.range
+        ? DateTimeRange(start: _query.from!, end: _query.to!)
+        : DateTimeRange(
+            start: today.subtract(const Duration(days: 29)),
+            end: today,
+          );
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: today,
+      initialDateRange: current,
+      helpText: l10n.reportRangeHelp,
+      // Flutter's full-screen range picker sets the chosen dates in a
+      // headline style that overflows a phone in Arabic (40 dp at 360 dp,
+      // 50 dp at 320 dp), so the picker uses the design system's 16 px
+      // title style for them.
+      builder: (context, child) {
+        final theme = Theme.of(context);
+        return Theme(
+          data: theme.copyWith(
+            datePickerTheme: theme.datePickerTheme.copyWith(
+              rangePickerHeaderHeadlineStyle: AppTextStyles.mobileLgSemiBold,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked == null || !mounted) return;
+    if (!ReportQuery.validRange(picked.start, picked.end)) {
+      showSnack(context, l10n.reportRangeTooLong(ReportQuery.maxRangeDays));
+      return;
+    }
+    setState(
+      () => _query = _query.copyWith(
+        span: ReportSpan.range,
+        from: picked.start,
+        to: picked.end,
+        page: 1,
+      ),
+    );
   }
 
   void _step(int by) => setState(() {
@@ -87,6 +140,14 @@ class _EmployeeReportScreenState extends ConsumerState<EmployeeReportScreen> {
   /// as read aloud ("November 2026").
   (String shown, String spoken) _periodLabel(BuildContext context) {
     final locale = Localizations.localeOf(context).toString();
+    if (_query.span == ReportSpan.range) {
+      final short = DateFormat.yMMMd(locale);
+      final long = DateFormat.yMMMMd(locale);
+      return (
+        '${short.format(_query.from!)} – ${short.format(_query.to!)}',
+        '${long.format(_query.from!)} – ${long.format(_query.to!)}',
+      );
+    }
     if (_query.span == ReportSpan.year) {
       final y = DateFormat.y(locale).format(_query.anchor);
       return (y, y);
@@ -119,7 +180,9 @@ class _EmployeeReportScreenState extends ConsumerState<EmployeeReportScreen> {
               IconButton(
                 key: const Key('report-previous'),
                 tooltip: l10n.previousPeriod,
-                onPressed: () => _step(-1),
+                onPressed: _query.span == ReportSpan.range
+                    ? null
+                    : () => _step(-1),
                 icon: const Icon(Icons.chevron_left),
               ),
               Expanded(
@@ -131,15 +194,31 @@ class _EmployeeReportScreenState extends ConsumerState<EmployeeReportScreen> {
                     spacing: AppSpacing.sm,
                     runSpacing: 6,
                     children: [
-                      Semantics(
-                        label: period.$2,
-                        excludeSemantics: true,
-                        child: Text(
-                          period.$1,
-                          key: const Key('report-period'),
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.mobileBaseSemiBold.copyWith(
-                            color: AppColors.textPrimary,
+                      // The period is also the way to a custom range
+                      // (collection "Custom Range", `from`/`to`): a third
+                      // chip does not fit the card on a 360 dp phone
+                      // without wrapping, so the label itself opens the
+                      // date-range picker. Primary colour marks it as
+                      // tappable; screen readers hear "Choose dates".
+                      Tooltip(
+                        message: l10n.reportChooseDates,
+                        child: Semantics(
+                          button: true,
+                          label: period.$2,
+                          hint: l10n.reportChooseDates,
+                          excludeSemantics: true,
+                          child: InkWell(
+                            key: const Key('report-choose-dates'),
+                            onTap: _pickRange,
+                            borderRadius: BorderRadius.circular(AppSpacing.sm),
+                            child: Text(
+                              period.$1,
+                              key: const Key('report-period'),
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.mobileBaseSemiBold.copyWith(
+                                color: AppColors.primary,
+                              ),
+                            ),
                           ),
                         ),
                       ),

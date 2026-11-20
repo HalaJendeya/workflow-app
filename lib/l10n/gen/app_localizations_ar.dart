@@ -2688,4 +2688,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get viewInvoice => 'عرض الفاتورة';
+
+  @override
+  String get reportChooseDates => 'اختر التواريخ';
+
+  @override
+  String get reportRangeHelp => 'فترة التقرير';
+
+  @override
+  String reportRangeTooLong(int days) {
+    return 'اختر فترة لا تزيد عن $days يومًا.';
+  }
 }

@@ -149,4 +149,30 @@ void main() {
     expect(_period(tester), '$year');
     expect(tester.takeException(), isNull);
   });
+
+  for (final lang in ['en', 'ar']) {
+    testWidgets('$lang 320 dp x1.3: a custom range label fits the card', (
+      tester,
+    ) async {
+      await _pump(tester, const Size(320, 640), 1.3, lang);
+      await tester.tap(find.byKey(const Key('report-choose-dates')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'picker open');
+      // The picker's confirm button (Save / its Arabic label).
+      final picker = tester.element(find.byType(DateRangePickerDialog));
+      await tester.tap(
+        find.text(MaterialLocalizations.of(picker).saveButtonLabel),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(_period(tester), contains(' – '));
+      final card = tester.getRect(find.byKey(_key));
+      final label = tester.getRect(find.byKey(const Key('report-period')));
+      expect(card.left <= label.left && label.right <= card.right, isTrue);
+      final text = tester.renderObject<RenderParagraph>(
+        find.byKey(const Key('report-period')),
+      );
+      expect(text.didExceedMaxLines, isFalse);
+    });
+  }
 }
