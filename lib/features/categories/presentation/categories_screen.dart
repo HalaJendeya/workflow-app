@@ -317,7 +317,17 @@ class _SectionCard extends StatelessWidget {
                       ),
                       child: SizedBox.square(
                         dimension: 24,
-                        child: Center(child: WfSvg(items[i].icon)),
+                        // Grey item icons (#707070, Payments #334155)
+                        // follow the theme on the dark tile.
+                        child: Center(
+                          child: WfSvg(
+                            items[i].icon,
+                            key: Key('cat-item-icon-${items[i].icon}'),
+                            color: _greyItemIcon(items[i].icon)
+                                ? AppColors.iconMutedTint
+                                : null,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -351,3 +361,8 @@ void pushPage(BuildContext context, Widget page) => Navigator.of(
 
 /// Switches to a shell tab by path.
 void goTab(BuildContext context, String path) => context.go(path);
+
+/// Item icons drawn in Figma's neutral grey (`cat_item_*`, Tasks); the blue
+/// ones (Sprints, Timesheets) keep their colour in both themes.
+bool _greyItemIcon(String name) =>
+    name.startsWith('cat_item_') || name == 'nav_tasks';

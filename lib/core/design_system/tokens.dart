@@ -205,6 +205,15 @@ abstract final class AppColors {
   /// `text/secondary` and `text/placeholder`
   static Color get textSecondary => _p.textSecondary;
 
+  /// Tint for a single-colour Figma icon drawn black (bell, search,
+  /// profile…): `null` in light mode, which keeps Figma's own colour, and
+  /// [textPrimary] in dark mode, where black would vanish on the surface.
+  static Color? get iconStrongTint => isDark ? _p.textPrimary : null;
+
+  /// As [iconStrongTint] for grey icons (#707070 / #334155 in Figma):
+  /// [textSecondary] in dark mode.
+  static Color? get iconMutedTint => isDark ? _p.textSecondary : null;
+
   /// Strongest text (Figma's pure black titles).
   static Color get ink => _p.ink;
 
