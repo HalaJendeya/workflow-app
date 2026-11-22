@@ -24,7 +24,7 @@ Map<String, Object?> _ok(Object? data) => {
   'data': data,
 };
 
-const _membership = {
+const Map<String, Object?> _membership = {
   'status': 'approved',
   'client': {
     'id': 7,
@@ -56,7 +56,7 @@ void main() {
             token: 't',
             tokenType: 'Bearer',
             userId: 10,
-            companyId: null, // As the live client login answers.
+            // No companyId: the live client login answers company_id: null.
             portal: Portal.client,
           ).toStorage(),
         );
