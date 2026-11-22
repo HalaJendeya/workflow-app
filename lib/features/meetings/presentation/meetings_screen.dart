@@ -315,6 +315,16 @@ class MeetingKpi extends StatelessWidget {
   );
 }
 
+/// Column labels for a week of [days]: the locale's abbreviated names
+/// ("Sun", "Mon"…) when it has short ones, else its narrow names. Arabic
+/// has no abbreviations — `E` gives the full "الخميس" — so it gets the
+/// one-letter forms its own calendars use.
+List<String> weekdayLabels(String locale, Iterable<DateTime> days) {
+  final short = [for (final d in days) DateFormat.E(locale).format(d)];
+  if (short.every((l) => l.characters.length <= 3)) return short;
+  return [for (final d in days) DateFormat.EEEEE(locale).format(d)];
+}
+
 /// Month grid from the "Meetings Calendar" card: 38×34 cells, selected day
 /// in a 12 px-radius primary tile, days outside the month in #9E9E9E.
 class MeetingMonthCalendar extends StatelessWidget {
@@ -340,14 +350,19 @@ class MeetingMonthCalendar extends StatelessWidget {
     final lead = first.weekday % 7; // Sunday-first grid.
     final start = first.subtract(Duration(days: lead));
     final days = List.generate(42, (i) => start.add(Duration(days: i)));
-    final weekdays = DateFormat.E(locale);
+    final labels = weekdayLabels(locale, days.take(7));
+    final fullNames = DateFormat.EEEE(locale);
     return Column(
       children: [
         Row(
           children: [
             Expanded(
               child: Text(
-                DateFormat.yMMMM(locale).format(month),
+                // Western digits, like the day numbers below (Arabic's
+                // default would mix ٢٠٢٦ with 1…31 in one card).
+                (DateFormat.yMMMM(
+                  locale,
+                )..useNativeDigits = false).format(month),
                 style: AppTextStyles.mobileBaseSemiBold.copyWith(
                   color: AppColors.textPrimary,
                 ),
@@ -369,13 +384,25 @@ class MeetingMonthCalendar extends StatelessWidget {
           children: [
             for (var i = 0; i < 7; i++)
               Expanded(
-                child: SizedBox(
-                  height: 28,
-                  child: Center(
-                    child: Text(
-                      weekdays.format(days[i]),
-                      style: AppTextStyles.mobileXsRegular.copyWith(
-                        color: AppColors.textSecondary,
+                child: Semantics(
+                  label: fullNames.format(days[i]),
+                  excludeSemantics: true,
+                  child: SizedBox(
+                    height: 28,
+                    child: Center(
+                      // One line that shrinks rather than clips: a 1/7
+                      // column is ~40 dp at 320 dp, less at 130 % text.
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          labels[i],
+                          key: Key('cal-weekday-$i'),
+                          maxLines: 1,
+                          softWrap: false,
+                          style: AppTextStyles.mobileXsRegular.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                       ),
                     ),
                   ),
