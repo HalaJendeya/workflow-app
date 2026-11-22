@@ -2437,7 +2437,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get myReportBody =>
-      'مهامك ووقتك وسجلات ساعاتك واجتماعاتك لشهر أو سنة.';
+      'مهامك ووقتك وسجلات ساعاتك واجتماعاتك لشهر أو سنة أو فترة تختارها.';
 
   @override
   String get previousPeriod => 'الفترة السابقة';

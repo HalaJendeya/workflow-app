@@ -432,8 +432,8 @@ void main() {
         ) async {
           await _pump(tester, size, scale, mode: AppMode.mock);
           await _openMore(tester, 'Meetings');
-          await _reveal(tester, find.text('join by code').first);
-          await tester.tap(find.text('join by code').first);
+          await _reveal(tester, find.text('Join by code').first);
+          await tester.tap(find.text('Join by code').first);
           await tester.pumpAndSettle();
           await tester.enterText(
             find.byKey(const Key('join-code')),

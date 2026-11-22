@@ -69,7 +69,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountTypeTitle => 'Account Type';
 
   @override
-  String get accountTypeClientTitle => 'client';
+  String get accountTypeClientTitle => 'Client';
 
   @override
   String get accountTypeClientBody =>
@@ -814,7 +814,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scheduleMeeting => 'Schedule meeting';
 
   @override
-  String get joinByCode => 'join by code';
+  String get joinByCode => 'Join by code';
 
   @override
   String get meetingOverview => 'Meeting overview';
@@ -2442,7 +2442,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get myReportBody =>
-      'Your tasks, time, timesheets and meetings for a month or a year.';
+      'Your tasks, time, timesheets and meetings for a month, a year or a range of dates.';
 
   @override
   String get previousPeriod => 'Previous period';

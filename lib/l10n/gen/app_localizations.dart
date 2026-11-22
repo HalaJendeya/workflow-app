@@ -203,7 +203,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountTypeClientTitle.
   ///
   /// In en, this message translates to:
-  /// **'client'**
+  /// **'Client'**
   String get accountTypeClientTitle;
 
   /// No description provided for @accountTypeClientBody.
@@ -1577,7 +1577,7 @@ abstract class AppLocalizations {
   /// No description provided for @joinByCode.
   ///
   /// In en, this message translates to:
-  /// **'join by code'**
+  /// **'Join by code'**
   String get joinByCode;
 
   /// No description provided for @meetingOverview.
@@ -4445,7 +4445,7 @@ abstract class AppLocalizations {
   /// No description provided for @myReportBody.
   ///
   /// In en, this message translates to:
-  /// **'Your tasks, time, timesheets and meetings for a month or a year.'**
+  /// **'Your tasks, time, timesheets and meetings for a month, a year or a range of dates.'**
   String get myReportBody;
 
   /// No description provided for @previousPeriod.

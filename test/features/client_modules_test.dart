@@ -245,7 +245,7 @@ void main() {
     await tester.fling(page(), const Offset(0, 3000), 4000);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('join by code'));
+    await tester.tap(find.text('Join by code'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('join-code')), 'bhu-232-cek');
     await tester.tap(find.byKey(const Key('form-save')));

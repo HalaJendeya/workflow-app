@@ -293,7 +293,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(cat);
     await tester.pumpAndSettle();
-    expect(find.text('join by code'), findsNothing);
+    expect(find.text('Join by code'), findsNothing);
     expect(find.byKey(const Key('create-fab')), findsNothing);
     expect(find.textContaining('LiveKit'), findsNothing);
     expect(find.textContaining('API'), findsNothing);

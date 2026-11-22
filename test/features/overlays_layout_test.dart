@@ -233,7 +233,7 @@ void main() {
         testWidgets('join by code and the meeting room panels', (tester) async {
           await _pumpMock(tester, Portal.client, size, scale);
           await _openCategory(tester, 'Meetings');
-          await _tap(tester, find.text('join by code').first);
+          await _tap(tester, find.text('Join by code').first);
           await _tap(tester, find.byKey(const Key('form-save')));
           expect(find.text('This field is required'), findsWidgets);
           await tester.enterText(
