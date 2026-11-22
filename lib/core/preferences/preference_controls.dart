@@ -255,10 +255,11 @@ class PreferencesCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 4),
+            // Icons.chevron_right mirrors itself in RTL (matchTextDirection):
+            // picking chevron_left there flipped it back to point right.
             Icon(
-              Directionality.of(context) == TextDirection.rtl
-                  ? Icons.chevron_left
-                  : Icons.chevron_right,
+              Icons.chevron_right,
+              key: const Key('settings-row-chevron'),
               color: AppColors.textSecondary,
             ),
           ],
