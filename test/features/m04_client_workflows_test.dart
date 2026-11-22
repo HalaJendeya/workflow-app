@@ -326,6 +326,65 @@ void main() {
       },
     );
 
+    test('List My Companies: live membership rows read the nested company '
+        '(Redmi 8 F1)', () async {
+      // Shape of the live answer on 2026-11-22 (values are made up).
+      http.reply(
+        200,
+        ok([
+          {
+            'status': 'approved',
+            'client': {
+              'id': 7,
+              'name': 'Client A',
+              'email': 'a@client.test',
+              'created_at': '2026-10-01T00:00:00.000000Z',
+              'updated_at': '2026-10-01T00:00:00.000000Z',
+            },
+            'company': {
+              'id': 1,
+              'name': 'WorkFlow',
+              'email': 'hi@workflow.test',
+              'domain': 'workflow.test',
+              'logo': null,
+              'created_at': '2026-09-01T00:00:00.000000Z',
+              'updated_at': '2026-09-01T00:00:00.000000Z',
+            },
+          },
+        ]),
+      );
+      final list = await ClientCompaniesRepository(client).list();
+      expect(list, hasLength(1));
+      // The company's id and name, never the client's.
+      expect(list.single.id, 1);
+      expect(list.single.name, 'WorkFlow');
+      expect(list.single.subtitle, 'workflow.test');
+    });
+
+    test('List My Companies: a membership without a company name is '
+        'invalid', () async {
+      http.reply(
+        200,
+        ok([
+          {
+            'status': 'approved',
+            'client': {'id': 7, 'name': 'Client A'},
+            'company': {'id': 1},
+          },
+        ]),
+      );
+      await expectLater(
+        ClientCompaniesRepository(client).list(),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiFailureKind.invalidResponse,
+          ),
+        ),
+      );
+    });
+
     test('List My Companies: no company gives an empty list', () async {
       http.reply(200, ok(<Object>[]));
       expect(await ClientCompaniesRepository(client).list(), isEmpty);

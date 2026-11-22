@@ -9,21 +9,29 @@ import 'package:workflow_app/features/auth/application/session_scope.dart';
 
 /// A company of `GET /api/v1/client/companies` ("List My Companies").
 ///
-/// The collection documents only that the response has `data`. The fields
-/// read here are the company model as the live server returns it elsewhere
-/// (`data.company` of `GET /{role}/account`, 2026-11-14): `id` and `name`
-/// are required, `domain` and `email` optional. The membership status of the
-/// `client_company` row is **not** documented for this route, so it is not
-/// read (docs/api-contract-gaps.md, C4).
+/// The collection documents only that the response has `data`. Live
+/// (2026-11-22, Redmi 8 F1) each row is the client's **membership**:
+/// `{status, client: {…}, company: {id, name, email, domain, logo, …}}`, so
+/// the company is read from `company`. A flat company row (the shape of
+/// `data.company` on `GET /{role}/account`) is still accepted. `id` and
+/// `name` are required, `domain` and `email` optional. The membership
+/// `status` is not documented, so it is not read (docs/api-contract-gaps.md,
+/// C4).
 class ClientCompany {
   const new({required this.id, required this.name, this.domain, this.email});
 
-  factory fromJson(Json j) => ClientCompany(
-    id: asInt(j['id']) ?? missingField('id'),
-    name: j['name'] is String ? j['name'] as String : missingField('name'),
-    domain: _text(j['domain']),
-    email: _text(j['email']),
-  );
+  factory fromJson(Json row) {
+    final nested = row['company'];
+    final j = nested is Json ? nested : row;
+    return ClientCompany(
+      id: asInt(j['id']) ?? missingField('company.id'),
+      name: j['name'] is String
+          ? j['name'] as String
+          : missingField('company.name'),
+      domain: _text(j['domain']),
+      email: _text(j['email']),
+    );
+  }
 
   final int id;
   final String name;
