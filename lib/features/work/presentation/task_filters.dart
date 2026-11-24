@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
+import 'package:workflow_app/core/widgets/filter_sheet.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/core/widgets/wf_components.dart';
 import 'package:workflow_app/features/work/data/board_repository.dart';
 import 'package:workflow_app/features/work/domain/work_models.dart';
 import 'package:workflow_app/l10n/gen/app_localizations.dart';
+
+export 'package:workflow_app/core/widgets/filter_sheet.dart' show ActiveFilter;
 
 /// Status chips of Figma "Tasks Management" (node 729:24295), plus "To do":
 /// the status most of an employee's open work is in. Since the Redmi 8
@@ -244,12 +247,19 @@ Future<TaskFilters?> showTaskFilterSheet(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                 child: Row(
                   children: [
-                    TextButton(
-                      key: const Key('task-filters-reset'),
-                      onPressed: draft.isDefault
-                          ? null
-                          : () => setDraft(const TaskFilters()),
-                      child: Text(l10n.resetFilters),
+                    // Shrinks and wraps between words: Arabic "Reset
+                    // filters" at 130 % text overflowed a 320 dp row.
+                    Flexible(
+                      child: TextButton(
+                        key: const Key('task-filters-reset'),
+                        onPressed: draft.isDefault
+                            ? null
+                            : () => setDraft(const TaskFilters()),
+                        child: Text(
+                          l10n.resetFilters,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
@@ -335,16 +345,8 @@ TaskFilters _withValue(TaskFilters f, Object? v) => TaskFilters(
   sort: v is TaskSort ? v : f.sort,
 );
 
-/// An applied filter, shown beside the Filters button with a remove button.
-class ActiveFilter {
-  const new(this.key, this.label, this.onRemove);
-  final String key;
-  final String label;
-  final VoidCallback onRemove;
-}
-
-/// "Filters (n)" button, the applied filters as removable chips, and
-/// "Reset filters" when anything differs from the defaults.
+/// The Tasks filter bar: the shared [FilterBar] with the keys the Tasks
+/// screen and its tests have always used.
 class TaskFilterBar extends StatelessWidget {
   const new({
     required this.count,
@@ -359,113 +361,16 @@ class TaskFilterBar extends StatelessWidget {
   final List<ActiveFilter> active;
   final VoidCallback onOpen;
   final VoidCallback onReset;
-
-  /// An action on the filtered list (Export CSV), right after the Filters
-  /// button so it keeps its place whatever filters are active.
   final Widget? trailing;
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final on = count > 0;
-    return Wrap(
-      key: const Key('task-filter-bar'),
-      spacing: 8,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        Semantics(
-          button: true,
-          child: Material(
-            color: on ? AppColors.primary50 : AppColors.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: on
-                    ? ModuleColors.selectedChipBorder
-                    : ModuleColors.chipBorder,
-              ),
-            ),
-            child: InkWell(
-              key: const Key('task-filters'),
-              borderRadius: BorderRadius.circular(12),
-              onTap: onOpen,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.tune,
-                      size: 16,
-                      color: on ? AppColors.primary : AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      on ? l10n.taskFiltersActive(count) : l10n.taskFilters,
-                      style: AppTextStyles.mobileXsSemiBold.copyWith(
-                        color: on ? AppColors.primary : AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        ?trailing,
-        for (final f in active)
-          _ActiveChip(key: Key('active-filter-${f.key}'), filter: f),
-        if (on)
-          TextButton(
-            key: const Key('reset-filters'),
-            onPressed: onReset,
-            child: Text(l10n.resetFilters),
-          ),
-      ],
-    );
-  }
-}
-
-class _ActiveChip extends StatelessWidget {
-  const new({required this.filter, super.key});
-
-  final ActiveFilter filter;
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color: AppColors.primary50,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-      side: BorderSide(color: ModuleColors.selectedChipBorder),
-    ),
-    child: Padding(
-      padding: const EdgeInsetsDirectional.only(start: 12),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            child: Text(
-              filter.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.mobileXsSemiBold.copyWith(
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-          IconButton(
-            tooltip: AppLocalizations.of(context).removeFilter(filter.label),
-            visualDensity: VisualDensity.compact,
-            iconSize: 16,
-            onPressed: filter.onRemove,
-            icon: Icon(Icons.close, color: AppColors.primary),
-          ),
-        ],
-      ),
-    ),
+  Widget build(BuildContext context) => FilterBar(
+    key: const Key('task-filter-bar'),
+    count: count,
+    active: active,
+    onOpen: onOpen,
+    onReset: onReset,
+    trailing: trailing,
+    buttonKey: const Key('task-filters'),
   );
 }
