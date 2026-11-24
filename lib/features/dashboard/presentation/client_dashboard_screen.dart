@@ -118,7 +118,7 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
           title: l10n.activeClientProjects,
           chips: [
             FilterChipBox(
-              label: l10n.runningCount(projects.length),
+              label: l10n.runningCount(count(projects.length)),
               selected: true,
               onTap: () => goToProjects(context),
             ),
@@ -557,7 +557,7 @@ class _ApiClientDashboard extends ConsumerWidget {
               key: const Key('dash-running'),
               label: running == null
                   ? l10n.runningLabel
-                  : l10n.runningCount(running),
+                  : l10n.runningCount(count(running)),
               selected: true,
               onTap: () => openProjects(ApiProjectStatus.inProgress),
             ),

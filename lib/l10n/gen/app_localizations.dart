@@ -2856,7 +2856,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{count} Running'**
-  String runningCount(int count);
+  String runningCount(String count);
 
   /// No description provided for @settledSeries.
   ///

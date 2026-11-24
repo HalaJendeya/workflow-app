@@ -30,6 +30,7 @@ class _WorkFlowAppState extends ConsumerState<WorkFlowApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    useWesternDigits();
     // The palette is in place before the first frame: no flash of the
     // other theme.
     AppColors.use(_brightness(ref.read(preferencesProvider)));
@@ -153,3 +154,10 @@ class _WorkFlowAppState extends ConsumerState<WorkFlowApp>
     );
   }
 }
+
+/// Numeral policy: every number and date the app formats uses Western
+/// digits (0–9) in both languages; Arabic keeps its own month and weekday
+/// names. Counts and money were already formatted with the `en` locale, but
+/// Arabic dates showed Arabic-Indic digits ("٢٤ نوفمبر", "نوفمبر ٢٠٢٦")
+/// beside them (Redmi 8 finding). API values are shown as received.
+void useWesternDigits() => DateFormat.useNativeDigitsByDefaultFor('ar', false);

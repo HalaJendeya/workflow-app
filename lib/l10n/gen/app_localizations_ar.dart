@@ -1516,7 +1516,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get roleLabel => 'الدور';
 
   @override
-  String runningCount(int count) {
+  String runningCount(String count) {
     return '$count قيد التنفيذ';
   }
 

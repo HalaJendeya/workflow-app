@@ -102,7 +102,7 @@ class _EmployeeDashboardScreenState
           title: l10n.activeClientProjects,
           chips: [
             FilterChipBox(
-              label: l10n.runningCount(projects.length),
+              label: l10n.runningCount(count(projects.length)),
               selected: true,
               onTap: () => context.go(Routes.employeeProjects),
             ),
@@ -1086,7 +1086,9 @@ class _ApiEmployeeDashboard extends ConsumerWidget {
           title: l10n.activeClientProjects,
           chips: [
             FilterChipBox(
-              label: l10n.runningCount(projects.value?.stats.inProgress ?? 0),
+              label: l10n.runningCount(
+                count(projects.value?.stats.inProgress ?? 0),
+              ),
               selected: true,
               onTap: () => context.go(Routes.employeeProjects),
             ),

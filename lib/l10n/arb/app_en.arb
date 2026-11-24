@@ -762,7 +762,7 @@
   "@runningCount": {
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "String"
       }
     }
   },

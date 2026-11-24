@@ -1517,7 +1517,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get roleLabel => 'Role';
 
   @override
-  String runningCount(int count) {
+  String runningCount(String count) {
     return '$count Running';
   }
 
