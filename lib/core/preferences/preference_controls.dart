@@ -240,18 +240,25 @@ class PreferencesCard extends ConsumerWidget {
           children: [
             Icon(icon, size: 20, color: AppColors.textSecondary),
             const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                title,
-                style: AppTextStyles.mobileBaseSemiBold.copyWith(
-                  color: AppColors.textPrimary,
-                ),
+            // The title keeps its own width and the value takes the rest,
+            // wrapping between its words: at 320 dp with 130 % text
+            // "System default" squeezed the title into "Langu / age".
+            Text(
+              title,
+              key: Key('${(key as ValueKey<String>).value}-title'),
+              style: AppTextStyles.mobileBaseSemiBold.copyWith(
+                color: AppColors.textPrimary,
               ),
             ),
-            Text(
-              value,
-              style: AppTextStyles.mobileBaseRegular.copyWith(
-                color: AppColors.textSecondary,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                value,
+                key: Key('${key.value}-value'),
+                textAlign: TextAlign.end,
+                style: AppTextStyles.mobileBaseRegular.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
             const SizedBox(width: 4),
