@@ -147,6 +147,8 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     return ModulePage(
       title: l10n.projectsTitle,
       description: l10n.projectsDescription,
+      searchHint: l10n.searchProjectsHint,
+      searchFieldKey: const Key('projects-search'),
       onSearch: (v) => setState(() => _query = v),
       onCreate: widget.canManage ? () => openProjectForm(context) : null,
       createLabel: l10n.addProject,
@@ -169,11 +171,6 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
               delta: demo ? '4% ${l10n.vsLastMonth}' : '—',
             ),
           ],
-        ),
-        WfSearchBox(
-          fieldKey: const Key('projects-search'),
-          hint: l10n.searchProjectsHint,
-          onChanged: (v) => setState(() => _query = v),
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,

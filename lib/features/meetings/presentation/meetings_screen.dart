@@ -82,6 +82,8 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
     return ModulePage(
       title: l10n.meetingsTitle,
       description: l10n.meetingsDescription,
+      searchHint: l10n.searchMeetingsHint,
+      searchFieldKey: const Key('meetings-search'),
       onSearch: (v) => setState(() => _query = v),
       onCreate: () => openScheduleMeeting(context),
       createLabel: l10n.scheduleMeeting,
@@ -220,11 +222,6 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
             ),
           ),
         Text(l10n.upcomingMeetings, style: h16),
-        WfSearchBox(
-          fieldKey: const Key('meetings-search'),
-          hint: l10n.searchMeetingsHint,
-          onChanged: (v) => setState(() => _query = v),
-        ),
         ChipRow(
           children: [
             DropdownChip<MeetingStatus?>(

@@ -132,6 +132,10 @@ class _ApiMeetingsViewState extends ConsumerState<ApiMeetingsView> {
     return ModulePage(
       title: l10n.meetingsTitle,
       description: l10n.meetingsDescription,
+      // One search, in the masthead: a second field above Upcoming
+      // meetings wrote the same query but never showed the other's text.
+      searchHint: l10n.searchMeetingsHint,
+      searchFieldKey: const Key('meetings-search'),
       onSearch: _onSearch,
       children: [
         if (isEmployee)
@@ -270,11 +274,6 @@ class _ApiMeetingsViewState extends ConsumerState<ApiMeetingsView> {
           },
         ),
         Text(l10n.upcomingMeetings, style: h16),
-        WfSearchBox(
-          fieldKey: const Key('meetings-search'),
-          hint: l10n.searchMeetingsHint,
-          onChanged: _onSearch,
-        ),
         ChipRow(
           children: [
             DropdownChip<ApiMeetingStatus?>(

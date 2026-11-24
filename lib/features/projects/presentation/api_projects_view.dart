@@ -84,6 +84,9 @@ class _ApiProjectsViewState extends ConsumerState<ApiProjectsView> {
     return ModulePage(
       title: l10n.projectsTitle,
       description: l10n.projectsDescription,
+      // One search, in the masthead, as on Employee Tasks.
+      searchHint: l10n.searchProjectsHint,
+      searchFieldKey: const Key('projects-search'),
       onSearch: _onSearch,
       onCreate: widget.onCreate,
       createLabel: l10n.addProject,
@@ -106,11 +109,6 @@ class _ApiProjectsViewState extends ConsumerState<ApiProjectsView> {
               delta: '—',
             ),
           ],
-        ),
-        WfSearchBox(
-          fieldKey: const Key('projects-search'),
-          hint: l10n.searchProjectsHint,
-          onChanged: _onSearch,
         ),
         ChipRow(
           children: [
