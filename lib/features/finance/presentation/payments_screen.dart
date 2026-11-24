@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:workflow_app/core/data/local_collection.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/export_csv_chip.dart';
+import 'package:workflow_app/core/widgets/filter_sheet.dart';
 import 'package:workflow_app/core/widgets/form_widgets.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/data/client_finance_repository.dart';
@@ -29,9 +30,13 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
   DateRange _range = DateRange.last30;
   PaymentDirection? _direction;
 
-  // API mode: server-side filters of `GET /client/payments`.
-  PaymentStatusFilter _apiStatus = PaymentStatusFilter.all;
-  DateRange _apiRange = DateRange.all;
+  // API mode: server-side filters of `GET /client/payments`, applied
+  // together from one sheet.
+  static const ({PaymentStatusFilter status, DateRange range}) _noFilters = (
+    status: PaymentStatusFilter.all,
+    range: DateRange.all,
+  );
+  ({PaymentStatusFilter status, DateRange range}) _apiFilters = _noFilters;
   String _apiSearch = '';
   int _apiPage = 1;
   Timer? _debounce;
@@ -79,6 +84,10 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
     return ModulePage(
       title: l10n.paymentsTitle,
       description: l10n.paymentsDescription,
+      // One search, in the masthead (the inline second field is gone, as
+      // on Employee Tasks).
+      searchHint: l10n.searchPaymentsHint,
+      searchFieldKey: const Key('payments-search'),
       onSearch: demo ? (v) => setState(() => _query = v) : _onApiSearch,
       // Clients have no payment create route: demo only. In API mode the
       // export chip is the server's CSV (see _apiChildren).
@@ -116,65 +125,102 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
   /// `GET /client/payments`: metrics, filters and rows from one response.
   List<Widget> _apiChildren(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final filters = _apiFilters;
     final query = (
-      status: _apiStatus,
+      status: filters.status,
       search: _apiSearch,
-      from: _apiRange.start(DateTime.now()),
+      from: filters.range.start(DateTime.now()),
       page: _apiPage,
     );
+    void apply(({PaymentStatusFilter status, DateRange range}) next) {
+      if (next == _apiFilters) return;
+      setState(() {
+        _apiFilters = next;
+        _apiPage = 1;
+      });
+    }
+
     final result = ref.watch(clientPaymentsProvider(query));
     String statusLabel(PaymentStatusFilter s) => switch (s) {
       PaymentStatusFilter.all => l10n.filterAllStatus,
       PaymentStatusFilter.confirmed => l10n.statusConfirmed,
       PaymentStatusFilter.pending => l10n.statusPending,
     };
+    Future<void> open() async {
+      final picked = await showFilterSheet(
+        context,
+        id: 'payment',
+        title: l10n.paymentFiltersTitle,
+        initial: filters,
+        defaults: _noFilters,
+        sections: (context, draft, setDraft) => [
+          FilterSection(
+            title: l10n.fieldStatus,
+            children: [
+              for (final s in PaymentStatusFilter.values)
+                FilterChipBox(
+                  key: Key('payment-status-${s.name}'),
+                  label: statusLabel(s),
+                  selected: draft.status == s,
+                  onTap: () => setDraft((status: s, range: draft.range)),
+                ),
+            ],
+          ),
+          FilterSection(
+            title: l10n.filterPeriod,
+            children: [
+              for (final r in DateRange.values)
+                FilterChipBox(
+                  key: Key('payment-range-${r.name}'),
+                  label: r.label(l10n),
+                  selected: draft.range == r,
+                  onTap: () => setDraft((status: draft.status, range: r)),
+                ),
+            ],
+          ),
+        ],
+      );
+      if (picked != null && mounted) apply(picked);
+    }
+
     return [
-      // Figma 643:35269: "↓ Export Report" above the metrics; the server's
-      // export of what the list shows (same filters, every page).
-      Align(
-        alignment: AlignmentDirectional.centerStart,
-        child: ExportCsvChip(
-          key: const Key('payments-export'),
-          label: l10n.exportReport,
-          download: () =>
-              ref.read(clientFinanceRepositoryProvider).paymentsCsv(query),
-        ),
-      ),
       _ApiPaymentMetrics(result: result),
       InfoNotice(
         key: const Key('payment-rows-note'),
         text: l10n.paymentRowsNote,
       ),
-      WfSearchBox(
-        fieldKey: const Key('payments-search'),
-        hint: l10n.searchPaymentsHint,
-        onChanged: _onApiSearch,
-      ),
-      ChipRow(
-        children: [
-          DropdownChip<DateRange>(
-            key: const Key('payment-range'),
-            value: _apiRange,
-            options: DateRange.values,
-            labelOf: (r) => r.label(l10n),
-            onChanged: (r) => setState(() {
-              _apiRange = r;
-              _apiPage = 1;
-            }),
-          ),
-        ],
-      ),
-      ChipRow(
-        children: [
-          for (final s in PaymentStatusFilter.values)
-            FilterChipBox(
-              key: Key('payment-status-${s.name}'),
-              label: statusLabel(s),
-              selected: _apiStatus == s,
-              onTap: () => setState(() {
-                _apiStatus = s;
-                _apiPage = 1;
-              }),
+      // Status and period live in one sheet; the applied ones show here as
+      // removable chips. Export sits beside the button: the server's export
+      // of what the list shows (same filters, every page).
+      FilterBar(
+        key: const Key('payment-filter-bar'),
+        buttonKey: const Key('payment-filters'),
+        count:
+            (filters.status != PaymentStatusFilter.all ? 1 : 0) +
+            (filters.range != DateRange.all ? 1 : 0),
+        onOpen: open,
+        onReset: () => apply(_noFilters),
+        trailing: ExportCsvChip(
+          key: const Key('payments-export'),
+          label: l10n.exportReport,
+          download: () =>
+              ref.read(clientFinanceRepositoryProvider).paymentsCsv(query),
+        ),
+        active: [
+          if (filters.status != PaymentStatusFilter.all)
+            ActiveFilter(
+              'status',
+              statusLabel(filters.status),
+              () => apply((
+                status: PaymentStatusFilter.all,
+                range: filters.range,
+              )),
+            ),
+          if (filters.range != DateRange.all)
+            ActiveFilter(
+              'range',
+              filters.range.label(l10n),
+              () => apply((status: filters.status, range: DateRange.all)),
             ),
         ],
       ),
@@ -210,11 +256,6 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
   ) {
     final l10n = AppLocalizations.of(context);
     return [
-      WfSearchBox(
-        fieldKey: const Key('payments-search'),
-        hint: l10n.searchPaymentsHint,
-        onChanged: (v) => setState(() => _query = v),
-      ),
       ChipRow(
         children: [
           DropdownChip<String?>(

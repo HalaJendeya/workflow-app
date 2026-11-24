@@ -1207,6 +1207,9 @@
     }
   },
   "taskFiltersTitle": "Filter tasks",
+  "invoiceFiltersTitle": "Filter invoices",
+  "paymentFiltersTitle": "Filter payments",
+  "filterPeriod": "Period",
   "resetFilters": "Reset filters",
   "showResults": "Show results",
   "filterProject": "Project",

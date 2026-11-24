@@ -2323,6 +2323,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get taskFiltersTitle => 'تصفية المهام';
 
   @override
+  String get invoiceFiltersTitle => 'تصفية الفواتير';
+
+  @override
+  String get paymentFiltersTitle => 'تصفية المدفوعات';
+
+  @override
+  String get filterPeriod => 'الفترة';
+
+  @override
   String get resetFilters => 'إعادة ضبط الفلاتر';
 
   @override

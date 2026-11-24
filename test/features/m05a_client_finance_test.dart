@@ -446,15 +446,32 @@ Future<void> _tap(
   }
 }
 
-Future<void> _pick(WidgetTester tester, Key chip, String option) async {
-  await _tap(tester, find.byKey(chip));
-  await tester.tap(
-    find.descendant(
-      of: find.byKey(const Key('option-sheet')),
-      matching: find.text(option),
-    ),
-  );
+/// Opens a list's Filters sheet (`invoice`, `payment`).
+Future<void> _openFilters(WidgetTester tester, String id) =>
+    _tap(tester, find.byKey(Key('$id-filters')));
+
+/// "Show results": applies the sheet's choices in one request.
+Future<void> _applyFilters(
+  WidgetTester tester,
+  String id, {
+  bool settle = true,
+}) => _tap(tester, find.byKey(Key('$id-filters-apply')), settle: settle);
+
+/// Picks one choice in a list's Filters sheet and applies it.
+Future<void> _filter(WidgetTester tester, String id, Key choice) async {
+  await _openFilters(tester, id);
+  await _tap(tester, find.byKey(choice));
+  await _applyFilters(tester, id);
+}
+
+/// Picks [option] in the invoice project picker (opened from the Filters
+/// sheet) and applies it.
+Future<void> _pickProject(WidgetTester tester, String option) async {
+  await _openFilters(tester, 'invoice');
+  await _tap(tester, find.byKey(const Key('invoice-project')));
+  await tester.tap(find.byKey(Key('project-option-$option')));
   await tester.pumpAndSettle();
+  await _applyFilters(tester, 'invoice');
 }
 
 Future<void> _invoicesTab(WidgetTester tester) async {
@@ -769,19 +786,18 @@ void main() {
       // Page 2, then a filter: back to page 1.
       await _tap(tester, find.widgetWithText(ChoiceChip, '2'));
       expect(server.last('/api/v1/client/invoices').queryParameters['page'], 2);
-      await _tap(tester, find.byKey(const Key('invoice-filter-overdue')));
+      await _filter(tester, 'invoice', const Key('invoice-filter-overdue'));
       var q = server.last('/api/v1/client/invoices').queryParameters;
       expect(q['status'], 'overdue');
       expect(q['page'], 1);
 
-      await _pick(tester, const Key('invoice-sort'), 'Due date');
+      await _filter(tester, 'invoice', const Key('invoice-sort-dueSoonest'));
       q = server.last('/api/v1/client/invoices').queryParameters;
       expect(q['sort'], 'due_date');
+      expect(q['status'], 'overdue', reason: 'earlier filters are kept');
       expect(q['page'], 1);
 
-      await _tap(tester, find.byKey(const Key('invoice-project')));
-      await tester.tap(find.byKey(const Key('project-option-8')));
-      await tester.pumpAndSettle();
+      await _pickProject(tester, '8');
       q = server.last('/api/v1/client/invoices').queryParameters;
       expect(q['project_id'], 8);
       expect(q['page'], 1);
@@ -792,6 +808,7 @@ void main() {
     ) async {
       final (server, _) = await _pump(tester);
       await _invoicesTab(tester);
+      await _openFilters(tester, 'invoice');
       await _tap(tester, find.byKey(const Key('invoice-project')));
       // Page 1 only: no project list is downloaded up front.
       expect(
@@ -817,16 +834,21 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(last);
       await tester.pumpAndSettle();
+      // Chosen in the sheet's draft; shown on its chip until applied.
+      expect(find.text('Warehouse Migration ⌄'), findsOneWidget);
+      await _applyFilters(tester, 'invoice');
       final q = server.last('/api/v1/client/invoices').queryParameters;
       expect(q['project_id'], 105);
       expect(q['page'], 1);
-      expect(find.text('Warehouse Migration ⌄'), findsOneWidget);
+      expect(
+        find.byKey(const Key('active-filter-project')),
+        findsOneWidget,
+        reason: 'the applied project shows as a removable chip',
+      );
       expect(find.byKey(const Key('api-invoice-605')), findsOneWidget);
 
       // Back to all projects.
-      await _tap(tester, find.byKey(const Key('invoice-project')));
-      await tester.tap(find.byKey(const Key('project-option-all')));
-      await tester.pumpAndSettle();
+      await _pickProject(tester, 'all');
       expect(
         server
             .last('/api/v1/client/invoices')
@@ -839,6 +861,7 @@ void main() {
     testWidgets('picker search is sent to the server', (tester) async {
       final (server, _) = await _pump(tester);
       await _invoicesTab(tester);
+      await _openFilters(tester, 'invoice');
       await _tap(tester, find.byKey(const Key('invoice-project')));
       await tester.enterText(
         find.byKey(const Key('project-picker-search')),
@@ -861,19 +884,27 @@ void main() {
       await _invoicesTab(tester);
       // Project 7's answer is slow; project 8 is chosen before it arrives.
       server.projectGates[7] = Completer<void>();
+      Future<void> frames() async {
+        for (var i = 0; i < 5; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+      }
+
+      await _openFilters(tester, 'invoice');
       await _tap(tester, find.byKey(const Key('invoice-project')));
       await tester.tap(find.byKey(const Key('project-option-7')));
-      // Project 7's spinner never settles while its answer is held.
-      for (var i = 0; i < 5; i++) {
-        await tester.pump(const Duration(milliseconds: 100));
-      }
-      // The chip is still on screen: tap it without settling.
-      await tester.tap(find.byKey(const Key('invoice-project')));
-      for (var i = 0; i < 5; i++) {
-        await tester.pump(const Duration(milliseconds: 100));
-      }
-      await tester.tap(find.byKey(const Key('project-option-8')));
       await tester.pumpAndSettle();
+      // Project 7's spinner never settles while its answer is held.
+      await _applyFilters(tester, 'invoice', settle: false);
+      // The Filters button is still on screen: change it without settling.
+      await tester.tap(find.byKey(const Key('invoice-filters')));
+      await frames();
+      await tester.tap(find.byKey(const Key('invoice-project')));
+      await frames();
+      await tester.tap(find.byKey(const Key('project-option-8')));
+      await frames();
+      await tester.tap(find.byKey(const Key('invoice-filters-apply')));
+      await frames();
       server.projectGates[7]!.complete();
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('api-invoice-508')), findsOneWidget);
@@ -1173,7 +1204,7 @@ void main() {
       expect(find.text(r'$300'), findsWidgets);
       expect(find.text('Incoming'), findsOneWidget);
       expect(find.text('Outgoing'), findsOneWidget);
-      await _tap(tester, find.byKey(const Key('payment-status-pending')));
+      await _filter(tester, 'payment', const Key('payment-status-pending'));
       expect(
         server.last('/api/v1/client/payments').queryParameters['status'],
         'pending',
@@ -1275,6 +1306,7 @@ void main() {
       // The project picker under the new context offers none of company 3's
       // projects.
       await _invoicesTab(tester);
+      await _openFilters(tester, 'invoice');
       await _tap(tester, find.byKey(const Key('invoice-project')));
       expect(find.byKey(const Key('project-option-7')), findsNothing);
       expect(

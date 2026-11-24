@@ -47,6 +47,9 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
     return ModulePage(
       title: l10n.invoicesTitle,
       description: l10n.invoicesDescription,
+      // One search, in the masthead, as on Employee Tasks.
+      searchHint: l10n.searchInvoicesHint,
+      searchFieldKey: const Key('invoices-search'),
       onSearch: (v) => setState(() => _query = v),
       onCreate: () => _openForm(context),
       createLabel: l10n.createInvoice,
@@ -71,11 +74,6 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
               negative: true,
             ),
           ],
-        ),
-        WfSearchBox(
-          fieldKey: const Key('invoices-search'),
-          hint: l10n.searchInvoicesHint,
-          onChanged: (v) => setState(() => _query = v),
         ),
         ChipRow(
           children: [

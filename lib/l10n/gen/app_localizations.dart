@@ -4268,6 +4268,24 @@ abstract class AppLocalizations {
   /// **'Filter tasks'**
   String get taskFiltersTitle;
 
+  /// No description provided for @invoiceFiltersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter invoices'**
+  String get invoiceFiltersTitle;
+
+  /// No description provided for @paymentFiltersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter payments'**
+  String get paymentFiltersTitle;
+
+  /// No description provided for @filterPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get filterPeriod;
+
   /// No description provided for @resetFilters.
   ///
   /// In en, this message translates to:

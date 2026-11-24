@@ -248,7 +248,11 @@ void main() {
       );
       expect(find.text('Export Report'), findsOneWidget);
 
+      await tester.tap(find.byKey(const Key('invoice-filters')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('invoice-filter-overdue')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('invoice-filters-apply')));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('invoices-search')),
@@ -284,9 +288,11 @@ void main() {
         const InvoicesScreen(),
         routes: {route: (200, _file(_csv(_invoiceHeader), 'i.csv'))},
       );
-      await tester.tap(find.byKey(const Key('invoice-sort')));
+      await tester.tap(find.byKey(const Key('invoice-filters')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Highest amount').last);
+      await tester.tap(find.byKey(const Key('invoice-sort-highestAmount')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('invoice-filters-apply')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('export-csv')));
       await tester.pumpAndSettle();

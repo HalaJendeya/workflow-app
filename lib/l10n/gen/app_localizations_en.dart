@@ -2331,6 +2331,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get taskFiltersTitle => 'Filter tasks';
 
   @override
+  String get invoiceFiltersTitle => 'Filter invoices';
+
+  @override
+  String get paymentFiltersTitle => 'Filter payments';
+
+  @override
+  String get filterPeriod => 'Period';
+
+  @override
   String get resetFilters => 'Reset filters';
 
   @override

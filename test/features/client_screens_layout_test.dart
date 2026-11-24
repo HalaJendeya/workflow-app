@@ -535,7 +535,13 @@ void main() {
       await _checkEnd(tester, 'client_Payments_api_controls');
       // Server-side search and status filters; the demo-only direction
       // chips ("Incoming (n)") are not offered.
+      // Status and period are in the Filters sheet.
       expect(find.byKey(const Key('payments-search')), findsOneWidget);
+      expect(find.byKey(const Key('payment-filters')), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const Key('payment-filters')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('payment-filters')));
+      await tester.pumpAndSettle();
       expect(find.byKey(const Key('payment-status-confirmed')), findsOneWidget);
       expect(find.textContaining('Incoming ('), findsNothing);
     });

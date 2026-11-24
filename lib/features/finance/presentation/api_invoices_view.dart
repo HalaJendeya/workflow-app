@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:workflow_app/core/design_system/app_theme.dart';
 import 'package:workflow_app/core/widgets/async_section.dart';
 import 'package:workflow_app/core/widgets/export_csv_chip.dart';
+import 'package:workflow_app/core/widgets/filter_sheet.dart';
 import 'package:workflow_app/core/widgets/module_widgets.dart';
 import 'package:workflow_app/features/finance/data/client_finance_repository.dart';
 import 'package:workflow_app/features/finance/presentation/finance_common.dart';
@@ -55,11 +56,57 @@ class ApiInvoicesView extends ConsumerStatefulWidget {
   ConsumerState<ApiInvoicesView> createState() => _ApiInvoicesViewState();
 }
 
+/// Every invoice filter and the sort, applied together from one sheet.
+@immutable
+class InvoiceFilters {
+  const new({
+    this.status = InvoiceFilter.all,
+    this.range = DateRange.all,
+    this.project,
+    this.sort = InvoiceSort.newest,
+  });
+
+  final InvoiceFilter status;
+  final DateRange range;
+  final ProjectOption? project;
+
+  /// `newest` is the default.
+  final InvoiceSort sort;
+
+  /// What the Filters button counts: everything that differs from the
+  /// defaults, sort included.
+  int get count =>
+      (status != InvoiceFilter.all ? 1 : 0) +
+      (range != DateRange.all ? 1 : 0) +
+      (project != null ? 1 : 0) +
+      (sort != InvoiceSort.newest ? 1 : 0);
+
+  InvoiceFilters copyWith({
+    InvoiceFilter? status,
+    DateRange? range,
+    ({ProjectOption? value})? project,
+    InvoiceSort? sort,
+  }) => InvoiceFilters(
+    status: status ?? this.status,
+    range: range ?? this.range,
+    project: project == null ? this.project : project.value,
+    sort: sort ?? this.sort,
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is InvoiceFilters &&
+      other.status == status &&
+      other.range == range &&
+      other.project == project &&
+      other.sort == sort;
+
+  @override
+  int get hashCode => Object.hash(status, range, project, sort);
+}
+
 class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
-  InvoiceFilter _filter = InvoiceFilter.all;
-  InvoiceSort _sort = InvoiceSort.newest;
-  ProjectOption? _project;
-  DateRange _range = DateRange.all;
+  InvoiceFilters _filters = const InvoiceFilters();
   String _search = '';
   int _page = 1;
   Timer? _debounce;
@@ -83,14 +130,97 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
   }
 
   InvoiceQuery get _query => (
-    filter: _filter,
-    sort: _sort,
+    filter: _filters.status,
+    sort: _filters.sort,
     search: _search,
-    from: _range.start(DateTime.now()),
+    from: _filters.range.start(DateTime.now()),
     to: null,
-    projectId: _project?.id,
+    projectId: _filters.project?.id,
     page: _page,
   );
+
+  /// Applies [next] from page 1; an unchanged value sends nothing.
+  void _apply(InvoiceFilters next) {
+    if (next == _filters) return;
+    setState(() {
+      _filters = next;
+      _page = 1;
+    });
+  }
+
+  Future<void> _openFilters(InvoiceStats? stats) async {
+    final l10n = AppLocalizations.of(context);
+    final picked = await showFilterSheet<InvoiceFilters>(
+      context,
+      id: 'invoice',
+      title: l10n.invoiceFiltersTitle,
+      initial: _filters,
+      defaults: const InvoiceFilters(),
+      sections: (context, draft, setDraft) => [
+        FilterSection(
+          title: l10n.fieldStatus,
+          children: [
+            for (final f in InvoiceFilter.values)
+              FilterChipBox(
+                key: Key('invoice-filter-${f.name}'),
+                label: stats == null
+                    ? invoiceFilterLabel(l10n, f)
+                    : '${invoiceFilterLabel(l10n, f)} ${count(switch (f) {
+                        InvoiceFilter.all => stats.total,
+                        InvoiceFilter.paid => stats.paid,
+                        InvoiceFilter.unpaid => stats.unpaid,
+                        InvoiceFilter.partiallyPaid => stats.partiallyPaid,
+                        InvoiceFilter.overdue => stats.overdue,
+                      })}',
+                selected: draft.status == f,
+                onTap: () => setDraft(draft.copyWith(status: f)),
+              ),
+          ],
+        ),
+        FilterSection(
+          title: l10n.filterPeriod,
+          children: [
+            for (final r in DateRange.values)
+              FilterChipBox(
+                key: Key('invoice-range-${r.name}'),
+                label: r.label(l10n),
+                selected: draft.range == r,
+                onTap: () => setDraft(draft.copyWith(range: r)),
+              ),
+          ],
+        ),
+        FilterSection(
+          title: l10n.filterProject,
+          children: [
+            // Searchable, paged picker over all of the client's projects.
+            FilterChipBox(
+              key: const Key('invoice-project'),
+              label: '${draft.project?.title ?? l10n.allProjects} ⌄',
+              selected: draft.project != null,
+              onTap: () async {
+                final choice = await showProjectPicker(context);
+                if (choice == null || !context.mounted) return;
+                setDraft(draft.copyWith(project: (value: choice.project)));
+              },
+            ),
+          ],
+        ),
+        FilterSection(
+          title: l10n.sortBy,
+          children: [
+            for (final s in InvoiceSort.values)
+              FilterChipBox(
+                key: Key('invoice-sort-${s.name}'),
+                label: invoiceSortLabel(l10n, s),
+                selected: draft.sort == s,
+                onTap: () => setDraft(draft.copyWith(sort: s)),
+              ),
+          ],
+        ),
+      ],
+    );
+    if (picked != null && mounted) _apply(picked);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,21 +234,14 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
     return ModulePage(
       title: l10n.invoicesTitle,
       description: l10n.invoicesDescription,
+      // One search, in the masthead (the inline second field is gone, as
+      // on Employee Tasks).
+      searchHint: l10n.searchInvoicesHint,
+      searchFieldKey: const Key('invoices-search'),
       onSearch: _onSearch,
       onCreate: widget.onCreate,
       createLabel: l10n.createInvoice,
       children: [
-        // Figma 643:36002: "↓ Export Report" above the metrics. It exports
-        // what the list shows (same filters and sort, every page).
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: ExportCsvChip(
-            key: const Key('invoices-export'),
-            label: l10n.exportReport,
-            download: () =>
-                ref.read(clientFinanceRepositoryProvider).invoicesCsv(query),
-          ),
-        ),
         MetricGroup(
           metrics: [
             Metric(
@@ -135,67 +258,46 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
             ),
           ],
         ),
-        WfSearchBox(
-          fieldKey: const Key('invoices-search'),
-          hint: l10n.searchInvoicesHint,
-          onChanged: _onSearch,
-        ),
-        ChipRow(
-          children: [
-            DropdownChip<DateRange>(
-              value: _range,
-              options: DateRange.values,
-              labelOf: (r) => r.label(l10n),
-              onChanged: (r) => setState(() {
-                _range = r;
-                _page = 1;
-              }),
-            ),
-            DropdownChip<InvoiceSort>(
-              key: const Key('invoice-sort'),
-              value: _sort,
-              options: InvoiceSort.values,
-              labelOf: (s) => invoiceSortLabel(l10n, s),
-              onChanged: (s) => setState(() {
-                _sort = s;
-                _page = 1;
-              }),
-            ),
-            // Searchable, paged picker over all of the client's projects.
-            FilterChipBox(
-              key: const Key('invoice-project'),
-              label: '${_project?.title ?? l10n.allProjects} ⌄',
-              selected: _project != null,
-              onTap: () async {
-                final choice = await showProjectPicker(context);
-                if (choice == null || !mounted) return;
-                setState(() {
-                  _project = choice.project;
-                  _page = 1;
-                });
-              },
-            ),
-          ],
-        ),
-        ChipRow(
-          children: [
-            for (final f in InvoiceFilter.values)
-              FilterChipBox(
-                key: Key('invoice-filter-${f.name}'),
-                label: stats == null
-                    ? invoiceFilterLabel(l10n, f)
-                    : '${invoiceFilterLabel(l10n, f)} ${count(switch (f) {
-                        InvoiceFilter.all => stats.total,
-                        InvoiceFilter.paid => stats.paid,
-                        InvoiceFilter.unpaid => stats.unpaid,
-                        InvoiceFilter.partiallyPaid => stats.partiallyPaid,
-                        InvoiceFilter.overdue => stats.overdue,
-                      })}',
-                selected: _filter == f,
-                onTap: () => setState(() {
-                  _filter = f;
-                  _page = 1;
-                }),
+        // Status, period, project and sort live in one sheet; the applied
+        // ones show here as removable chips. Export sits beside the button:
+        // it downloads what the list shows (same filters and sort, every
+        // page).
+        FilterBar(
+          key: const Key('invoice-filter-bar'),
+          buttonKey: const Key('invoice-filters'),
+          count: _filters.count,
+          onOpen: () => _openFilters(stats),
+          onReset: () => _apply(const InvoiceFilters()),
+          trailing: ExportCsvChip(
+            key: const Key('invoices-export'),
+            label: l10n.exportReport,
+            download: () =>
+                ref.read(clientFinanceRepositoryProvider).invoicesCsv(query),
+          ),
+          active: [
+            if (_filters.status != InvoiceFilter.all)
+              ActiveFilter(
+                'status',
+                invoiceFilterLabel(l10n, _filters.status),
+                () => _apply(_filters.copyWith(status: InvoiceFilter.all)),
+              ),
+            if (_filters.range != DateRange.all)
+              ActiveFilter(
+                'range',
+                _filters.range.label(l10n),
+                () => _apply(_filters.copyWith(range: DateRange.all)),
+              ),
+            if (_filters.project case final p?)
+              ActiveFilter(
+                'project',
+                p.title,
+                () => _apply(_filters.copyWith(project: (value: null))),
+              ),
+            if (_filters.sort != InvoiceSort.newest)
+              ActiveFilter(
+                'sort',
+                invoiceSortLabel(l10n, _filters.sort),
+                () => _apply(_filters.copyWith(sort: InvoiceSort.newest)),
               ),
           ],
         ),
@@ -210,8 +312,8 @@ class _ApiInvoicesViewState extends ConsumerState<ApiInvoicesView> {
                 ApiInvoiceCard(
                   invoice: i,
                   currency: list.currencies[i.currencyId],
-                  projectTitle: i.projectId == _project?.id
-                      ? _project?.title
+                  projectTitle: i.projectId == _filters.project?.id
+                      ? _filters.project?.title
                       : null,
                 ),
                 const SizedBox(height: 16),

@@ -94,7 +94,6 @@ void main() {
     expect(find.byKey(const Key('api-invoice-12')), findsOneWidget);
     expect(find.byKey(const Key('api-invoice-13')), findsOneWidget);
     expect(find.text(r'$1,000'), findsOneWidget);
-    expect(find.text('Overdue 1'), findsOneWidget);
     // No demo record leaks into API mode.
     expect(find.text('#INV-2026-0234'), findsNothing);
 
@@ -104,7 +103,13 @@ void main() {
     expect(call.headers['X-Company'], '2');
     expect(call.headers['Authorization'], 'Bearer t');
 
+    await tester.tap(find.byKey(const Key('invoice-filters')));
+    await tester.pumpAndSettle();
+    // The server's status counts are shown in the Filters sheet.
+    expect(find.text('Overdue 1'), findsOneWidget);
     await tester.tap(find.byKey(const Key('invoice-filter-paid')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('invoice-filters-apply')));
     await tester.pumpAndSettle();
     // Cards also look up their project's name, so pick the list request.
     expect(
